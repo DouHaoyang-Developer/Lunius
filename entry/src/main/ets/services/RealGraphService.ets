@@ -2,7 +2,7 @@
 // 知识图谱服务 — 解析 [[wikilinks]] 构建节点/边关系图
 
 import { IGraphService } from './IGraphService';
-import { GraphData, GraphNodeData, GraphEdgeData } from './ApiTypes';
+import { GraphData, GraphNodeData, GraphEdgeData, LinkStats } from './ApiTypes';
 import { FileNode, NodeType } from '../models/FileNode';
 import { fileService } from './IFileService';
 
@@ -233,7 +233,7 @@ export class RealGraphService implements IGraphService {
     return { nodes: filteredNodes, edges: filteredEdges };
   }
 
-  async getLinkStats(noteId: string): Promise<{ outgoing: number; incoming: number; missing: number }> {
+  async getLinkStats(noteId: string): Promise<LinkStats> {
     await this.ensureIndex();
 
     const outLinks = this.linkIndex.get(noteId);
@@ -252,6 +252,7 @@ export class RealGraphService implements IGraphService {
       }
     }
 
-    return { outgoing, incoming, missing };
+    const stats: LinkStats = { outgoing: outgoing, incoming: incoming, missing: missing };
+    return stats;
   }
 }

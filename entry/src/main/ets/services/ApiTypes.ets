@@ -4,6 +4,11 @@
 // Frontmatter 值类型
 export type FrontmatterValue = string | number | boolean | string[];
 
+export interface NoteReadResult {
+  content: string;
+  metadata: NoteMetadata;
+}
+
 export interface NoteMetadata {
   id: string;
   title: string;
@@ -29,16 +34,18 @@ export interface VaultStats {
   latestNote: number;
 }
 
+export interface SearchMatch {
+  line: number;
+  text: string;
+  start: number;
+  end: number;
+}
+
 export interface SearchResultItem {
   noteId: string;
   title: string;
   path: string;
-  matches: Array<{
-    line: number;
-    text: string;
-    start: number;
-    end: number;
-  }>;
+  matches: SearchMatch[];
   score: number;
 }
 
@@ -61,6 +68,12 @@ export interface GraphEdgeData {
 export interface GraphData {
   nodes: GraphNodeData[];
   edges: GraphEdgeData[];
+}
+
+export interface LinkStats {
+  outgoing: number;
+  incoming: number;
+  missing: number;
 }
 
 export interface SyncStatus {

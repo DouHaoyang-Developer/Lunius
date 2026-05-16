@@ -4,10 +4,12 @@
 import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
 import { NoteMetadata } from '../../services/ApiTypes';
 
+type PropertyType = 'text' | 'number' | 'checkbox' | 'tags' | 'date' | 'list';
+
 export interface PropertyItem {
   key: string;
   value: string | number | boolean | string[];
-  type: 'text' | 'number' | 'checkbox' | 'tags' | 'date' | 'list';
+  type: PropertyType;
 }
 
 @Component
@@ -28,11 +30,12 @@ export struct PropertiesPanel {
     if (!this.metadata?.frontmatter) return [];
     const result: PropertyItem[] = [];
     this.metadata.frontmatter.forEach((value: string | number | boolean | string[], key: string) => {
-      let type: string = 'text';
-      if (typeof value === 'number') type = 'number';
-      else if (typeof value === 'boolean') type = 'checkbox';
-      else if (Array.isArray(value)) type = 'tags';
-      result.push({ key: key, value: value, type: type });
+      let propType: PropertyType = 'text';
+      if (typeof value === 'number') propType = 'number';
+      else if (typeof value === 'boolean') propType = 'checkbox';
+      else if (Array.isArray(value)) propType = 'tags';
+      const pi: PropertyItem = { key: key, value: value, type: propType };
+      result.push(pi);
     });
     return result;
   }

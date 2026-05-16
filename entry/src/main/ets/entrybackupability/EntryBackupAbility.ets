@@ -1,20 +1,11 @@
-// entry/src/main/ets/entrybackupability/EntryBackupAbility.ets
-import { BackupExtensionAbility, BundleVersion } from '@kit.AbilityKit';
+import { BackupExtensionAbility, BundleVersion } from '@kit.CoreFileKit';
 
 export default class EntryBackupAbility extends BackupExtensionAbility {
-  async onBackup() {
+  async onBackup(): Promise<void> {
     console.log('Obsidian onBackup');
-    return {
-      resultCode: 0,
-      resultInfo: 'Backup success'
-    };
   }
 
-  async onRestore(bundleVersion: BundleVersion) {
+  async onRestore(bundleVersion: BundleVersion): Promise<void> {
     console.log('Obsidian onRestore');
-    return {
-      resultCode: 0,
-      resultInfo: 'Restore success'
-    };
   }
 }

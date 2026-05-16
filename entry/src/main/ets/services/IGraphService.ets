@@ -1,7 +1,7 @@
 // services/IGraphService.ets
 // 关系图谱服务接口
 
-import { GraphData, GraphNodeData, GraphEdgeData } from './ApiTypes';
+import { GraphData, GraphNodeData, GraphEdgeData, LinkStats } from './ApiTypes';
 import { RealGraphService } from './RealGraphService';
 
 export interface IGraphService {
@@ -12,7 +12,7 @@ export interface IGraphService {
   getLocalGraph(centerNoteId: string, depth?: number): Promise<GraphData>;
 
   // 获取笔记的连接统计
-  getLinkStats(noteId: string): Promise<{ outgoing: number; incoming: number; missing: number }>;
+  getLinkStats(noteId: string): Promise<LinkStats>;
 }
 
 export class MockGraphService implements IGraphService {
@@ -50,13 +50,11 @@ export class MockGraphService implements IGraphService {
     return full;
   }
 
-  async getLinkStats(noteId: string): Promise<{ outgoing: number; incoming: number; missing: number }> {
-    return { outgoing: 3, incoming: 2, missing: 1 };
+  async getLinkStats(noteId: string): Promise<LinkStats> {
+    const stats: LinkStats = { outgoing: 3, incoming: 2, missing: 1 };
+    return stats;
   }
 }
 
 // 单例导出 - 使用真实图谱服务
 export const graphService: IGraphService = new RealGraphService();
-
-// 保留 MockGraphService 供测试参考
-export { MockGraphService };

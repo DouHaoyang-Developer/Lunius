@@ -1,135 +1,139 @@
-# Lunius
+# Lunius — Obsidian 风格知识管理应用 (HarmonyOS)
 
-## 架构概览
+基于 HarmonyOS ArkTS 构建的本地化知识管理应用，采用 Obsidian 风格的界面设计，支持 Markdown 实时编辑、Wiki 链接知识图谱、反向链接追踪、多标签管理等核心能力。
+
+## 项目结构
 
 ```
-obsidian_arkts/
+Lunius/
 ├── entry/src/main/ets/
-│   ├── entryability/          # 入口 Ability
-│   ├── pages/                 # 3 个页面（MainEntry/Settings/Search）
-│   ├── components/            # UI 组件
-│   │   ├── breadcrumb/        # 面包屑导航
-│   │   ├── commandpalette/    # 命令面板（Ctrl+P）
-│   │   ├── modal/             # 通用模态框
-│   │   ├── properties/        # Frontmatter YAML 属性面板
-│   │   ├── splitview/         # 分屏编辑器
-│   │   ├── statusbar/         # 底部状态栏
-│   │   ├── BacklinksView.ets
-│   │   ├── FileTree.ets       # 支持 PC 多窗口上下文菜单
-│   │   ├── GraphView.ets
-│   │   ├── MarkdownEditor.ets # 集成 VM、面包屑、状态栏、分屏
-│   │   ├── OutlineView.ets
-│   │   ├── Ribbon.ets         # 支持 router 跳转
-│   │   ├── RightSidebar.ets
-│   │   └── TabBar.ets
-│   ├── models/                # 数据模型
-│   ├── services/              # ★ 前后端分离服务层
-│   │   ├── ApiTypes.ets       # 接口类型定义
-│   │   ├── IFileService.ets   # 文件系统服务 + Mock 实现
-│   │   ├── IGraphService.ets  # 图谱服务 + Mock 实现
-│   │   └── ISyncService.ets   # 同步服务 + Mock 实现
-│   ├── utils/                 # 工具类
-│   └── viewmodels/            # ★ MVVM 状态管理层
-│       ├── NoteViewModel.ets  # 单笔记状态（加载/保存/Frontmatter）
-│       └── WorkspaceViewModel.ets # 工作区状态（多标签/分屏/历史）
+│   ├── entryability/           # 入口 Ability（服务初始化 + 上下文注入）
+│   ├── entrybackupability/     # 备份恢复 Ability
+│   ├── pages/                  # 4 个页面
+│   │   ├── MainEntry.ets       # 主工作区（文件树 + 编辑器 + 侧边栏）
+│   │   ├── SearchPage.ets      # 全局搜索
+│   │   ├── SettingsPage.ets    # 设置 + Vault 统计
+│   │   └── Index.ets           # 首页入口
+│   ├── components/             # UI 组件
+│   │   ├── breadcrumb/         # 面包屑导航（路径层级）
+│   │   ├── commandpalette/     # 命令面板（命令搜索 + 快捷执行）
+│   │   ├── modal/              # 通用模态框（确认 / 提示 / 输入）
+│   │   ├── properties/         # Frontmatter 属性面板（YAML 可视化编辑）
+│   │   ├── splitview/          # 分屏编辑器（左右拖拽 + 实时预览）
+│   │   ├── statusbar/          # 底部状态栏（字数 / 同步状态 / 视图切换）
+│   │   ├── BacklinksView.ets   # 反向链接 + 标签面板
+│   │   ├── FileTree.ets        # 文件浏览器（树形展开 + 新建笔记）
+│   │   ├── GraphView.ets       # 知识图谱（鼠标拖拽 + 缩放 + 局部图谱）
+│   │   ├── MarkdownEditor.ets  # Markdown 编辑器（三模式 + 自动补全 + 语法高亮）
+│   │   ├── OutlineView.ets     # 文档大纲（标题层级导航）
+│   │   ├── Ribbon.ets          # 左侧功能栏（支持路由跳转）
+│   │   ├── RightSidebar.ets    # 右侧面板容器（大纲 + 反向链接）
+│   │   └── TabBar.ets          # 标签页切换栏
+│   ├── models/                 # 数据模型
+│   │   └── FileNode.ets        # 文件节点 / 大纲 / 标签 / 反向链接模型
+│   ├── services/               # ★ 服务层（前后端分离）
+│   │   ├── ApiTypes.ets        # 全部接口类型定义
+│   │   ├── IFileService.ets    # 文件系统服务接口 + MockFileService
+│   │   ├── IGraphService.ets   # 知识图谱服务接口 + MockGraphService
+│   │   ├── ISyncService.ets    # 同步服务接口 + SyncService（JSON 持久化）
+│   │   ├── RealFileService.ets # ★ 真实文件 I/O 服务（本地 .md 文件读写）
+│   │   ├── RealGraphService.ets# ★ 真实图谱引擎（[[wikilink]] 解析 + 节点/边构建）
+│   │   ├── VaultIndex.ets      # ★ Vault 索引（全局标签索引 + 统计）
+│   │   └── Index.ets           # 统一服务导出 + 预热入口
+│   ├── utils/                  # 工具类
+│   │   ├── FileService.ets     # 文件 I/O 单例（@kit.CoreFileKit 封装）
+│   │   ├── TabManager.ets      # 标签页状态管理（JSON 持久化 + 防抖）
+│   │   ├── MarkdownHighlighter.ets  # 语法高亮（MutableStyledString）
+│   │   ├── MarkdownSegmenter.ets    # Markdown 分段解析（语法 / 内容分离）
+│   │   ├── MarkdownToHtml.ets       # Markdown → HTML 转换
+│   │   ├── MarkdownCompleter.ets    # 自动补全引擎
+│   │   ├── Theme.ets           # 主题配色 + 响应式断点 + 字体规范
+│   │   └── ResponsiveLayout.ets# 响应式布局状态（手机 / 平板 / PC）
+│   └── viewmodels/             # ★ MVVM 状态管理层
+│       ├── NoteViewModel.ets   # 单笔记状态（加载 / 保存 / Frontmatter / 自动保存）
+│       └── WorkspaceViewModel.ets # 工作区状态（多标签 / 分屏 / 历史导航 / 会话恢复）
 ```
 
-## 核心改进（v3.0）
+## 架构设计
 
-### 1. 前后端分离架构
+### MVVM + Service 三层分离
 
-| 层级 | 职责 | 文件 |
+| 层级 | 职责 | 关键文件 |
+|------|------|----------|
+| **Service** | 数据存取、外部 API、索引构建 | `RealFileService` / `RealGraphService` / `SyncService` / `VaultIndex` |
+| **ViewModel** | 业务逻辑、状态管理、UI 无关 | `NoteViewModel` / `WorkspaceViewModel` |
+| **Component** | 纯 UI 渲染、事件委托 | `MarkdownEditor` / `FileTree` / `GraphView` 等 |
+
+### 数据流
+
+```
+文件系统 (CoreFileKit)
+  └─ FileService（单例）
+       └─ RealFileService（实现 IFileService）
+            ├─ NoteViewModel → MarkdownEditor / PropertiesPanel
+            ├─ VaultIndex（标签统计 / Vault 仪表盘）
+            ├─ RealGraphService（[[wikilink]] 图谱）
+            └─ TabManager（标签持久化 → tabs_state.json）
+
+启动链:
+EntryAbility.onCreate
+  ├─ FileService.setContext(context)
+  ├─ TabManager.init()
+  └─ initAllServices() → fileTree + graphData + vaultIndex + syncStatus
+```
+
+## 后端能力一览
+
+| 功能 | 状态 | 实现 |
 |------|------|------|
-| **Service** | 定义数据接口 + Mock 实现 | `services/*.ets` |
-| **ViewModel** | 业务逻辑 + 状态管理 | `viewmodels/*.ets` |
-| **Component** | 纯 UI 渲染 | `components/*.ets` |
+| 本地文件读写（`.md`） | ✅ | `RealFileService` + `FileService`（CoreFileKit） |
+| YAML Frontmatter 解析/写入 | ✅ | 纯字符串解析，输出 `Map<string, FrontmatterValue>` |
+| 文件树（目录层级） | ✅ | 自动扫描 `filesDir` 下所有 `.md` 文件 |
+| 笔记 CRUD | ✅ | 创建 / 读取 / 保存 / 删除 / 重命名 |
+| 全文搜索 | ✅ | 逐文件内容匹配 + 行号 / 片段高亮 |
+| 反向链接 | ✅ | 全量 [[wikilink]] 索引 + 交叉引用查询 |
+| 知识图谱（全局） | ✅ | 解析全部 notes 的 wiki 链接，构建节点/边 |
+| 知识图谱（局部） | ✅ | BFS 遍历，中心节点高亮 |
+| 标签索引 | ✅ | `VaultIndex` 全局标签收集 + 按标签筛选 |
+| Vault 统计 | ✅ | 总笔记数 / 词数 / 链接数 / 标签数 |
+| 标签页持久化 | ✅ | `TabManager` JSON 文件存储 + 会话恢复 |
+| 同步状态管理 | ✅ | `SyncService` JSON 持久化（local-only） |
+| Wiki 链接解析 | ✅ | `[[笔记名]]` 语法识别 + 链接/反链双向索引 |
 
-后端开发只需：
-1. 实现 `IFileService` 接口（替换 `MockFileService`）
-2. 实现 `IGraphService` 接口（替换 `MockGraphService`）
-3. 实现 `ISyncService` 接口（替换 `MockSyncService`）
+## Markdown 编辑器
 
-### 2. 完整的 Obsidian 界面还原
+| 模式 | 功能 |
+|------|------|
+| **编辑模式** | 纯文本编辑，支持自动补全触发 |
+| **预览模式** | Markdown → HTML 渲染（MardownToHtml） |
+| **分屏模式** | 左编辑右预览，拖拽调整比例 |
 
-| 组件 | 功能 | 状态 |
+自动补全支持：标题（`#`）、粗体/斜体（`*`）、代码（`` ` ``）、引用（`>`）、列表（`-`/`1.`）、链接（`[text](url)`）、分割线（`---`）。
+
+语法高亮基于 `MutableStyledString`，支持标题层级配色、粗体/斜体/代码/链接样式区分。
+
+## 多设备适配
+
+| 设备 | 布局 | 特性 |
 |------|------|------|
-| 面包屑 | 显示 Vault/文件夹/文件层级，支持点击跳转 | ✅ |
-| 命令面板 | Ctrl+P 唤起，12+ 命令，支持搜索过滤 | ✅ |
-| 状态栏 | 字数/字符/阅读时间/光标位置/同步状态/视图切换 | ✅ |
-| 分屏编辑 | 左右拖拽调整比例，实时同步滚动（预留） | ✅ |
-| 属性面板 | Frontmatter YAML 编辑，标签管理 | ✅ |
-| 模态框 | 确认/提示/输入，通用组件 | ✅ |
-| 上下文菜单 | PC 长按文件显示「在新窗口打开」 | ✅ |
+| **手机** | 底部 Tabs + 遮罩侧边栏 | 全屏编辑、简化命令面板 |
+| **平板** | 双栏 / 三栏自适应 | 分屏支持 |
+| **PC / 2in1** | 完整三栏 + Ribbon | 上下文菜单、键盘快捷键 |
 
-### 3. ViewModel 状态管理
+## 快速开始
 
-**NoteViewModel**
-- `loadNote()` / `saveNote()` / 自动保存防抖
-- `updateFrontmatter()` / `addTag()` / `removeTag()`
-- `getWordCount()` / `getReadingTime()`
-- 文件外部变更监听
+1. 用 DevEco Studio 打开项目
+2. `Sync Project`（SDK >= 5.0.0(12)）
+3. 运行 → 首次启动自动创建空 Vault
+4. 点击 `+` 创建笔记 → 开始 Markdown 写作
+5. 使用 `[[笔记名]]` 创建 Wiki 链接 → 图谱页查看关系
 
-**WorkspaceViewModel**
-- `openNote()` / `closeTab()` / `activateTab()`
-- `splitView()` / `closeSplitPane()` - 分屏管理
-- `navigateBack()` / `navigateForward()` - 历史栈
-- 多 Pane 状态持久化
+## 技术栈
 
-### 4. 多设备适配
-
-- **手机**：底部 Tabs + 遮罩层侧边栏 + 简化命令面板
-- **平板**：双栏/三栏自适应 + 分屏支持
-- **PC/2in1**：完整三栏 + 分屏编辑 + 上下文菜单 + 键盘快捷键
-
-## 后端对接指南
-
-### 步骤 1：实现 IFileService
-
-```typescript
-export class RealFileService implements IFileService {
-  async getFileTree(): Promise<FileNode[]> {
-    // 调用后端 API: GET /api/vault/tree
-    return http.request('GET', '/api/vault/tree');
-  }
-
-  async readNote(noteId: string): Promise<{ content: string; metadata: NoteMetadata }> {
-    // 调用后端 API: GET /api/notes/{noteId}
-    return http.request('GET', `/api/notes/${noteId}`);
-  }
-
-  async writeNote(noteId: string, content: string, metadata?: Partial<NoteMetadata>): Promise<void> {
-    // 调用后端 API: PUT /api/notes/{noteId}
-    await http.request('PUT', `/api/notes/${noteId}`, { content, metadata });
-  }
-  // ... 其他方法
-}
-```
-
-### 步骤 2：替换 Service 单例
-
-```typescript
-// services/IFileService.ets
-// export const fileService: IFileService = new MockFileService();
-export const fileService: IFileService = new RealFileService();
-```
-
-### 步骤 3：数据类型对齐
-
-确保后端返回的 JSON 结构与 `ApiTypes.ets` 中的接口定义一致：
-- `NoteMetadata` - 笔记元数据
-- `SearchResultItem` - 搜索结果
-- `GraphData` / `GraphNodeData` / `GraphEdgeData` - 图谱数据
-- `SyncStatus` - 同步状态
-
-## 运行验证
-
-1. 解压导入 DevEco Studio
-2. 放置图标到 `resources/base/media/`
-3. Sync Project，SDK >= 6.0.2（22）
-4. 运行验证：
-   - [ ] 打开笔记 → 面包屑显示路径 → 状态栏显示字数
-   - [ ] 点击属性面板 → 编辑 Frontmatter → 保存
-   - [ ] Ctrl+P（或点击 ⌘ 图标）→ 命令面板弹出 → 选择命令
-   - [ ] 分屏模式 → 左右拖拽调整比例
-   - [ ] 更多 Tab → 设置 → 跳转独立设置页
-   - [ ] PC 模拟器 → 长按文件 → 显示上下文菜单
+- **框架**: HarmonyOS ArkTS (API 12+)
+- **语言**: ArkTS (TypeScript 严格超集)
+- **文件 I/O**: `@kit.CoreFileKit`
+- **UI 组件**: ArkUI 声明式
+- **状态管理**: `@Observed` / `@ObjectLink` / `@StorageLink`
+- **持久化**: JSON 文件（`tabs_state.json` / `sync_status.json`）
+- **Markdown 解析**: 自研（Frontmatter YAML + Wiki Link + 内联语法）

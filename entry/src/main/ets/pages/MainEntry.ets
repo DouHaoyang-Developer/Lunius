@@ -18,6 +18,19 @@ import { FileNode, NodeType } from '../models/FileNode';
 import { fileService } from '../services/IFileService';
 import { FileService } from '../utils/FileService';
 
+interface TabBarItem {
+  id: string;
+  title: string;
+  isModified?: boolean;
+  isActive?: boolean;
+}
+
+interface ToolMenuItem {
+  icon: string;
+  label: string;
+  action: () => void;
+}
+
 @Entry
 @Component
 struct ObsidianApp {
@@ -148,15 +161,21 @@ struct ObsidianApp {
   }
 
   // 从 WorkspaceViewModel 构建 TabBar 所需的 TabItem 数组
-  private get tabBarItems(): Array<{ id: string; title: string; isModified?: boolean; isActive?: boolean }> {
+  private get tabBarItems(): TabBarItem[] {
     const pane = this.workspace.panes.find(p => p.id === this.workspace.activePaneId);
     if (!pane) return [];
-    return pane.tabs.map(t => ({
-      id: t.id,
-      title: t.title,
-      isModified: t.isModified,
-      isActive: t.isActive
-    }));
+    const items: TabBarItem[] = [];
+    for (let i = 0; i < pane.tabs.length; i++) {
+      const t = pane.tabs[i];
+      const item: TabBarItem = {
+        id: t.id,
+        title: t.title,
+        isModified: t.isModified,
+        isActive: t.isActive
+      };
+      items.push(item);
+    }
+    return items;
   }
 
   private get tabBarActiveId(): string {
@@ -282,7 +301,7 @@ struct ObsidianApp {
             responsive: this.responsive,
             vm: this.activeTab.viewModel,
             isVisible: true,
-            width: this.responsive.isPC ? SidebarWidth.PC_RIGHT : SidebarWidth.TABLET_RIGHT,
+            panelWidth: this.responsive.isPC ? SidebarWidth.PC_RIGHT : SidebarWidth.TABLET_RIGHT,
             onClose: () => { this.workspace.rightSidebarVisible = false; }
           })
           .height('100%')
@@ -387,7 +406,7 @@ struct ObsidianApp {
               }},
               { icon: '📝', label: '新建笔记', action: () => this.handleCreateNewNote() },
               { icon: 'ℹ️', label: '关于', action: () => {} }
-            ], (item: {icon: string, label: string, action: () => void}, index: number) => {
+            ], (item: ToolMenuItem, index: number) => {
               Row({ space: 12 }) {
                 Text(item.icon).fontSize(20)
                 Text(item.label).fontSize(15).fontColor(this.colors.textPrimary).layoutWeight(1)
@@ -397,7 +416,7 @@ struct ObsidianApp {
               .backgroundColor(this.colors.bgPrimary)
               .border({ width: { bottom: 1 }, color: this.colors.divider })
               .onClick(item.action)
-            }, (item: {icon: string, label: string}) => item.label)
+            }, (item: ToolMenuItem) => item.label)
           }
           .width('100%').layoutWeight(1)
         }

@@ -14,7 +14,7 @@ export struct RightSidebar {
   @ObjectLink responsive: ResponsiveState;
   @ObjectLink vm: NoteViewModel;
   @Prop isVisible: boolean = true;
-  @Prop width: number = SidebarWidth.PC_RIGHT;
+  @Prop panelWidth: number = SidebarWidth.PC_RIGHT;
   onClose?: () => void;
 
   private get colors(): ObsidianColors {
@@ -36,11 +36,13 @@ export struct RightSidebar {
 
   private getBacklinks(): Backlink[] {
     if (!this.vm.metadata) return [];
-    return this.vm.metadata.backlinks.map(b => ({
-      source: b,
-      context: '',
-      line: 0
-    }));
+    const result: Backlink[] = [];
+    const bl = this.vm.metadata.backlinks;
+    for (let i = 0; i < bl.length; i++) {
+      const item: Backlink = { source: bl[i], context: '', line: 0 };
+      result.push(item);
+    }
+    return result;
   }
 
   private getTags(): string[] {
@@ -90,7 +92,7 @@ export struct RightSidebar {
       .width('100%').height('100%')
       .padding({ left: 4 })
     }
-    .width(this.isVisible ? this.width : 0)
+    .width(this.isVisible ? this.panelWidth : 0)
     .height('100%')
     .backgroundColor(this.colors.sidebarBg)
     .border({ width: { left: 1 }, color: this.colors.divider })

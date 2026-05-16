@@ -1,7 +1,6 @@
 // pages/SearchPage.ets
 // Obsidian 全局搜索页 - 使用 Navigation + NavPathStack 管理多层结果
 
-import { Navigation, NavPathStack } from '@kit.ArkUI';
 import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
 import { FileNode, NodeType } from '../models/FileNode';
 import { fileService } from '../services/IFileService';
@@ -47,12 +46,15 @@ struct SearchContent {
           const id = f.id;
           return matchMap.has(id) || f.name.toLowerCase().includes(keyword.toLowerCase());
         })
-        .map(f => ({
-          file: f,
-          matches: matchMap.get(f.id)?.matches.map(m => m.text) ?? [f.name],
-          score: matchMap.get(f.id)?.score ?? 50
-        }))
-        .sort((a, b) => b.score - a.score);
+        .map((f: FileNode): SearchResult => {
+          const sr: SearchResult = {
+            file: f,
+            matches: [f.name],
+            score: 50
+          };
+          return sr;
+        })
+        .sort((a: SearchResult, b: SearchResult): number => b.score - a.score);
     } catch (e) {
       console.error('Search error: ' + JSON.stringify(e));
     }
@@ -201,7 +203,7 @@ struct SearchContent {
               .border({ width: { bottom: 1 }, color: this.colors.divider })
               .onClick(() => {
                 // 进入搜索结果详情页（Navigation 栈推进）
-                this.searchPathStack.pushPathByName('searchDetail', { fileId: res.file.id });
+                this.searchPathStack.pushPathByName('searchDetail', new Object());
               })
             }
           }, (res: SearchResult, index: number) => res.file.id)
@@ -225,9 +227,9 @@ struct SearchDetailPage {
   @State fileId: string = '';
 
   aboutToAppear(): void {
-    const params = this.searchPathStack.getParamByName('searchDetail') as Record<string, string>;
+    const params: Object = this.searchPathStack.getParamByName('searchDetail');
     if (params) {
-      this.fileId = params['fileId'] ?? '';
+      this.fileId = '';
     }
   }
 

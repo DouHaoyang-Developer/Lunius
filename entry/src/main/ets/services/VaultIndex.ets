@@ -43,7 +43,8 @@ export class VaultIndex {
 
       for (const id of fileIds) {
         try {
-          const { metadata } = await fileService.readNote(id);
+          const result = await fileService.readNote(id);
+          const metadata = result.metadata;
           const tags = metadata.tags || [];
 
           this.fileTags.set(id, tags);

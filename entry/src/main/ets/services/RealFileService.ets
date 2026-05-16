@@ -2,7 +2,7 @@
 // 真实文件服务 — 实现 IFileService，提供本地文件 I/O + 反向链接
 
 import { IFileService, SearchOptions, FileChangeEvent } from './IFileService';
-import { NoteMetadata, SearchResultItem, FrontmatterValue } from './ApiTypes';
+import { NoteMetadata, SearchResultItem, SearchMatch, NoteReadResult, FrontmatterValue } from './ApiTypes';
 import { FileNode, NodeType } from '../models/FileNode';
 import { FileService } from '../utils/FileService';
 
@@ -213,7 +213,7 @@ export class RealFileService implements IFileService {
     return [vault];
   }
 
-  async readNote(noteId: string): Promise<{ content: string; metadata: NoteMetadata }> {
+  async readNote(noteId: string): Promise<NoteReadResult> {
     const filePath = this.getPathFromNoteId(noteId);
     const raw = await this.fileService.readFile(filePath);
     const result = this.parseFrontmatter(raw);
@@ -249,7 +249,8 @@ export class RealFileService implements IFileService {
       frontmatter: fm
     };
 
-    return { content, metadata };
+    const noteResult: NoteReadResult = { content: content, metadata: metadata };
+    return noteResult;
   }
 
   async writeNote(noteId: string, content: string, metadata?: Partial<NoteMetadata>): Promise<void> {
@@ -323,13 +324,14 @@ export class RealFileService implements IFileService {
         const lowerQuery = options?.caseSensitive ? query : query.toLowerCase();
 
         if (lowerContent.includes(lowerQuery)) {
-          const matches: Array<{ line: number; text: string; start: number; end: number }> = [];
+          const matches: SearchMatch[] = [];
           const lines = content.split('\n');
           for (let i = 0; i < lines.length; i++) {
             const line = options?.caseSensitive ? lines[i] : lines[i].toLowerCase();
             const idx = line.indexOf(lowerQuery);
             if (idx !== -1) {
-              matches.push({ line: i + 1, text: lines[i], start: idx, end: idx + query.length });
+              const m: SearchMatch = { line: i + 1, text: lines[i], start: idx, end: idx + query.length };
+              matches.push(m);
             }
           }
           results.push({

@@ -40,7 +40,6 @@ struct SettingsPage {
       .fontWeight(FontWeight.Medium)
       .fontColor(this.colors.textMuted)
       .margin({ top: 24, bottom: 8, left: 16, right: 16 })
-      .textTransform(TextTransform.Uppercase)
       .letterSpacing(1)
   }
 

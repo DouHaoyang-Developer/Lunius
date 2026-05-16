@@ -1,7 +1,7 @@
 // services/IFileService.ets
 // 文件系统服务接口 - 后端实现后可替换为真实文件系统或远程 API
 
-import { NoteMetadata, SearchResultItem, FrontmatterValue } from './ApiTypes';
+import { NoteMetadata, SearchResultItem, SearchMatch, NoteReadResult, FrontmatterValue } from './ApiTypes';
 import { FileNode } from '../models/FileNode';
 import { RealFileService } from './RealFileService';
 
@@ -10,7 +10,7 @@ export interface IFileService {
   getFileTree(): Promise<FileNode[]>;
 
   // 读取笔记内容
-  readNote(noteId: string): Promise<{ content: string; metadata: NoteMetadata }>;
+  readNote(noteId: string): Promise<NoteReadResult>;
 
   // 写入笔记
   writeNote(noteId: string, content: string, metadata?: Partial<NoteMetadata>): Promise<void>;
@@ -52,64 +52,68 @@ export interface FileChangeEvent {
   timestamp: number;
 }
 
+interface MockNoteData {
+  content: string;
+  metadata: NoteMetadata;
+}
+
 // 模拟实现（前端开发阶段使用）
 export class MockFileService implements IFileService {
-  private mockData: Map<string, { content: string; metadata: NoteMetadata }> = new Map();
+  private mockData: Map<string, MockNoteData> = new Map();
 
   constructor() {
     this.initMockData();
   }
 
-  private makeMockFrontmatter(author: string, priority: string, reviewed: boolean): Map<string, string | number | boolean | string[]> {
+  private makeMockNoteMetadata(id: string, title: string, filePath: string, createdDelta: number,
+    updatedDelta: number, tagList: string[], aliasList: string[],
+    wordC: number, charC: number, linkList: string[], blList: string[]): NoteMetadata {
     const fm = new Map<string, string | number | boolean | string[]>();
-    fm.set('author', author);
-    fm.set('priority', priority);
-    fm.set('reviewed', reviewed);
-    return fm;
+    fm.set('author', 'Team A');
+    fm.set('priority', 'high');
+    const md: NoteMetadata = {
+      id: id, title: title, path: filePath,
+      createdAt: Date.now() - createdDelta, updatedAt: Date.now() - updatedDelta,
+      tags: tagList, aliases: aliasList,
+      wordCount: wordC, charCount: charC,
+      links: linkList, backlinks: blList, attachments: [],
+      frontmatter: fm
+    };
+    return md;
   }
 
   private initMockData(): void {
-    const now = Date.now();
-    const notes = [
-      {
-        id: '01-1',
-        content: '# HarmonyOS 开发规范\n\n> 本文档定义了基于 ArkTS 与 ArkUI 的 HarmonyOS 应用开发标准。\n\n## 一、ArkTS 语言规范\n\n### 1.1 类型系统\n\nArkTS 是 TypeScript 的严格超集...',
-        metadata: {
-          id: '01-1', title: 'HarmonyOS 开发规范', path: '/01 项目笔记/HarmonyOS 开发规范.md',
-          createdAt: now - 86400000 * 5, updatedAt: now - 86400000,
-          tags: ['dev', 'harmonyos'], aliases: ['HOS规范'],
-          wordCount: 2340, charCount: 15600,
-          links: ['ArkTS 性能优化.md', '响应式设计原理.md'],
-          backlinks: [], attachments: [],
-          frontmatter: this.makeMockFrontmatter('Team A', 'high', false)
-        }
-      },
-      {
-        id: '01-2',
-        content: '# ArkTS 性能优化\n\n性能优化是 HarmonyOS 应用开发的关键...',
-        metadata: {
-          id: '01-2', title: 'ArkTS 性能优化', path: '/01 项目笔记/ArkTS 性能优化.md',
-          createdAt: now - 86400000 * 4, updatedAt: now - 86400000 * 2,
-          tags: ['dev', 'performance'], aliases: [],
-          wordCount: 1890, charCount: 12400,
-          links: ['HarmonyOS 开发规范.md'],
-          backlinks: ['HarmonyOS 开发规范.md'], attachments: [],
-          frontmatter: this.makeMockFrontmatter('Team B', 'medium', true)
-        }
-      }
-    ];
-    notes.forEach(n => this.mockData.set(n.id, n));
+    const meta1: NoteMetadata = this.makeMockNoteMetadata(
+      '01-1', 'HarmonyOS 开发规范', '/01 项目笔记/HarmonyOS 开发规范.md',
+      432000000, 86400000, ['dev', 'harmonyos'], ['HOS规范'],
+      2340, 15600, ['ArkTS 性能优化.md', '响应式设计原理.md'], []
+    );
+    const data1: MockNoteData = {
+      content: '# HarmonyOS 开发规范\n\n> 本文档定义了基于 ArkTS 与 ArkUI 的 HarmonyOS 应用开发标准。\n\n## 一、ArkTS 语言规范\n\n### 1.1 类型系统\n\nArkTS 是 TypeScript 的严格超集...',
+      metadata: meta1
+    };
+    this.mockData.set(meta1.id, data1);
+
+    const meta2: NoteMetadata = this.makeMockNoteMetadata(
+      '01-2', 'ArkTS 性能优化', '/01 项目笔记/ArkTS 性能优化.md',
+      345600000, 172800000, ['dev', 'performance'], [],
+      1890, 12400, ['HarmonyOS 开发规范.md'], ['HarmonyOS 开发规范.md']
+    );
+    const data2: MockNoteData = {
+      content: '# ArkTS 性能优化\n\n性能优化是 HarmonyOS 应用开发的关键...',
+      metadata: meta2
+    };
+    this.mockData.set(meta2.id, data2);
   }
 
   async getFileTree(): Promise<FileNode[]> {
-    // 返回与 FileNode.ets 兼容的树
-    const { MockVaultData } = await import('../models/FileNode');
-    return MockVaultData;
+    const mod = await import('../models/FileNode');
+    return mod.MockVaultData;
   }
 
-  async readNote(noteId: string): Promise<{ content: string; metadata: NoteMetadata }> {
+  async readNote(noteId: string): Promise<NoteReadResult> {
     const data = this.mockData.get(noteId);
-    if (!data) throw new Error(`Note ${noteId} not found`);
+    if (!data) throw new Error('Note ' + noteId + ' not found');
     return data;
   }
 
@@ -126,14 +130,17 @@ export class MockFileService implements IFileService {
   }
 
   async createNote(path: string, title: string, template?: string): Promise<NoteMetadata> {
-    const id = `note-${Date.now()}`;
+    const id = 'note-' + Date.now().toString();
+    const fm = new Map<string, string | number | boolean | string[]>();
     const metadata: NoteMetadata = {
-      id, title, path: `${path}/${title}.md`,
+      id: id, title: title, path: path + '/' + title + '.md',
       createdAt: Date.now(), updatedAt: Date.now(),
       tags: [], aliases: [], wordCount: 0, charCount: 0,
-      links: [], backlinks: [], attachments: [], frontmatter: new Map<string, string | number | boolean | string[]>()
+      links: [], backlinks: [], attachments: [], frontmatter: fm
     };
-    this.mockData.set(id, { content: template ?? `# ${title}\n`, metadata });
+    const content = template || '# ' + title + '\n';
+    const data: MockNoteData = { content: content, metadata: metadata };
+    this.mockData.set(id, data);
     return metadata;
   }
 
@@ -150,16 +157,19 @@ export class MockFileService implements IFileService {
 
   async searchNotes(query: string, options?: SearchOptions): Promise<SearchResultItem[]> {
     const results: SearchResultItem[] = [];
-    this.mockData.forEach((val, id) => {
+    this.mockData.forEach((val: MockNoteData, id: string) => {
       if (val.metadata.title.toLowerCase().includes(query.toLowerCase()) ||
           val.content.toLowerCase().includes(query.toLowerCase())) {
-        results.push({
+        const match: SearchMatch = { line: 0, text: val.content.substring(0, 100), start: 0, end: 100 };
+        const matches: SearchMatch[] = [match];
+        const item: SearchResultItem = {
           noteId: id,
           title: val.metadata.title,
           path: val.metadata.path,
-          matches: [{ line: 0, text: val.content.substring(0, 100), start: 0, end: 100 }],
+          matches: matches,
           score: 1.0
-        });
+        };
+        results.push(item);
       }
     });
     return results;
@@ -167,12 +177,11 @@ export class MockFileService implements IFileService {
 
   async getMetadata(noteId: string): Promise<NoteMetadata> {
     const data = this.mockData.get(noteId);
-    if (!data) throw new Error(`Note ${noteId} not found`);
+    if (!data) throw new Error('Note ' + noteId + ' not found');
     return data.metadata;
   }
 
   async updateFrontmatterField(noteId: string, key: string, value: FrontmatterValue): Promise<void> {
-    // Mock: 无实际持久化
     const data = this.mockData.get(noteId);
     if (data) {
       data.metadata.updatedAt = Date.now();
@@ -180,7 +189,6 @@ export class MockFileService implements IFileService {
   }
 
   onFileChange(callback: (event: FileChangeEvent) => void): void {
-    // 模拟：5秒后触发一个变更事件
     setTimeout(() => {
       callback({
         type: 'modify',
@@ -194,6 +202,3 @@ export class MockFileService implements IFileService {
 
 // 单例导出 - 使用真实文件系统实现
 export const fileService: IFileService = new RealFileService();
-
-// 保留 MockFileService 供测试和后端对接参考
-export { MockFileService };
