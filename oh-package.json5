@@ -1,0 +1,9 @@
+{
+  "modelVersion": "6.0.2",
+  "name": "obsidian-arkts",
+  "version": "1.0.0",
+  "description": "Obsidian clone for HarmonyOS using ArkTS",
+  "vendor": "obsidian-harmony",
+  "license": "MIT",
+  "dependencies": {}
+}

@@ -1,0 +1,7 @@
+{
+  "src": [
+    "pages/MainEntry",
+    "pages/SettingsPage",
+    "pages/SearchPage"
+  ]
+}
