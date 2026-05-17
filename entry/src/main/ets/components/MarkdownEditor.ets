@@ -14,6 +14,7 @@ import { Modal, ModalConfig } from './modal/Modal';
 import { getCompletions, shouldShowCompletion, CompletionItem } from '../utils/MarkdownCompleter';
 import { LivePreviewHelper } from '../utils/LivePreviewHelper';
 import { markdownToHtml } from '../utils/MarkdownToHtml';
+import { MermaidWebView, extractMermaidBlocks, ContentBlock } from '../utils/MermaidRenderer';
 import { syncService } from '../services/ISyncService';
 import { SyncStatus } from '../services/ApiTypes';
 
@@ -59,6 +60,10 @@ export struct MarkdownEditor {
     this.stopSyncPoll();
     this.vm.flushToDisk();
     this.vm.stopIntervalSave();
+  }
+
+  private buildPreviewBlocks(): ContentBlock[] {
+    return extractMermaidBlocks(this.vm.content);
   }
 
   private showToast(message: string): void {
@@ -380,13 +385,21 @@ export struct MarkdownEditor {
                 .width('100%').layoutWeight(1)
                 .margin({ left: 20, right: 20 })
             } else if (this.viewMode === 'preview') {
-              // 阅读模式：MarkdownToHtml 富文本渲染
+              // 阅读模式：MarkdownToHtml + Mermaid WebView 混合渲染
               Scroll() {
                 Column({ space: 12 }) {
                   Text(this.vm.title).fontSize(28).fontWeight(FontWeight.Bold).fontColor(this.colors.textPrimary)
                     .width('100%').margin({ bottom: 16 })
-                  Text(markdownToHtml(this.vm.content)).fontSize(14).fontColor(this.colors.textPrimary)
-                    .width('100%').lineHeight(24)
+                  // 按块渲染：Markdown 文本 + Mermaid 图表交替
+                  ForEach(this.buildPreviewBlocks(), (block: ContentBlock) => {
+                    if (block.type === 'mermaid') {
+                      MermaidWebView({ mermaidCode: block.content, themeMode: this.themeMode })
+                        .width('100%')
+                    } else {
+                      Text(markdownToHtml(block.content)).fontSize(14).fontColor(this.colors.textPrimary)
+                        .width('100%').lineHeight(24)
+                    }
+                  }, (block: ContentBlock, index: number): string => index.toString())
                 }.width('100%').padding(24)
               }.width('100%').height('100%').scrollBar(BarState.Auto)
             } else {

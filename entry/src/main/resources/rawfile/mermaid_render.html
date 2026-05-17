@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* { margin: 0; padding: 0; }
+#container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+#container svg { max-width: 100%; height: auto; }
+.error-msg { color: #E53935; font-family: monospace; padding: 12px; }
+.fallback { color: #666; font-family: monospace; padding: 12px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div id="container"></div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+var _mermaidReady = false;
+var _pendingCode = '';
+var _currentTheme = 'default';
+
+function applyTheme(theme) {
+  _currentTheme = theme;
+  mermaid.initialize({ startOnLoad: false, theme: theme, securityLevel: 'loose' });
+}
+
+function waitForMermaid(callback) {
+  var start = Date.now();
+  function check() {
+    if (typeof mermaid !== 'undefined') {
+      mermaid.initialize({ startOnLoad: false, theme: _currentTheme, securityLevel: 'loose' });
+      _mermaidReady = true;
+      callback();
+    } else if (Date.now() - start < 8000) {
+      setTimeout(check, 100);
+    } else {
+      document.getElementById('container').innerHTML =
+        '<div class="error-msg">Mermaid.js 加载超时，请检查网络连接</div>';
+    }
+  }
+  check();
+}
+
+waitForMermaid(function() {
+  if (_pendingCode) {
+    renderMermaid(_pendingCode);
+  }
+});
+
+async function renderMermaid(code) {
+  var container = document.getElementById('container');
+  if (!_mermaidReady) {
+    _pendingCode = code;
+    container.innerHTML = '<div class="fallback">Mermaid 加载中...</div>';
+    return 'pending';
+  }
+  try {
+    var result = await mermaid.render('mermaid-diagram', code);
+    container.innerHTML = result.svg;
+    return 'ok';
+  } catch (e) {
+    container.innerHTML = '<div class="error-msg">渲染失败: ' + e.message + '</div>';
+    return 'error: ' + e.message;
+  }
+}
+
+function setTheme(theme) {
+  if (theme === 'dark') {
+    document.body.style.backgroundColor = '#1E1E1E';
+    document.body.style.color = '#D4D4D4';
+    applyTheme('dark');
+  } else {
+    document.body.style.backgroundColor = '#FFFFFF';
+    document.body.style.color = '#2E2E2E';
+    applyTheme('default');
+  }
+}
+</script>
+</body>
+</html>

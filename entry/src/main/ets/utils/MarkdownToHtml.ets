@@ -12,7 +12,8 @@ export function markdownToHtml(md: string): string {
   const codeBlocks: string[] = [];
   let processed = md.replace(/```(\w*)\n([\s\S]*?)```/g, (_m: string, lang: string, code: string): string => {
     if (lang === 'mermaid') {
-      codeBlocks.push(`<p><span style="fontFamily:monospace;background-color:#F8F0FF;color:#9C27B0;fontWeight:bold">[Mermaid: ${escapeHtml(code.trim().substring(0, 50))}...]</span></p>`);
+      const lineCount = code.trim().split('\n').length;
+      codeBlocks.push(`<p><span style="fontFamily:monospace;background-color:#F8F0FF;color:#9C27B0;fontWeight:bold;padding:8px;display:block;border-left:4px solid #9C27B0">[Mermaid 图表 — 共 ${lineCount} 行]</span></p>`);
     } else {
       const lines: string[] = code.trimEnd().split('\n');
       let escaped = '';

@@ -59,6 +59,7 @@ enum LineContext {
   HEADING = 'heading',
   QUOTE = 'quote',
   CALLOUT = 'callout',
+  CODE = 'code',
   HR = 'hr',
   LIST = 'list'
 }
@@ -210,6 +211,7 @@ export class LivePreviewHelper {
     // 当前行的上下文（追踪是否在标题行、引用行、列表行等）
     let currentLineContext: LineContext = LineContext.NORMAL;
     let headingLevel: number = 0;
+    let inCodeBlock: boolean = false;
 
     for (let i = 0; i < segments.length; i++) {
       const seg: MarkdownSegment = segments[i];
@@ -259,6 +261,16 @@ export class LivePreviewHelper {
         if (seg.text.match(/^(---|\*\*\*|___)\s*$/)) {
           currentLineContext = LineContext.HR;
         }
+        // 检测 Fenced 代码块开始 ```lang / 结束 ```
+        if (seg.text.match(/^```/) && !seg.text.match(/^```.*```$/)) {
+          inCodeBlock = !inCodeBlock;
+          if (inCodeBlock) {
+            currentLineContext = LineContext.CODE;
+          } else {
+            currentLineContext = LineContext.NORMAL;
+          }
+          continue;
+        }
       }
 
       if (style) {
@@ -281,6 +293,9 @@ export class LivePreviewHelper {
       }
       if (lineCtx === LineContext.QUOTE) {
         return { fontColor: '#8B5CF6', fontSize: 16, fontStyle: FontStyle.Italic, fontFamily: 'monospace' };
+      }
+      if (lineCtx === LineContext.CODE) {
+        return { fontColor: '#6A5ACD', fontSize: 15, fontFamily: 'monospace' };
       }
       if (lineCtx === LineContext.HR) {
         return { fontColor: '#C7C7CC', fontSize: 14, fontFamily: 'monospace' };

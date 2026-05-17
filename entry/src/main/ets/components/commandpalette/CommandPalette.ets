@@ -19,6 +19,7 @@ export struct CommandPalette {
   @State selectedIndex: number = 0;
   @Prop isVisible: boolean = false;
   onClose?: () => void;
+  onCommand?: (commandId: string) => void;
 
   private get colors(): ObsidianColors {
     return getColors(this.themeMode);
@@ -36,8 +37,9 @@ export struct CommandPalette {
       { id: 'settings', name: '打开设置', icon: '⚙️', shortcut: 'Ctrl+,', category: '系统', action: () => {} },
       { id: 'theme', name: '切换主题', icon: '🌓', shortcut: '', category: '系统', action: () => {} },
       { id: 'sync', name: '立即同步', icon: '⟳', shortcut: '', category: '系统', action: () => {} },
-      { id: 'export', name: '导出 HTML', icon: '📄', shortcut: '', category: '导出', action: () => {} },
-      { id: 'exportMd', name: '导出 Markdown', icon: '📝', shortcut: '', category: '导出', action: () => {} }
+      { id: 'exportPdf', name: '导出 PDF', icon: '🖨', shortcut: '', category: '导出', action: () => { if (this.onCommand) this.onCommand('exportPdf'); } },
+      { id: 'exportHtml', name: '导出 HTML', icon: '📄', shortcut: '', category: '导出', action: () => { if (this.onCommand) this.onCommand('exportHtml'); } },
+      { id: 'exportMd', name: '导出 Markdown', icon: '📝', shortcut: '', category: '导出', action: () => { if (this.onCommand) this.onCommand('exportMd'); } }
     ];
 
     if (!this.query) return all;

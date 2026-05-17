@@ -1,8 +1,7 @@
 // pages/MainEntry.ets
 // Obsidian ArkTS v3 - 完整工作区，真实文件系统后端
 
-import { display } from '@kit.ArkUI';
-import { router } from '@kit.ArkUI';
+import { display, router, promptAction } from '@kit.ArkUI';
 import { ObsidianColors, ThemeMode, getColors, SidebarWidth } from '../utils/Theme';
 import { ResponsiveState } from '../utils/ResponsiveLayout';
 import { WorkspaceViewModel, TabState } from '../viewmodels/WorkspaceViewModel';
@@ -19,6 +18,7 @@ import { fileService } from '../services/IFileService';
 import { FileService } from '../utils/FileService';
 import { DailyNoteHelper } from '../utils/DailyNoteHelper';
 import { TabManager } from '../utils/TabManager';
+import { ExportHelper } from '../utils/ExportHelper';
 
 interface TabBarItem {
   id: string;
@@ -125,6 +125,25 @@ struct ObsidianApp {
       if (this.responsive.isPhone) {
         this.showMobileSidebar = false;
       }
+    }
+  }
+
+  private async handleExportCommand(commandId: string): Promise<void> {
+    const tab = this.activeTab;
+    if (!tab) return;
+    try {
+      if (commandId === 'exportHtml') {
+        const path = await ExportHelper.exportAsHtml(tab.noteId, tab.viewModel.content, tab.viewModel.title);
+        promptAction.showToast({ message: 'HTML 已保存: ' + path, duration: 2000 });
+      } else if (commandId === 'exportMd') {
+        const path = await ExportHelper.exportMarkdown(tab.noteId, tab.viewModel.content, tab.viewModel.title);
+        promptAction.showToast({ message: 'MD 已保存: ' + path, duration: 2000 });
+      } else if (commandId === 'exportPdf') {
+        const path = await ExportHelper.exportAsPdf(tab.noteId, tab.viewModel.content, tab.viewModel.title);
+        promptAction.showToast({ message: 'PDF: ' + path, duration: 2000 });
+      }
+    } catch (e) {
+      promptAction.showToast({ message: '导出失败', duration: 2000 });
     }
   }
 
@@ -358,7 +377,8 @@ struct ObsidianApp {
       if (this.showCommandPalette) {
         CommandPalette({
           isVisible: true,
-          onClose: () => this.showCommandPalette = false
+          onClose: () => this.showCommandPalette = false,
+          onCommand: (commandId: string) => this.handleExportCommand(commandId)
         })
       }
 
