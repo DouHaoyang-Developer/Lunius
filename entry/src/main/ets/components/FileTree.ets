@@ -161,6 +161,7 @@ export struct FileTree {
   onFileSelect?: (node: FileNode) => void;
   onOpenInNewWindow?: (node: FileNode) => void;
   onCreateNew?: () => void;
+  onCreateFromTemplate?: () => void;
 
   private get colors(): ObsidianColors {
     return getColors(this.themeMode);
@@ -214,6 +215,14 @@ export struct FileTree {
             this.onCreateNew();
           }
         })
+        .gesture(
+          LongPressGesture()
+            .onAction(() => {
+              if (this.onCreateFromTemplate) {
+                this.onCreateFromTemplate();
+              }
+            })
+        )
       }
       .width('100%')
       .height(48)

@@ -166,7 +166,8 @@ export class RealFileService implements IFileService {
 
   private extractLinks(content: string): string[] {
     const links: string[] = [];
-    const regex = /\[\[([^\]]+)\]\]/g;
+    // 匹配 [[link]] 和 ![[embed]]
+    const regex = /!?\[\[([^\]]+)\]\]/g;
     let m: RegExpExecArray | null;
     while ((m = regex.exec(content)) !== null) {
       links.push(m[1]);

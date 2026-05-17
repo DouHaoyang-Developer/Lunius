@@ -7,7 +7,7 @@ import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
 interface RibbonAction {
   icon: string;
   label: string;
-  action: 'toggleSidebar' | 'openSearch' | 'openGraph' | 'openSettings' | 'toggleTheme';
+  action: 'toggleSidebar' | 'openSearch' | 'openGraph' | 'openSettings' | 'openDailyNote' | 'toggleTheme';
   isActive?: boolean;
 }
 
@@ -26,7 +26,7 @@ export struct Ribbon {
     { icon: '📁', label: 'file-explorer', action: 'toggleSidebar', isActive: true },
     { icon: '🔍', label: 'search', action: 'openSearch' },
     { icon: '📊', label: 'graph', action: 'openGraph' },
-    { icon: '📅', label: 'calendar', action: 'toggleSidebar' },
+    { icon: '📅', label: 'daily-note', action: 'openDailyNote' },
     { icon: '⚙️', label: 'settings', action: 'openSettings' }
   ];
 
@@ -46,6 +46,11 @@ export struct Ribbon {
       case 'openGraph':
         if (this.onToolAction) {
           this.onToolAction('switchToGraph');
+        }
+        break;
+      case 'openDailyNote':
+        if (this.onToolAction) {
+          this.onToolAction('openDailyNote');
         }
         break;
       default:
@@ -83,7 +88,7 @@ export struct Ribbon {
                 Text(tool.label === 'file-explorer' ? '文件' : 
                      tool.label === 'search' ? '搜索' :
                      tool.label === 'graph' ? '图谱' :
-                     tool.label === 'calendar' ? '日历' : '设置')
+                     tool.label === 'daily-note' ? '日记' : '设置')
                   .fontSize(10)
                   .fontColor(this.colors.textMuted)
                   .margin({ top: 2 })

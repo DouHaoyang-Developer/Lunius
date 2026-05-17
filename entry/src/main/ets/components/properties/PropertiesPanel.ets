@@ -86,6 +86,7 @@ export struct PropertiesPanel {
           this.ReadOnlyRow('修改时间', this.formatDate(this.metadata?.updatedAt));
           this.ReadOnlyRow('路径', this.metadata?.path ?? '-');
           this.ReadOnlyRow('字数', `${this.metadata?.wordCount ?? 0}`);
+          this.ReadOnlyRow('别名', (this.metadata?.aliases || []).join(', ') || '-');
         }
         .width('100%')
         .padding({ top: 4, bottom: 4 })

@@ -17,12 +17,15 @@ import { CommandPalette } from '../components/commandpalette/CommandPalette';
 import { FileNode, NodeType } from '../models/FileNode';
 import { fileService } from '../services/IFileService';
 import { FileService } from '../utils/FileService';
+import { DailyNoteHelper } from '../utils/DailyNoteHelper';
+import { TabManager } from '../utils/TabManager';
 
 interface TabBarItem {
   id: string;
   title: string;
   isModified?: boolean;
   isActive?: boolean;
+  isPinned?: boolean;
 }
 
 interface ToolMenuItem {
@@ -125,18 +128,38 @@ struct ObsidianApp {
     }
   }
 
-  private async handleCreateNewNote(): Promise<void> {
+  private async openDailyNote(): Promise<void> {
     try {
-      const result = await fileService.createNote('/', '未命名', '# 未命名\n\n开始写作...\n');
-      // 刷新文件树
+      const result = await DailyNoteHelper.openOrCreateDailyNote();
       await this.loadFileTree();
-      // 自动打开新笔记
+      this.activeFileId = result.noteId;
+      this.workspace.openNote(result.noteId, result.title);
+      this.currentView = 'editor';
+    } catch (e) {
+      console.error('Daily note error: ' + JSON.stringify(e));
+    }
+  }
+
+  private async createNoteWithTemplate(template?: string): Promise<void> {
+    try {
+      const tpl = template || '# 未命名\n\n开始写作...\n';
+      const result = await fileService.createNote('/', '未命名', tpl);
+      await this.loadFileTree();
       this.activeFileId = result.id;
       this.workspace.openNote(result.id, result.title);
       this.currentView = 'editor';
     } catch (e) {
-      console.error('Failed to create new note: ' + JSON.stringify(e));
+      console.error('Failed to create note: ' + JSON.stringify(e));
     }
+  }
+
+  private async handleCreateNewNote(): Promise<void> {
+    this.createNoteWithTemplate();
+  }
+
+  private async handleCreateFromTemplate(): Promise<void> {
+    const tpl = '# 模板笔记\n\n## 概述\n\n## 详细内容\n\n## 总结\n\n';
+    this.createNoteWithTemplate(tpl);
   }
 
   private handleRibbonAction(action: string): void {
@@ -149,6 +172,9 @@ struct ObsidianApp {
         break;
       case 'openSettings':
         router.pushUrl({ url: 'pages/SettingsPage' });
+        break;
+      case 'openDailyNote':
+        this.openDailyNote();
         break;
     }
   }
@@ -171,7 +197,8 @@ struct ObsidianApp {
         id: t.id,
         title: t.title,
         isModified: t.isModified,
-        isActive: t.isActive
+        isActive: t.isActive,
+        isPinned: false
       };
       items.push(item);
     }
@@ -205,7 +232,7 @@ struct ObsidianApp {
             expandedNodes: this.expandedNodes,
             isPC: this.responsive.isPC,
             onFileSelect: (node: FileNode) => this.handleFileSelect(node),
-            onCreateNew: () => this.handleCreateNewNote()
+            onCreateNew: () => this.handleCreateNewNote(), onCreateFromTemplate: () => this.handleCreateFromTemplate()
           })
           .width(this.responsive.isPC ? SidebarWidth.PC_LEFT : SidebarWidth.TABLET_LEFT)
           .height('100%')
@@ -249,6 +276,11 @@ struct ObsidianApp {
                 },
                 onTabClose: (tabId: string) => {
                   this.workspace.closeTab(tabId);
+                },
+                onTabPin: (tabId: string) => {
+                  // 通过 TabManager 切换置顶状态
+                  const tabMgr = TabManager.getInstance();
+                  tabMgr.togglePin(tabId);
                 }
               })
               .layoutWeight(1)
@@ -267,7 +299,9 @@ struct ObsidianApp {
           if (this.currentView === 'editor' && this.activeTab) {
             MarkdownEditor({
               vm: this.activeTab.viewModel,
-              isSplitView: this.workspace.isSplitView
+              isSplitView: this.workspace.isSplitView,
+              onNavigateBack: () => { this.workspace.navigateBack(); },
+              onNavigateForward: () => { this.workspace.navigateForward(); }
             })
             .width('100%').layoutWeight(1)
           } else if (this.currentView === 'graph') {
@@ -352,7 +386,7 @@ struct ObsidianApp {
                 expandedNodes: this.expandedNodes,
                 isPC: false,
                 onFileSelect: (node: FileNode) => this.handleFileSelect(node),
-                onCreateNew: () => this.handleCreateNewNote()
+                onCreateNew: () => this.handleCreateNewNote(), onCreateFromTemplate: () => this.handleCreateFromTemplate()
               })
               .layoutWeight(1)
             }

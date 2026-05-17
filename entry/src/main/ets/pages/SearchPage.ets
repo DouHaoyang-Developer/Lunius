@@ -41,20 +41,34 @@ struct SearchContent {
       if (fileTree.length > 0) collect(fileTree);
 
       const matchMap = new Map(searchResults.map(r => [r.noteId, r]));
-      this.results = allFiles
-        .filter(f => {
-          const id = f.id;
-          return matchMap.has(id) || f.name.toLowerCase().includes(keyword.toLowerCase());
-        })
-        .map((f: FileNode): SearchResult => {
+      this.results = [];
+      for (let i = 0; i < allFiles.length; i++) {
+        const f = allFiles[i];
+        const id = f.id;
+        let isMatch = matchMap.has(id) || f.name.toLowerCase().includes(keyword.toLowerCase());
+        // 别名匹配
+        if (!isMatch) {
+          try {
+            const meta = await fileService.getMetadata(id);
+            const aliases: string[] = meta.aliases || [];
+            for (let j = 0; j < aliases.length; j++) {
+              if (aliases[j].toLowerCase().includes(keyword.toLowerCase())) {
+                isMatch = true;
+                break;
+              }
+            }
+          } catch (e) { /* skip */ }
+        }
+        if (isMatch) {
           const sr: SearchResult = {
             file: f,
             matches: [f.name],
             score: 50
           };
-          return sr;
-        })
-        .sort((a: SearchResult, b: SearchResult): number => b.score - a.score);
+          this.results.push(sr);
+        }
+      }
+      this.results.sort((a: SearchResult, b: SearchResult): number => b.score - a.score);
     } catch (e) {
       console.error('Search error: ' + JSON.stringify(e));
     }

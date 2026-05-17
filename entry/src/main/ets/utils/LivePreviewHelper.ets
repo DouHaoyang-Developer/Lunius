@@ -210,6 +210,10 @@ export class LivePreviewHelper {
         if (seg.text.match(/^[\-\*\+]\s$/) || seg.text.match(/^\d+\.\s$/)) {
           currentLineContext = LineContext.LIST;
         }
+        // 检测 Wiki 嵌入 ![[
+        if (seg.text.startsWith('![[')) {
+          currentLineContext = LineContext.NORMAL;
+        }
         // 检测分割线
         if (seg.text.match(/^(---|\*\*\*|___)\s*$/)) {
           currentLineContext = LineContext.HR;
@@ -246,6 +250,15 @@ export class LivePreviewHelper {
     }
 
     // ─── 语法段 ─────────────────────────────────
+    // 嵌入语法 ![[ 用紫色标识
+    if (seg.text.startsWith('![[') || seg.text.startsWith('[[')) {
+      const embedStyle: RichEditorTextStyle = {
+        fontColor: '#9370DB', fontSize: 16, fontFamily: 'monospace',
+        fontWeight: FontWeight.Medium
+      };
+      if (cursorInside) return embedStyle;
+      return SYNTAX_HIDDEN_STYLE;
+    }
     // 核心逻辑：光标不在语法段内 → 隐藏；光标在语法段内 → 显示为灰色
     if (cursorInside) {
       return SYNTAX_VISIBLE_STYLE;

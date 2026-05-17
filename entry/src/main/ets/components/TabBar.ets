@@ -8,6 +8,7 @@ export interface TabItem {
   title: string;
   isModified?: boolean;
   isActive?: boolean;
+  isPinned?: boolean;
 }
 
 @Component
@@ -17,6 +18,7 @@ export struct TabBar {
   @Prop activeTabId: string = '';
   onTabChange?: (tabId: string) => void;
   onTabClose?: (tabId: string) => void;
+  onTabPin?: (tabId: string) => void;
 
   private get colors(): ObsidianColors {
     return getColors(this.themeMode);
@@ -28,6 +30,10 @@ export struct TabBar {
         ForEach(this.tabs, (tab: TabItem, index: number) => {
           ListItem() {
             Row({ space: 6 }) {
+              if (tab.isPinned) {
+                Text('📌').fontSize(10)
+              }
+
               Text('📄')
                 .fontSize(12)
                 .fontColor(tab.isActive ? this.colors.fileIcon : this.colors.iconSecondary)
@@ -38,6 +44,18 @@ export struct TabBar {
                 .fontWeight(tab.isActive ? FontWeight.Medium : FontWeight.Regular)
                 .maxLines(1)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
+
+              Button({ type: ButtonType.Circle }) {
+                Text('📌').fontSize(8).fontColor(this.colors.textMuted)
+              }
+              .width(14).height(14)
+              .backgroundColor(Color.Transparent)
+              .visibility(tab.isActive ? Visibility.Visible : Visibility.Hidden)
+              .onClick(() => {
+                if (this.onTabPin) {
+                  this.onTabPin(tab.id);
+                }
+              })
 
               Button({ type: ButtonType.Circle }) {
                 Text('✕')

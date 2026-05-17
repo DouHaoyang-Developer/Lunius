@@ -28,6 +28,8 @@ export struct MarkdownEditor {
   @StorageLink('themeMode') themeMode: ThemeMode = ThemeMode.DARK;
   @ObjectLink vm: NoteViewModel;
   @Prop isSplitView: boolean = false;
+  @Prop canNavigateBack: boolean = false;
+  @Prop canNavigateForward: boolean = false;
   @State viewMode: string = 'live';
   @State showProperties: boolean = false;
   @State showModal: boolean = false;
@@ -36,6 +38,8 @@ export struct MarkdownEditor {
   @State showCompletions: boolean = false;
   @State syncStatus: SyncStatus | null = null;
   @State editorCaretOffset: number = -1;
+  onNavigateBack?: () => void;
+  onNavigateForward?: () => void;
 
   private richEditorController: RichEditorController = new RichEditorController();
   private livePreview: LivePreviewHelper = new LivePreviewHelper();
@@ -279,6 +283,21 @@ export struct MarkdownEditor {
 
         // 工具栏
         Row({ space: 8 }) {
+          // 历史导航
+          Button({ type: ButtonType.Circle }) {
+            Text('←').fontSize(14).fontColor(this.colors.iconSecondary)
+          }
+          .width(28).height(28).backgroundColor(this.colors.bgHover)
+          .onClick(() => { if (this.onNavigateBack) this.onNavigateBack(); })
+
+          Button({ type: ButtonType.Circle }) {
+            Text('→').fontSize(14).fontColor(this.colors.iconSecondary)
+          }
+          .width(28).height(28).backgroundColor(this.colors.bgHover)
+          .onClick(() => { if (this.onNavigateForward) this.onNavigateForward(); })
+
+          Divider().vertical(true).height(20).color(this.colors.divider)
+
           Button({ type: ButtonType.Normal }) {
             Text(this.viewModeLabel)
               .fontSize(12).fontColor(this.colors.accent).fontWeight(FontWeight.Medium)
