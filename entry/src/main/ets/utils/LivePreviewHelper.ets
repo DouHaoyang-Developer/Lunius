@@ -84,18 +84,58 @@ export class LivePreviewHelper {
     }
   }
 
-  // ─── 源码模式：纯文本，统一样式 ──────────────────
+  // ─── 源码模式：Markdown 段级语法着色 ─────────────
 
   buildSourceSpans(controller: RichEditorController, text: string): void {
     if (this.isRebuilding) return;
     this.isRebuilding = true;
     try {
       controller.deleteSpans();
-      if (text.length > 0) {
-        controller.addTextSpan(text, { style: CONTENT_STYLE });
+      if (text.length === 0) return;
+
+      const segments = parseMarkdownSegments(text);
+      let currentLineContext: LineContext = LineContext.NORMAL;
+      let headingLevel = 0;
+
+      for (let i = 0; i < segments.length; i++) {
+        const seg = segments[i];
+        if (!seg.text) continue;
+
+        // 换行后重置
+        if (seg.text === '\n') {
+          currentLineContext = LineContext.NORMAL;
+          headingLevel = 0;
+          controller.addTextSpan('\n');
+          continue;
+        }
+
+        // 语法段：检测行上下文
+        if (seg.type === 'syntax') {
+          const hMatch = seg.text.match(/^(#{1,6})\s/);
+          if (hMatch) { currentLineContext = LineContext.HEADING; headingLevel = hMatch[1].length; }
+          if (seg.text.match(/^>\s?/)) { currentLineContext = LineContext.QUOTE; }
+          if (seg.text.match(/^[\-\*\+]\s/) || seg.text.match(/^\d+\.\s/)) { currentLineContext = LineContext.LIST; }
+          if (/^(---|\*\*\*|___)\s*$/.test(seg.text.trim())) { currentLineContext = LineContext.HR; }
+        }
+
+        // 选择样式：语法段用灰/隐藏，内容段用行级着色
+        if (seg.type === 'syntax') {
+          controller.addTextSpan(seg.text, { style: SYNTAX_VISIBLE_STYLE });
+        } else {
+          let style: RichEditorTextStyle = CONTENT_STYLE;
+          if (currentLineContext === LineContext.HEADING && headingLevel > 0 && headingLevel <= 3) {
+            const headingStyles: RichEditorTextStyle[] = [HEADING_1_STYLE, HEADING_2_STYLE, HEADING_3_STYLE];
+            style = headingStyles[headingLevel - 1];
+          } else if (currentLineContext === LineContext.QUOTE) {
+            style = { fontColor: '#8B5CF6', fontSize: 16, fontStyle: FontStyle.Italic, fontFamily: 'monospace' };
+          } else if (currentLineContext === LineContext.HR) {
+            style = { fontColor: '#C7C7CC', fontSize: 14, fontFamily: 'monospace' };
+          }
+          controller.addTextSpan(seg.text, { style: style });
+        }
       }
     } catch (e) {
-      console.error('LivePreviewHelper buildSourceSpans error: ' + JSON.stringify(e));
+      console.error('LivePreviewHelper buildSourceSpans error');
     } finally {
       this.isRebuilding = false;
     }

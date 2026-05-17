@@ -1,10 +1,8 @@
 // components/FileTree.ets
 // 文件浏览器树形组件 - 支持 PC 多窗口
 
-import { window } from '@kit.ArkUI';
 import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
 import { FileNode, NodeType } from '../models/FileNode';
-import { ResponsiveState } from '../utils/ResponsiveLayout';
 
 @Component
 struct FileTreeNode {

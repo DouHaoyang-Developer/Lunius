@@ -15,7 +15,7 @@ export interface TabState {
   viewModel: NoteViewModel;
   isModified: boolean;
   isActive: boolean;
-  viewMode: 'live' | 'source' | 'preview';
+  viewMode: 'live' | 'source' | 'preview' | 'split';
 }
 
 export interface SplitPane {

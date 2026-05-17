@@ -64,33 +64,38 @@ export struct StatusBar {
         // 视图模式切换
         Row({ space: 0 }) {
           Button({ type: ButtonType.Normal }) {
-            Text('源码')
-              .fontSize(11)
+            Text('源码').fontSize(10)
               .fontColor(this.currentView === 'source' ? this.colors.accent : this.colors.textMuted)
           }
-          .width(48).height(22)
+          .width(40).height(22)
           .backgroundColor(this.currentView === 'source' ? this.colors.bgActive : Color.Transparent)
           .borderRadius({ topLeft: 3, bottomLeft: 3 })
           .onClick(() => this.onViewChange?.('source'))
 
           Button({ type: ButtonType.Normal }) {
-            Text('实时')
-              .fontSize(11)
+            Text('实时').fontSize(10)
               .fontColor(this.currentView === 'live' ? this.colors.accent : this.colors.textMuted)
           }
-          .width(48).height(22)
+          .width(40).height(22)
           .backgroundColor(this.currentView === 'live' ? this.colors.bgActive : Color.Transparent)
           .onClick(() => this.onViewChange?.('live'))
 
           Button({ type: ButtonType.Normal }) {
-            Text('阅读')
-              .fontSize(11)
+            Text('阅读').fontSize(10)
               .fontColor(this.currentView === 'preview' ? this.colors.accent : this.colors.textMuted)
           }
-          .width(48).height(22)
+          .width(40).height(22)
           .backgroundColor(this.currentView === 'preview' ? this.colors.bgActive : Color.Transparent)
-          .borderRadius({ topRight: 3, bottomRight: 3 })
           .onClick(() => this.onViewChange?.('preview'))
+
+          Button({ type: ButtonType.Normal }) {
+            Text('分屏').fontSize(10)
+              .fontColor(this.currentView === 'split' ? this.colors.accent : this.colors.textMuted)
+          }
+          .width(40).height(22)
+          .backgroundColor(this.currentView === 'split' ? this.colors.bgActive : Color.Transparent)
+          .borderRadius({ topRight: 3, bottomRight: 3 })
+          .onClick(() => this.onViewChange?.('split'))
         }
         .border({ width: 1, color: this.colors.divider })
         .borderRadius(3)

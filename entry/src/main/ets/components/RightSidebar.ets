@@ -1,11 +1,11 @@
 // components/RightSidebar.ets
 // 右侧边栏容器（大纲 + 反向链接）
 
-import { ObsidianColors, ThemeMode, getColors, SidebarWidth, DeviceType } from '../utils/Theme';
+import { ObsidianColors, ThemeMode, getColors, SidebarWidth } from '../utils/Theme';
 import { ResponsiveState } from '../utils/ResponsiveLayout';
 import { OutlineView } from './OutlineView';
 import { BacklinksView } from './BacklinksView';
-import { OutlineNode, Backlink, MockTags } from '../models/FileNode';
+import { OutlineNode, Backlink } from '../models/FileNode';
 import { NoteViewModel } from '../viewmodels/NoteViewModel';
 
 @Component

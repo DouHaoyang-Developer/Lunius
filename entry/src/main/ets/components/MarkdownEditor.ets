@@ -360,16 +360,20 @@ export struct MarkdownEditor {
                 .padding(16)
                 .width('100%').layoutWeight(1)
                 .margin({ left: 20, right: 20 })
-            } else {
-              // 阅读模式
+            } else if (this.viewMode === 'preview') {
+              // 阅读模式：MarkdownToHtml 富文本渲染
               Scroll() {
                 Column({ space: 12 }) {
                   Text(this.vm.title).fontSize(28).fontWeight(FontWeight.Bold).fontColor(this.colors.textPrimary)
                     .width('100%').margin({ bottom: 16 })
-                  Text(this.vm.content).fontSize(14).fontColor(this.colors.textPrimary)
+                  Text(markdownToHtml(this.vm.content)).fontSize(14).fontColor(this.colors.textPrimary)
                     .width('100%').lineHeight(24)
                 }.width('100%').padding(24)
               }.width('100%').height('100%').scrollBar(BarState.Auto)
+            } else {
+              // 分屏模式：左编辑右预览
+              SplitView({ vm: this.vm })
+                .width('100%').layoutWeight(1)
             }
           }.width('100%').layoutWeight(1)
 
