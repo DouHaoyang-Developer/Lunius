@@ -15,7 +15,7 @@ export interface TabState {
   viewModel: NoteViewModel;
   isModified: boolean;
   isActive: boolean;
-  viewMode: 'editor' | 'preview' | 'split';
+  viewMode: 'live' | 'source' | 'preview';
 }
 
 export interface SplitPane {
@@ -85,7 +85,7 @@ export class WorkspaceViewModel {
         viewModel: vm,
         isModified: false,
         isActive: tabItem.isActive,
-        viewMode: 'split'
+        viewMode: 'live'
       };
       pane.tabs.push(tab);
       if (tabItem.isActive) {
@@ -103,7 +103,7 @@ export class WorkspaceViewModel {
     const targetPaneId = paneId ?? this.activePaneId;
     const pane = this.panes.find(p => p.id === targetPaneId);
     if (!pane) {
-      const empty: TabState = { id: '', noteId: '', title: '', viewModel: new NoteViewModel(), isModified: false, isActive: false, viewMode: 'editor' };
+      const empty: TabState = { id: '', noteId: '', title: '', viewModel: new NoteViewModel(), isModified: false, isActive: false, viewMode: 'live' };
       return empty;
     }
 
@@ -124,7 +124,7 @@ export class WorkspaceViewModel {
       viewModel: vm,
       isModified: false,
       isActive: true,
-      viewMode: 'split'
+      viewMode: 'live'
     };
 
     pane.tabs.push(newTab);
