@@ -45,6 +45,17 @@ export function parseMarkdownSegments(text: string): MarkdownSegment[] {
       continue;
     }
 
+    // Callout 块: > [!note] / > [!warning] 等
+    const calloutMatch = line.match(/^>\s*\[!(\w+)\]\s?(.*)/);
+    if (calloutMatch) {
+      const prefix = calloutMatch[0].substring(0, calloutMatch[0].length - (calloutMatch[2]?.length || 0));
+      segments.push({ text: prefix, type: 'syntax' });
+      if (calloutMatch[2]) {
+        segments.push(...parseInlineMarkdown(calloutMatch[2]));
+      }
+      continue;
+    }
+
     // 引用块: >
     const quoteMatch = line.match(/^>\s?/);
     if (quoteMatch) {

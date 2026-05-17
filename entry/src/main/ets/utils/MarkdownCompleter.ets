@@ -110,6 +110,24 @@ export function getCompletions(textBeforeCursor: string, fullLine: string): Comp
     ];
   }
 
+  // ─── 斜杠命令 ──────────────────────────────
+  if (trimmed === '/') {
+    return [
+      { label: '标题1', insertText: '# ', description: '一级标题', cursorOffset: 0 },
+      { label: '标题2', insertText: '## ', description: '二级标题', cursorOffset: 0 },
+      { label: '标题3', insertText: '### ', description: '三级标题', cursorOffset: 0 },
+      { label: '粗体', insertText: '**粗体文本**', description: '粗体', cursorOffset: -2 },
+      { label: '斜体', insertText: '*斜体文本*', description: '斜体', cursorOffset: -1 },
+      { label: '代码块', insertText: '```\n\n```', description: '代码块', cursorOffset: -4 },
+      { label: '分割线', insertText: '\n---\n', description: '水平分割线', cursorOffset: -1 },
+      { label: '待办', insertText: '- [ ] ', description: '待办事项', cursorOffset: 0 },
+      { label: '引用', insertText: '> ', description: '引用块', cursorOffset: 0 },
+      { label: 'Callout', insertText: '> [!note] ', description: '信息提示块', cursorOffset: 0 },
+      { label: '链接', insertText: '[链接文本](https://)', description: '超链接', cursorOffset: -9 },
+      { label: '图片', insertText: '![图片描述](https://)', description: '图片', cursorOffset: -10 },
+    ];
+  }
+
   return [];
 }
 
@@ -123,7 +141,7 @@ export function shouldShowCompletion(textBeforeCursor: string): boolean {
   }
 
   // 触发字符
-  const triggers = ['#', '*', '`', '>', '-', '+', '[', '!', '---', '***', '___'];
+  const triggers = ['#', '*', '`', '>', '-', '+', '[', '!', '---', '***', '___', '/'];
   for (const t of triggers) {
     if (trimmed === t || trimmed.startsWith(t) && t.length > 1) {
       return true;

@@ -8,18 +8,20 @@ export function markdownToHtml(md: string): string {
     return '';
   }
 
-  // 1. 提取代码块（用缩进+背景色模拟）
+  // 1. 提取代码块（用缩进+背景色模拟），Mermaid 特殊处理
   const codeBlocks: string[] = [];
-  let processed = md.replace(/```(\w*)\n([\s\S]*?)```/g, (_m: string, _lang: string, code: string): string => {
-    const lines: string[] = code.trimEnd().split('\n');
-    let escaped = '';
-    for (let j = 0; j < lines.length; j++) {
-      escaped += escapeHtml(lines[j]);
-      if (j < lines.length - 1) {
-        escaped += '\n';
+  let processed = md.replace(/```(\w*)\n([\s\S]*?)```/g, (_m: string, lang: string, code: string): string => {
+    if (lang === 'mermaid') {
+      codeBlocks.push(`<p><span style="fontFamily:monospace;background-color:#F8F0FF;color:#9C27B0;fontWeight:bold">[Mermaid: ${escapeHtml(code.trim().substring(0, 50))}...]</span></p>`);
+    } else {
+      const lines: string[] = code.trimEnd().split('\n');
+      let escaped = '';
+      for (let j = 0; j < lines.length; j++) {
+        escaped += escapeHtml(lines[j]);
+        if (j < lines.length - 1) { escaped += '\n'; }
       }
+      codeBlocks.push(`<p><span style="fontFamily:monospace;background-color:#F0F0F0;padding:4">${escaped}</span></p>`);
     }
-    codeBlocks.push(`<p><span style="fontFamily:monospace;background-color:#F0F0F0;padding:4">${escaped}</span></p>`);
     return `\n@@CODEBLOCK_${codeBlocks.length - 1}@@\n`;
   });
 
@@ -159,6 +161,21 @@ export function markdownToHtml(md: string): string {
       } else {
         result.push(`<p>${prefix}${content}</p>`);
       }
+      continue;
+    }
+
+    // Callout: > [!note] / > [!warning] 等
+    const calloutMatch = line.match(/^>\s*\[!(\w+)\]\s?(.*)/);
+    if (calloutMatch) {
+      flushQuote(result, inQuote);
+      inQuote = false;
+      const calloutColors: Record<string, string> = {
+        'note': '#4A90D9', 'warning': '#F5A623', 'tip': '#4CAF50',
+        'danger': '#E53935', 'info': '#2196F3', 'abstract': '#9C27B0',
+        'success': '#4CAF50', 'question': '#FF9800'
+      };
+      const color = calloutColors[calloutMatch[1]] || '#7B68EE';
+      result.push(`<p><span style="fontWeight:bold;color:${color}">[!${calloutMatch[1]}]</span> ${processInline(calloutMatch[2] || '')}</p>`);
       continue;
     }
 

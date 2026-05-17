@@ -36,8 +36,8 @@ export struct CommandPalette {
       { id: 'settings', name: '打开设置', icon: '⚙️', shortcut: 'Ctrl+,', category: '系统', action: () => {} },
       { id: 'theme', name: '切换主题', icon: '🌓', shortcut: '', category: '系统', action: () => {} },
       { id: 'sync', name: '立即同步', icon: '⟳', shortcut: '', category: '系统', action: () => {} },
-      { id: 'export', name: '导出为 PDF', icon: '📄', shortcut: '', category: '导出', action: () => {} },
-      { id: 'publish', name: '发布到 Web', icon: '🌐', shortcut: '', category: '导出', action: () => {} }
+      { id: 'export', name: '导出 HTML', icon: '📄', shortcut: '', category: '导出', action: () => {} },
+      { id: 'exportMd', name: '导出 Markdown', icon: '📝', shortcut: '', category: '导出', action: () => {} }
     ];
 
     if (!this.query) return all;

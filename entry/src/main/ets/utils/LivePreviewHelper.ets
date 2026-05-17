@@ -58,9 +58,48 @@ enum LineContext {
   NORMAL = 'normal',
   HEADING = 'heading',
   QUOTE = 'quote',
+  CALLOUT = 'callout',
   HR = 'hr',
   LIST = 'list'
 }
+
+// ─── Callout 配色 ─────────────────────────────
+
+interface CalloutColor {
+  bg: string;
+  border: string;
+}
+
+const noteColor: CalloutColor = { bg: '#E8F4FD', border: '#4A90D9' };
+const warningColor: CalloutColor = { bg: '#FFF8E1', border: '#F5A623' };
+const tipColor: CalloutColor = { bg: '#E8F5E9', border: '#4CAF50' };
+const dangerColor: CalloutColor = { bg: '#FFEBEE', border: '#E53935' };
+const infoColor: CalloutColor = { bg: '#E3F2FD', border: '#2196F3' };
+const abstractColor: CalloutColor = { bg: '#F3E5F5', border: '#9C27B0' };
+const successColor: CalloutColor = { bg: '#E8F5E9', border: '#4CAF50' };
+const questionColor: CalloutColor = { bg: '#FFF3E0', border: '#FF9800' };
+
+interface CalloutColorMap {
+  note: CalloutColor;
+  warning: CalloutColor;
+  tip: CalloutColor;
+  danger: CalloutColor;
+  info: CalloutColor;
+  abstract: CalloutColor;
+  success: CalloutColor;
+  question: CalloutColor;
+}
+
+const CALLOUT_COLORS: CalloutColorMap = {
+  note: noteColor,
+  warning: warningColor,
+  tip: tipColor,
+  danger: dangerColor,
+  info: infoColor,
+  abstract: abstractColor,
+  success: successColor,
+  question: questionColor
+};
 
 export class LivePreviewHelper {
   private isRebuilding: boolean = false;
@@ -202,8 +241,10 @@ export class LivePreviewHelper {
           currentLineContext = LineContext.HEADING;
           headingLevel = hMatch[1].length;
         }
-        // 检测引用
-        if (seg.text.match(/^>\s?$/)) {
+        // 检测引用 / Callout
+        if (seg.text.match(/^>\s*\[!/)) {
+          currentLineContext = LineContext.CALLOUT;
+        } else if (seg.text.match(/^>\s?/)) {
           currentLineContext = LineContext.QUOTE;
         }
         // 检测列表标记
@@ -235,6 +276,9 @@ export class LivePreviewHelper {
 
     // ─── 内容段：始终显示 ───────────────────────
     if (!isSyntax) {
+      if (lineCtx === LineContext.CALLOUT) {
+        return { fontColor: '#333333', fontSize: 16, fontFamily: 'monospace' };
+      }
       if (lineCtx === LineContext.QUOTE) {
         return { fontColor: '#8B5CF6', fontSize: 16, fontStyle: FontStyle.Italic, fontFamily: 'monospace' };
       }
