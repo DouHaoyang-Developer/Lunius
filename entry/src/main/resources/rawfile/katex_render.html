@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<style>
+body{font-family:system-ui;margin:0;padding:8px;background:transparent;color:inherit}
+.katex{font-size:1.1em}
+.katex-display{overflow-x:auto;overflow-y:hidden;padding:4px 0}
+</style>
+</head>
+<body>
+<div id="content"></div>
+<script>
+let isDark='dark';
+function setTheme(theme){isDark=theme;document.body.style.color=theme==='dark'?'#D4D4D4':'#2E2E2E'}
+function renderLatex(code,displayMode){
+  try{
+    const html=katex.renderToString(code,{displayMode:!!displayMode,throwOnError:false});
+    document.getElementById('content').innerHTML=html;
+  }catch(e){
+    document.getElementById('content').innerHTML='<span style="color:red">LaTeX Error: '+e.message+'</span>';
+  }
+}
+</script>
+</body>
+</html>

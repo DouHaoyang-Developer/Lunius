@@ -16,13 +16,29 @@ export interface CompletionItem {
  * 根据光标前的文本内容，返回适用的补全建议
  * @param textBeforeCursor 光标前的文本（当前行开始到光标位置）
  * @param fullLine 当前完整行
+ * @param noteNames 可选的笔记文件名列表（用于 wikilink 补全）
  * @returns 补全建议列表，空数组表示无建议
  */
-export function getCompletions(textBeforeCursor: string, fullLine: string): CompletionItem[] {
+export function getCompletions(textBeforeCursor: string, fullLine: string, noteNames?: string[]): CompletionItem[] {
   // 仅在行首或紧跟空格时触发
   const trimmed = textBeforeCursor.trimStart();
   if (trimmed === '') {
     return [];
+  }
+
+  // ─── Wiki 链接补全 [[ ────────────────────
+  const wikiMatch = textBeforeCursor.match(/\[\[([^\]]*)$/);
+  if (wikiMatch && noteNames && noteNames.length > 0) {
+    const searchText = wikiMatch[1].toLowerCase();
+    const filtered = noteNames.filter((name: string) =>
+      name.toLowerCase().includes(searchText)
+    );
+    return filtered.slice(0, 15).map((name: string) => ({
+      label: name,
+      insertText: name + ']]',
+      description: '笔记链接',
+      cursorOffset: 0
+    }));
   }
 
   // ─── 标题补全 ──────────────────────────────
@@ -146,6 +162,11 @@ export function shouldShowCompletion(textBeforeCursor: string): boolean {
     if (trimmed === t || trimmed.startsWith(t) && t.length > 1) {
       return true;
     }
+  }
+
+  // Wiki 链接触发 [[
+  if (trimmed.startsWith('[[')) {
+    return true;
   }
 
   // 数字开头（有序列表）

@@ -89,6 +89,17 @@ export function parseMarkdownSegments(text: string): MarkdownSegment[] {
       continue;
     }
 
+    // LaTeX 块级公式 $$ ... $$
+    if (line.trim().startsWith('$$') && line.trim().endsWith('$$') && line.trim().length > 4) {
+      segments.push({ text: '$$', type: 'syntax' });
+      const inner = line.trim().slice(2, -2);
+      if (inner) {
+        segments.push({ text: inner, type: 'syntax' });
+      }
+      segments.push({ text: '$$', type: 'syntax' });
+      continue;
+    }
+
     // 分割线: --- *** ___
     if (/^(---|\*\*\*|___)\s*$/.test(line.trim())) {
       segments.push({ text: line, type: 'syntax' });
@@ -114,6 +125,19 @@ function parseInlineMarkdown(text: string): MarkdownSegment[] {
   let i = 0;
 
   while (i < text.length) {
+    // 行内 LaTeX $...$（单 $ 符）
+    if (text.charAt(i) === '$' && !text.startsWith('$$', i)) {
+      const end = text.indexOf('$', i + 1);
+      if (end > i + 1) {
+        result.push({ text: text.slice(i, end + 1), type: 'syntax' });
+        i = end + 1;
+        continue;
+      }
+      result.push({ text: '$', type: 'syntax' });
+      i += 1;
+      continue;
+    }
+
     // 粗斜体 ***text***
     if (text.startsWith('***', i)) {
       result.push({ text: '***', type: 'syntax' });
@@ -165,6 +189,25 @@ function parseInlineMarkdown(text: string): MarkdownSegment[] {
         continue;
       }
       result.push({ text: '`', type: 'syntax' });
+      i += 1;
+      continue;
+    }
+
+    // Wiki 链接 [[target]] 或 [[target|display]]
+    if (text.startsWith('[[')) {
+      const closeIdx = text.indexOf(']]', 2);
+      if (closeIdx !== -1) {
+        result.push({ text: '[[', type: 'syntax' });
+        const inner = text.slice(2, closeIdx);
+        if (inner) {
+          result.push(...parseInlineMarkdown(inner));
+        }
+        result.push({ text: ']]', type: 'syntax' });
+        i = closeIdx + 2;
+        continue;
+      }
+      // 未闭合的 [[ 视为内容
+      result.push({ text: text.charAt(i), type: 'content' });
       i += 1;
       continue;
     }

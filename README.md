@@ -2,7 +2,7 @@
 
 基于 HarmonyOS ArkTS 构建的本地化 Markdown 知识管理应用，采用 Obsidian 风格的界面设计，支持实时阅览（Live Preview）、Wiki 链接知识图谱、反向链接追踪、Mermaid 图表渲染等核心能力。
 
-**41 个源文件 · 7,352 行代码 · MVVM + Service 三层架构**
+**41 → 60 个源文件 · ~10,000 行代码 · MVVM + Service 三层架构**
 
 ---
 
@@ -17,21 +17,26 @@ Lunius/
 │   │   ├── MainEntry.ets        # 主工作区（文件树 + 编辑器 + 侧边栏 + 图谱）
 │   │   ├── SearchPage.ets       # 全局搜索（含别名匹配）
 │   │   └── SettingsPage.ets     # 设置 + Vault 统计仪表盘
-│   ├── components/              # UI 组件（15 个）
+│   ├── components/              # UI 组件（20 个）
 │   │   ├── breadcrumb/          # 面包屑路径导航
 │   │   ├── commandpalette/      # 命令面板（搜索 + 导出 + 每日笔记等）
 │   │   ├── modal/               # 通用模态框（确认 / 提示 / 输入）
-│   │   ├── properties/          # Frontmatter 属性面板 + 别名展示
+│   │   ├── properties/          # Frontmatter 属性面板（类型化编辑）
 │   │   ├── splitview/           # 分屏编辑器（左编辑 + 右预览 + 拖拽条）
 │   │   ├── statusbar/           # 底部状态栏（字数 / 同步 / 四模式切换）
-│   │   ├── BacklinksView.ets    # 反向链接 + 标签面板
-│   │   ├── FileTree.ets         # 文件浏览器（树形展开 + 模板创建）
+│   │   ├── BacklinksView.ets    # 反向链接 + 未链接提及 + 标签面板
+│   │   ├── BookmarkView.ets     # ★ 书签面板
+│   │   ├── ContextMenu.ets      # ★ 可复用右键上下文菜单
+│   │   ├── FileTree.ets         # 文件浏览器（树形展开 + 模板创建 + 上下文菜单）
+│   │   ├── FindReplaceBar.ets   # ★ 编辑器查找替换栏（Ctrl+F）
 │   │   ├── GraphView.ets        # 知识图谱（拖拽 + 缩放 + 局部图谱）
-│   │   ├── MarkdownEditor.ets   # 核心编辑器（四模式 + 自动补全 + Mermaid）
+│   │   ├── LinkPreviewCard.ets  # ★ 悬停链接预览卡片
+│   │   ├── MarkdownEditor.ets   # 核心编辑器（四模式 + [[自动补全]] + Mermaid + LaTeX + 查找替换 + 链接预览 + Vim 模式）
 │   │   ├── OutlineView.ets      # 文档大纲（标题层级导航）
-│   │   ├── Ribbon.ets           # 左侧功能栏（文件 / 搜索 / 图谱 / 日记）
+│   │   ├── QuickSwitcher.ets    # ★ 快速切换器（Ctrl+O 模糊搜索）
+│   │   ├── Ribbon.ets           # 左侧功能栏（文件 / 搜索 / 图谱 / 日记 / 书签）
 │   │   ├── RightSidebar.ets     # 右侧面板容器
-│   │   └── TabBar.ets           # 标签页切换（含置顶标记）
+│   │   └── TabBar.ets           # 标签页切换（含置顶标记 + 上下文菜单）
 │   ├── models/                  # 数据模型
 │   │   └── FileNode.ets         # 文件节点 / 大纲 / 标签 / 反向链接
 │   ├── services/                # ★ 服务层（接口 + 真实实现）
@@ -43,18 +48,28 @@ Lunius/
 │   │   ├── RealGraphService.ets # ★ 知识图谱引擎（[[wikilink]] 解析）
 │   │   ├── VaultIndex.ets       # ★ 全局标签索引 + Vault 统计
 │   │   └── Index.ets            # 统一服务导出 + 预热入口
-│   ├── utils/                   # 工具类（11 个）
-│   │   ├── FileService.ets      # CoreFileKit 文件 I/O 单例
+│   ├── utils/                   # 工具类（20 个）
+│   │   ├── FileService.ets      # CoreFileKit 文件 I/O 单例 ★ 递归子目录
 │   │   ├── TabManager.ets       # 标签页状态管理（JSON 持久化 + 防抖）
 │   │   ├── LivePreviewHelper.ets# ★ 实时阅览引擎（光标感知语法隐藏）
-│   │   ├── MarkdownSegmenter.ets# Markdown 分段解析（语法 / 内容分离）
-│   │   ├── MarkdownCompleter.ets# 自动补全引擎 + 斜杠命令（13 选项）
-│   │   ├── MarkdownToHtml.ets   # Markdown → HTML（含 Callout + Mermaid）
+│   │   ├── MarkdownSegmenter.ets# Markdown 分段解析（含 wikilink + LaTeX）
+│   │   ├── MarkdownCompleter.ets# 自动补全引擎 ★ [[wikilink]] 文件补全
+│   │   ├── MarkdownToHtml.ets   # Markdown → HTML（含 Callout + Mermaid + LaTeX）
 │   │   ├── MermaidRenderer.ets  # ★ ArkWeb Mermaid 图表渲染器
+│   │   ├── KatexRenderer.ets    # ★ ArkWeb KaTeX 数学公式渲染器
 │   │   ├── DailyNoteHelper.ets  # 每日笔记自动创建/打开
 │   │   ├── ExportHelper.ets     # 导出 HTML / Markdown / PDF
 │   │   ├── Theme.ets            # 主题配色 + 响应式断点 + 字体规范
-│   │   └── ResponsiveLayout.ets # 响应式布局状态（手机 / 平板 / PC）
+│   │   ├── ResponsiveLayout.ets # 响应式布局状态（手机 / 平板 / PC）
+│   │   ├── HeadingIndex.ets     # ★ 标题/块 ID 索引（#heading #^block）
+│   │   ├── SearchQueryParser.ets# ★ 搜索运算符解析（tag: path: file:）
+│   │   ├── TemplateEngine.ets   # ★ 模板变量引擎（{{date}} {{title}}）
+│   │   ├── AttachmentManager.ets# ★ 附件目录管理
+│   │   ├── BookmarkManager.ets  # ★ 书签持久化管理
+│   │   ├── DailyNoteConfig.ets  # ★ 每日笔记配置
+│   │   ├── FoldingManager.ets   # ★ 编辑器折叠管理
+│   │   ├── VimEngine.ets        # ★ Vim 模式引擎（normal/insert/visual）
+│   │   └── CryptoEngine.ets     # ★ AES 加密引擎
 │   ├── viewmodels/              # ★ MVVM 状态管理
 │   │   ├── NoteViewModel.ets    # 单笔记状态（防抖保存 + 错误回调 + 光标插入）
 │   │   └── WorkspaceViewModel.ets# 工作区状态（多标签 / 分屏 / 历史栈 / 会话恢复）
@@ -134,28 +149,47 @@ MainEntry.aboutToAppear
 
 ## 后端能力全景
 
-| 功能 | 实现 |
-|------|------|
-| 本地文件读写 | `RealFileService` + `FileService`（`@kit.CoreFileKit`） |
-| YAML Frontmatter 解析/写入 | 纯字符串操作 → `Map<string, FrontmatterValue>` |
-| 笔记 CRUD | 创建 / 读取（含反链）/ 保存 / 删除 / 重命名 |
-| 反向链接 | 全量 [[wikilink]] 索引 + 交叉引用 |
-| 全文搜索 | 逐文件匹配 + 行号片段 + 别名匹配 |
-| 知识图谱（全局） | 解析全部 notes 的 wiki 链接 → 节点/边 SVG |
-| 知识图谱（局部） | BFS 遍历 + 中心高亮 |
-| 标签索引 | `VaultIndex` 全局标签 + 按标签筛选 + 统计 |
-| Vault 统计 | 笔记数 / 词数 / 链接数 / 标签数 |
-| 标签页持久化 | `TabManager` JSON → `tabs_state.json` + 会话恢复 |
-| 同步状态 | `SyncService` JSON → `sync_status.json` |
-| Wiki 嵌入 `![[note]]` | `extractLinks` 正则扩展 + 紫色渲染 |
-| Callout 语法 | `> [!note/warning/tip/danger/...]` 8 种配色 |
-| Mermaid 图表 | `ArkWeb` + CDN `mermaid.js@10` → SVG 完整渲染 |
-| 模板创建 | 空白笔记 / 长按模板笔记 |
-| 每日笔记 | `DailyNoteHelper` → 自动检测 + 创建 + 打开 |
-| 历史导航 | `WorkspaceViewModel` 历史栈 + ← → 按钮 |
-| 标签页置顶 | `TabBar` 📌 图标 + `TabManager.togglePin()` |
-| 导出 HTML/MD/PDF | `ExportHelper` + `@kit.BasicServicesKit` print API |
-| 图片/附件插入 | `DocumentViewPicker` + 光标位置精确插入 |
+| 功能 | 实现 | 版本 |
+|------|------|------|
+| 本地文件读写 | `RealFileService` + `FileService`（`@kit.CoreFileKit`） | v1 |
+| 子文件夹递归支持 | `FileService.getMarkdownFiles(recursion:true)` + `getFileTree()` 层级构建 | ★ v2 |
+| YAML Frontmatter 解析/写入 | 纯字符串操作 → `Map<string, FrontmatterValue>` | v1 |
+| 类型化属性编辑 | 日期/数字/复选框/标签控件自适配 | ★ v2 |
+| 笔记 CRUD | 创建 / 读取（含反链）/ 保存 / 删除 / 重命名 | v1 |
+| 重命名自动更新链接 | `moveNote()` 调用 `replaceLinksInVault()` 全量替换 | ★ v2 |
+| 反向链接 | 全量 [[wikilink]] 索引 + 交叉引用 | v1 |
+| 未链接提及发现 | `findUnlinkedMentions()` 扫描未链接的标题提及 | ★ v2 |
+| 链接到标题/块 | `[[note#heading]]` `[[note#^block-id]]` 解析 | ★ v2 |
+| 全文搜索 | 逐文件匹配 + 行号片段 + 别名匹配 | v1 |
+| 搜索运算符 | `tag:` `path:` `file:` `-tag:` 结构化搜索 | ★ v2 |
+| 正则表达式搜索 | `SearchOptions.regex` 支持 RegExp 搜索 | ★ v2 |
+| 编辑器查找替换 | `FindReplaceBar` + Ctrl+F / 匹配导航 / 单个替换 / 全部替换 | ★ v2 |
+| [[wikilink]] 自动补全 | 输入 `[[` 弹出文件名列表 + 模糊过滤 + 键盘导航 | ★ v2 |
+| 悬停链接预览 | `LinkPreviewCard` — 光标在 wikilink 上时显示浮动预览 | ★ v2 |
+| 快速切换器 | `QuickSwitcher` — Ctrl+O 模糊搜索所有笔记 | ★ v2 |
+| 知识图谱（全局） | 解析全部 notes 的 wiki 链接 → 力导向布局 | ★ v2 |
+| 知识图谱（局部） | BFS 遍历 + 中心高亮 + 力导向子图 | v1 |
+| 标签索引 | `VaultIndex` 全局标签 + 按标签筛选 + 统计 | v1 |
+| Vault 统计 | 笔记数 / 词数 / 链接数 / 标签数 | v1 |
+| 标签页持久化 | `TabManager` JSON → `tabs_state.json` + 会话恢复 | v1 |
+| 同步状态 | `SyncService` JSON → `sync_status.json` | v1 |
+| 右键上下文菜单 | `ContextMenu` 可复用组件（文件树 / 标签页 / 大纲） | ★ v2 |
+| 书签系统 | `BookmarkManager` + `BookmarkView` — 笔记/标题/块收藏 | ★ v2 |
+| 模板变量引擎 | `{{date}} {{time}} {{title}} {{filename}} {{folder}}` | ★ v2 |
+| Wiki 嵌入 `![[note]]` | `extractLinks` 正则扩展 + 紫色渲染 | v1 |
+| Callout 语法 | `> [!note/warning/tip/danger/...]` 8 种配色 | v1 |
+| Mermaid 图表 | `ArkWeb` + CDN `mermaid.js@10` → SVG 完整渲染 | v1 |
+| LaTeX 数学公式 | `KatexRenderer` + CDN KaTeX → `$inline$` 和 `$$block$$` | ★ v2 |
+| 编辑器折叠 | `FoldingManager` — 标题/代码块折叠（源码模式） | ★ v2 |
+| Vim 模式 | `VimEngine` — normal/insert 模式 + hjkl/w/b/e/undo | ★ v2 |
+| 加密笔记 | `CryptoEngine` — AES XOR 加密 + 密码保护 | ★ v2 |
+| 附件管理 | `AttachmentManager` — attachments/ 目录管理 | ★ v2 |
+| 模板创建 | 空白笔记 / 长按模板笔记 + 模板变量 | v1+ |
+| 每日笔记 | `DailyNoteHelper` → 自动检测 + 创建 + 打开 | v1 |
+| 历史导航 | `WorkspaceViewModel` 历史栈 + ← → 按钮 | v1 |
+| 标签页置顶 | `TabBar` 📌 图标 + `TabManager.togglePin()` | v1 |
+| 导出 HTML/MD/PDF | `ExportHelper` + `@kit.BasicServicesKit` print API | v1 |
+| 图片/附件插入 | `DocumentViewPicker` + 光标位置精确插入 | v1 |
 
 ---
 

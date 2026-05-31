@@ -5,8 +5,16 @@ import { IFileService, SearchOptions, FileChangeEvent } from './IFileService';
 import { NoteMetadata, SearchResultItem, SearchMatch, NoteReadResult, FrontmatterValue } from './ApiTypes';
 import { FileNode, NodeType } from '../models/FileNode';
 import { FileService } from '../utils/FileService';
+import { parseSearchQuery } from '../utils/SearchQueryParser';
+import { renderTemplate, makeTemplateContext } from '../utils/TemplateEngine';
 
 const TAG = 'RealFileService';
+
+export interface UnlinkedMention {
+  source: string;
+  context: string;
+  line: number;
+}
 
 export class RealFileService implements IFileService {
   private fileService: FileService = FileService.getInstance();
@@ -58,11 +66,31 @@ export class RealFileService implements IFileService {
 
   private resolveLinkName(linkName: string, allFiles: string[]): string | null {
     const clean = linkName.replace('.md', '');
+    const baseDir = this.fileService.getBaseDirectory();
+
     for (const fp of allFiles) {
+      // 检查裸文件名匹配（向后兼容旧版 [[note]] 格式）
       const fileName = fp.substring(fp.lastIndexOf('/') + 1);
       const nameWithoutExt = fileName.replace('.md', '');
       if (nameWithoutExt === clean || fileName === linkName) {
-        return nameWithoutExt;
+        return this.getNoteIdFromPath(fp);
+      }
+
+      // 检查相对路径匹配（新版 [[folder/note]] 格式）
+      let relativePath = fp;
+      if (fp.startsWith(baseDir + '/')) {
+        relativePath = fp.substring(baseDir.length + 1);
+      } else if (fp.startsWith(baseDir)) {
+        relativePath = fp.substring(baseDir.length);
+      }
+      const relativeId = relativePath.replace('.md', '');
+      if (relativeId === clean) {
+        return relativeId;
+      }
+
+      // 检查仅文件名匹配（允许忽略文件夹差异）
+      if (nameWithoutExt === clean) {
+        return this.getNoteIdFromPath(fp);
       }
     }
     return null;
@@ -74,8 +102,14 @@ export class RealFileService implements IFileService {
   // ─── 内部映射 ─────────────────────────────────
 
   private getNoteIdFromPath(filePath: string): string {
-    const fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
-    return fileName.replace('.md', '');
+    const baseDir = this.fileService.getBaseDirectory();
+    let relativePath = filePath;
+    if (filePath.startsWith(baseDir + '/')) {
+      relativePath = filePath.substring(baseDir.length + 1);
+    } else if (filePath.startsWith(baseDir)) {
+      relativePath = filePath.substring(baseDir.length);
+    }
+    return relativePath.replace('.md', '');
   }
 
   private getPathFromNoteId(noteId: string): string {
@@ -166,11 +200,13 @@ export class RealFileService implements IFileService {
 
   private extractLinks(content: string): string[] {
     const links: string[] = [];
-    // 匹配 [[link]] 和 ![[embed]]
-    const regex = /!?\[\[([^\]]+)\]\]/g;
+    // 匹配 [[link]] [[link|display]] [[link#heading]] [[link#^block]] ![[embed]]
+    const regex = /!?\[\[([^\]#|]+)(?:[#|]([^\]]+))?\]\]/g;
     let m: RegExpExecArray | null;
     while ((m = regex.exec(content)) !== null) {
-      links.push(m[1]);
+      const target = m[1].trim();
+      const anchor = m[2] ? m[2].trim() : '';
+      links.push(anchor ? target + '#' + anchor : target);
     }
     return links;
   }
@@ -181,6 +217,8 @@ export class RealFileService implements IFileService {
     await this.refreshIdMapping();
     this.indexDirty = true;
     const files = await this.fileService.getMarkdownFiles();
+    const baseDir = this.fileService.getBaseDirectory();
+
     const vault: FileNode = {
       id: 'root',
       name: 'My Vault',
@@ -190,25 +228,79 @@ export class RealFileService implements IFileService {
       children: []
     };
 
+    const folderMap = new Map<string, FileNode>();
+    folderMap.set('', vault);
+
+    files.sort();
+
     for (const filePath of files) {
-      const fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+      let relativePath = filePath;
+      if (filePath.startsWith(baseDir + '/')) {
+        relativePath = filePath.substring(baseDir.length + 1);
+      } else if (filePath.startsWith(baseDir)) {
+        relativePath = filePath.substring(baseDir.length);
+      }
+
+      const fileName = relativePath.substring(relativePath.lastIndexOf('/') + 1);
+      const dirPath = relativePath.includes('/')
+        ? relativePath.substring(0, relativePath.lastIndexOf('/'))
+        : '';
+
+      // 确保所有父文件夹节点存在
+      const parts = dirPath ? dirPath.split('/') : [];
+      let currentPath = '';
+      for (const part of parts) {
+        const prevPath = currentPath;
+        currentPath = currentPath ? currentPath + '/' + part : part;
+
+        if (!folderMap.has(currentPath)) {
+          const folderNode: FileNode = {
+            id: 'folder-' + currentPath.replace(/\//g, '-'),
+            name: part,
+            type: NodeType.FOLDER,
+            path: '/' + currentPath,
+            isExpanded: true,
+            children: []
+          };
+          folderMap.set(currentPath, folderNode);
+
+          const parentFolder = folderMap.get(prevPath) || vault;
+          if (!parentFolder.children) {
+            parentFolder.children = [];
+          }
+          parentFolder.children.push(folderNode);
+        }
+      }
+
+      // 添加文件节点
       const id = this.getNoteIdFromPath(filePath);
+      const fileNode: FileNode = {
+        id,
+        name: fileName,
+        type: NodeType.FILE,
+        path: '/' + relativePath
+      };
+
       try {
         const raw = await this.fileService.readFile(filePath);
         const result = this.parseFrontmatter(raw);
         const fm: Map<string, FrontmatterValue> = result[0];
         const content: string = result[1] as string;
-        const tags: string[] = fm.get('tags') ? (Array.isArray(fm.get('tags')) ? fm.get('tags') as string[] : []) : [];
+        const tags: string[] = fm.get('tags')
+          ? (Array.isArray(fm.get('tags')) ? fm.get('tags') as string[] : [])
+          : [];
         const wordCount = content.split(/\s+/).filter((w: string) => w.length > 0).length;
-        vault.children!.push({
-          id, name: fileName, type: NodeType.FILE, path: '/' + fileName,
-          tags: tags, wordCount: wordCount
-        });
+        fileNode.tags = tags;
+        fileNode.wordCount = wordCount;
       } catch (e) {
-        vault.children!.push({
-          id, name: fileName, type: NodeType.FILE, path: '/' + fileName, wordCount: 0
-        });
+        fileNode.wordCount = 0;
       }
+
+      const targetParent = folderMap.get(dirPath) || vault;
+      if (!targetParent.children) {
+        targetParent.children = [];
+      }
+      targetParent.children.push(fileNode);
     }
 
     return [vault];
@@ -234,10 +326,11 @@ export class RealFileService implements IFileService {
     const backlinkSet = this.backlinkIndex.get(noteId);
     const backlinks = backlinkSet ? Array.from(backlinkSet).map((id: string): string => id + '.md') : [];
 
+    const relativePath = noteId + '.md';
     const metadata: NoteMetadata = {
       id: noteId,
       title: fileName.replace('.md', ''),
-      path: '/' + fileName,
+      path: '/' + relativePath,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       tags: tags,
@@ -266,17 +359,29 @@ export class RealFileService implements IFileService {
   }
 
   async createNote(path: string, title: string, template?: string): Promise<NoteMetadata> {
-    const fileName = await this.fileService.generateUniqueFileName(title || '未命名', 'md');
-    const filePath = await this.fileService.createFile(fileName);
-    const content = template || '# ' + title + '\n\n';
+    let subDir: string | undefined = undefined;
+    if (path && path !== '/') {
+      subDir = path.startsWith('/') ? path.substring(1) : path;
+    }
+
+    const fileName = await this.fileService.generateUniqueFileName(title || '未命名', 'md', subDir);
+    const filePath = await this.fileService.createFileInDir(fileName, subDir);
+    const ctx = makeTemplateContext(title || '未命名', subDir);
+    const rawContent = template || '# {{title}}\n\n创建时间: {{date}}\n\n';
+    const content = renderTemplate(rawContent, ctx);
     await this.fileService.writeFile(filePath, content);
 
     const noteId = this.getNoteIdFromPath(filePath);
     this.noteIdToPath.set(noteId, filePath);
     this.indexDirty = true;
 
+    let displayPath = fileName;
+    if (subDir) {
+      displayPath = subDir + '/' + fileName;
+    }
+
     return {
-      id: noteId, title, path: '/' + fileName,
+      id: noteId, title, path: '/' + displayPath,
       createdAt: Date.now(), updatedAt: Date.now(),
       tags: [], aliases: [], wordCount: title.split(/\s+/).length,
       charCount: content.length, links: [], backlinks: [],
@@ -302,43 +407,169 @@ export class RealFileService implements IFileService {
     const filePath = this.getPathFromNoteId(noteId);
     const baseDir = this.fileService.getBaseDirectory();
     const newFilePath = baseDir + newPath;
+
+    // 确保目标目录存在
+    const sepIdx = newPath.lastIndexOf('/');
+    if (sepIdx > 0) {
+      const targetDir = newPath.substring(0, sepIdx);
+      await this.fileService.createDirectory(targetDir);
+    }
+
     await this.fileService.renameFile(filePath, newFilePath);
     const newId = this.getNoteIdFromPath(newFilePath);
     this.noteIdToPath.set(newId, newFilePath);
     if (newId !== noteId) {
       this.noteIdToPath.delete(noteId);
     }
+
+    // 自动更新全 Vault 的 [[引用]]
+    if (newId !== noteId) {
+      await this.replaceLinksInVault(noteId, newId);
+    }
+
     this.indexDirty = true;
+  }
+
+  private async replaceLinksInVault(oldId: string, newId: string): Promise<void> {
+    const files = await this.fileService.getMarkdownFiles();
+    const oldName = oldId.includes('/') ? oldId.substring(oldId.lastIndexOf('/') + 1) : oldId;
+    const newName = newId.includes('/') ? newId.substring(newId.lastIndexOf('/') + 1) : newId;
+
+    for (const fp of files) {
+      const content = await this.fileService.readFile(fp);
+      let changed = false;
+      let updated = content;
+
+      // 替换 [[旧名]] → [[新名]]
+      const fullOld = `[[${oldId}]]`;
+      if (updated.includes(fullOld)) {
+        updated = updated.replace(new RegExp(this.escapeRegex(fullOld), 'g'), `[[${newId}]]`);
+        changed = true;
+      }
+
+      // 替换 [[旧文件名]] → [[新文件名]]（裸文件名形式）
+      if (oldName !== newName && oldName !== oldId) {
+        const bareOld = `[[${oldName}]]`;
+        if (updated.includes(bareOld)) {
+          updated = updated.replace(new RegExp(this.escapeRegex(bareOld), 'g'), `[[${newName}]]`);
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        await this.fileService.writeFile(fp, updated);
+        console.info(TAG + ' replaceLinksInVault updated: ' + fp);
+      }
+    }
   }
 
   async searchNotes(query: string, options?: SearchOptions): Promise<SearchResultItem[]> {
     const files = await this.fileService.getMarkdownFiles();
     const results: SearchResultItem[] = [];
+    const parsed = parseSearchQuery(query);
+    const hasFilters = parsed.tags.length > 0 || parsed.paths.length > 0 ||
+      parsed.files.length > 0 || parsed.notTags.length > 0;
+    const textSearch = parsed.textTerms.join(' ');
 
     for (const filePath of files) {
       const fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
       const noteId = this.getNoteIdFromPath(filePath);
 
+      // 过滤：tag: 运算符
+      if (parsed.tags.length > 0) {
+        const meta = await this.getMetadata(noteId);
+        const noteTags = meta.tags || [];
+        let hasAll = true;
+        for (const t of parsed.tags) {
+          if (!noteTags.includes(t)) { hasAll = false; break; }
+        }
+        if (!hasAll) continue;
+      }
+
+      // 过滤：-tag: 排除运算符
+      if (parsed.notTags.length > 0) {
+        const meta = await this.getMetadata(noteId);
+        const noteTags = meta.tags || [];
+        let hasAny = false;
+        for (const t of parsed.notTags) {
+          if (noteTags.includes(t)) { hasAny = true; break; }
+        }
+        if (hasAny) continue;
+      }
+
+      // 过滤：path: 运算符
+      if (parsed.paths.length > 0) {
+        let matchesPath = false;
+        for (const p of parsed.paths) {
+          if (noteId.toLowerCase().includes(p.toLowerCase())) {
+            matchesPath = true;
+            break;
+          }
+        }
+        if (!matchesPath) continue;
+      }
+
+      // 过滤：file: 运算符
+      if (parsed.files.length > 0) {
+        let matchesFile = false;
+        for (const f of parsed.files) {
+          if (fileName.toLowerCase().includes(f.toLowerCase())) {
+            matchesFile = true;
+            break;
+          }
+        }
+        if (!matchesFile) continue;
+      }
+
       if (options?.scope === 'vault' || options?.scope === undefined) {
         const content = await this.fileService.readFile(filePath);
+        const searchTarget = textSearch || query;
         const lowerContent = options?.caseSensitive ? content : content.toLowerCase();
-        const lowerQuery = options?.caseSensitive ? query : query.toLowerCase();
+        const lowerQuery = options?.caseSensitive ? searchTarget : searchTarget.toLowerCase();
+        const useRegex = options?.regex === true;
 
-        if (lowerContent.includes(lowerQuery)) {
-          const matches: SearchMatch[] = [];
-          const lines = content.split('\n');
-          for (let i = 0; i < lines.length; i++) {
-            const line = options?.caseSensitive ? lines[i] : lines[i].toLowerCase();
-            const idx = line.indexOf(lowerQuery);
-            if (idx !== -1) {
-              const m: SearchMatch = { line: i + 1, text: lines[i], start: idx, end: idx + query.length };
-              matches.push(m);
+        let matched = false;
+        let matches: SearchMatch[] = [];
+
+        if (useRegex && searchTarget) {
+          try {
+            const regex = new RegExp(searchTarget, options?.caseSensitive ? 'g' : 'gi');
+            let rm: RegExpExecArray | null;
+            while ((rm = regex.exec(content)) !== null) {
+              matched = true;
+              matches.push({ line: 0, text: content.substring(Math.max(0, rm.index - 20), rm.index + rm[0].length + 20), start: rm.index, end: rm.index + rm[0].length });
+            }
+          } catch (e) {
+            // invalid regex falls through
+          }
+        }
+
+        if (!matched && searchTarget) {
+          if (lowerContent.includes(lowerQuery)) {
+            matched = true;
+            const lines = content.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+              const line = options?.caseSensitive ? lines[i] : lines[i].toLowerCase();
+              const idx = line.indexOf(lowerQuery);
+              if (idx !== -1) {
+                const m: SearchMatch = { line: i + 1, text: lines[i], start: idx, end: idx + searchTarget.length };
+                matches.push(m);
+              }
             }
           }
+        }
+
+        // 如果仅有运算符（无文本搜索词），过滤后直接返回
+        if (!textSearch && hasFilters) {
+          matched = true;
+          matches = [{ line: 1, text: fileName, start: 0, end: fileName.length }];
+        }
+
+        if (matched) {
           results.push({
             noteId,
             title: fileName.replace('.md', ''),
-            path: '/' + fileName,
+            path: '/' + noteId + '.md',
             matches: matches.slice(0, 5),
             score: matches.length
           });
@@ -366,7 +597,59 @@ export class RealFileService implements IFileService {
     this.indexDirty = true;
   }
 
+  private escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
   onFileChange(callback: (event: FileChangeEvent) => void): void {
     this.changeCallbacks.push(callback);
+  }
+
+  async findUnlinkedMentions(noteId: string): Promise<UnlinkedMention[]> {
+    const meta = await this.getMetadata(noteId);
+    const title = meta.title;
+    if (!title) return [];
+    const allFiles = await this.fileService.getMarkdownFiles();
+    const backlinkSet = this.backlinkIndex.get(noteId);
+    const mentions: UnlinkedMention[] = [];
+
+    for (const fp of allFiles) {
+      const sourceId = this.getNoteIdFromPath(fp);
+      if (sourceId === noteId) continue;
+      if (backlinkSet && backlinkSet.has(sourceId)) continue;
+
+      const content = await this.fileService.readFile(fp);
+      const lowerContent = content.toLowerCase();
+      const lowerTitle = title.toLowerCase();
+
+      if (!lowerContent.includes(lowerTitle)) continue;
+
+      const lines = content.split('\n');
+      for (let i = 0; i < lines.length; i++) {
+        const lowerLine = lines[i].toLowerCase();
+        if (lowerLine.includes(lowerTitle)) {
+          // 确认不在 [[...]] 内
+          if (!lines[i].match(new RegExp(`\\[\\[.*${this.escapeRegex(title)}.*\\]\\]`, 'i'))) {
+            const mention: UnlinkedMention = { source: sourceId, context: lines[i].trim(), line: i + 1 };
+            mentions.push(mention);
+            if (mentions.length >= 10) break;
+          }
+        }
+      }
+      if (mentions.length >= 10) break;
+    }
+    return mentions;
+  }
+
+  async getAllNoteFileNames(): Promise<string[]> {
+    const files = await this.fileService.getMarkdownFiles();
+    const names: string[] = [];
+    for (const fp of files) {
+      const id = this.getNoteIdFromPath(fp);
+      if (id) {
+        names.push(id);
+      }
+    }
+    return names;
   }
 }

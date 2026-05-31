@@ -15,8 +15,11 @@ import { getCompletions, shouldShowCompletion, CompletionItem } from '../utils/M
 import { LivePreviewHelper } from '../utils/LivePreviewHelper';
 import { markdownToHtml } from '../utils/MarkdownToHtml';
 import { MermaidWebView, extractMermaidBlocks, ContentBlock } from '../utils/MermaidRenderer';
+import { fileService } from '../services/IFileService';
 import { syncService } from '../services/ISyncService';
 import { SyncStatus } from '../services/ApiTypes';
+import { LinkPreviewCard, LinkPreviewData } from './LinkPreviewCard';
+import { FindReplaceBar, FindMatch } from './FindReplaceBar';
 
 interface BreadcrumbItem {
   name: string;
@@ -39,10 +42,18 @@ export struct MarkdownEditor {
   @State showCompletions: boolean = false;
   @State syncStatus: SyncStatus | null = null;
   @State editorCaretOffset: number = -1;
+  // 悬停预览
+  @State showLinkPreview: boolean = false;
+  @State linkPreviewData: LinkPreviewData = { title: '', snippet: '', wordCount: 0 };
+  // 查找替换
+  @State showFindReplace: boolean = false;
+  @State findMatches: FindMatch[] = [];
+  @State findCurrentIndex: number = 0;
   onNavigateBack?: () => void;
   onNavigateForward?: () => void;
 
   private richEditorController: RichEditorController = new RichEditorController();
+  private linkPreviewTimer: number = -1;
   private livePreview: LivePreviewHelper = new LivePreviewHelper();
   private syncPollTimer: number = -1;
 
@@ -145,12 +156,12 @@ export struct MarkdownEditor {
   }
 
   // 内容变更时：提取纯文本 → 更新 VM → 重建 spans
-  private handleEditorChange(rangeBefore: RichEditorRange, rangeAfter: RichEditorRange): void {
+  private async handleEditorChange(rangeBefore: RichEditorRange, rangeAfter: RichEditorRange): Promise<void> {
     if (this.livePreview.getIsRebuilding()) return;
     const text = LivePreviewHelper.extractText(this.richEditorController);
     if (text !== this.vm.content) {
       this.vm.updateContent(text);
-      this.checkCompletion();
+      await this.checkCompletion();
     }
     this.rebuildEditor();
   }
@@ -165,6 +176,65 @@ export struct MarkdownEditor {
     }
     // 仅当光标跨过语法段边界时才重建
     this.rebuildEditor();
+
+    // 悬停预览：检测光标是否在 wikilink 上
+    this.scheduleLinkPreview();
+  }
+
+  // 500ms 去抖检测光标所在的 wikilink
+  private scheduleLinkPreview(): void {
+    if (this.linkPreviewTimer !== -1) {
+      clearTimeout(this.linkPreviewTimer);
+    }
+    this.showLinkPreview = false;
+    this.linkPreviewTimer = setTimeout(() => {
+      this.linkPreviewTimer = -1;
+      this.detectAndShowLinkPreview();
+    }, 500);
+  }
+
+  private async detectAndShowLinkPreview(): Promise<void> {
+    const caret = this.editorCaretOffset;
+    if (caret < 2) return;
+    const text = this.vm.content;
+    const textBefore = text.substring(0, caret);
+
+    // 查找光标前的最近 [[
+    const openIdx = textBefore.lastIndexOf('[[');
+    if (openIdx === -1) return;
+
+    // 查找闭合的 ]]，位置在光标之后
+    const closeIdx = text.indexOf(']]', Math.max(caret, openIdx + 2));
+    if (closeIdx === -1) return;
+
+    // 提取链接目标
+    const linkText = text.substring(openIdx + 2, closeIdx);
+    if (!linkText || linkText.includes('\n')) return;
+
+    // 去掉别名（[[target|display]] → target）
+    const pipeIdx = linkText.indexOf('|');
+    const targetName = pipeIdx !== -1 ? linkText.substring(0, pipeIdx) : linkText;
+
+    // 加载预览数据
+    try {
+      const result = await fileService.readNote(targetName);
+      const lines = result.content.trim().split('\n').filter((l: string) => l.trim());
+      const snippet = lines.slice(0, 3).join('\n');
+      this.linkPreviewData = {
+        title: result.metadata.title || targetName,
+        snippet: snippet,
+        wordCount: result.metadata.wordCount
+      };
+      this.showLinkPreview = true;
+    } catch (e) {
+      // 目标笔记不存在
+      this.linkPreviewData = {
+        title: targetName + ' (不存在)',
+        snippet: '目标笔记未找到',
+        wordCount: 0
+      };
+      this.showLinkPreview = true;
+    }
   }
 
   private rebuildEditor(): void {
@@ -186,6 +256,83 @@ export struct MarkdownEditor {
         this.richEditorController.setCaretOffset(caret);
       }
     }
+  }
+
+  // ─── 查找替换 ──────────────────────────────────
+
+  private performFindSearch(query: string, caseSensitive: boolean): void {
+    if (!query) {
+      this.findMatches = [];
+      this.findCurrentIndex = 0;
+      return;
+    }
+    const text = this.vm.content;
+    const searchText = caseSensitive ? text : text.toLowerCase();
+    const searchQuery = caseSensitive ? query : query.toLowerCase();
+    const matches: FindMatch[] = [];
+    let lineNum = 0;
+    for (let i = 0; i < text.length; i++) {
+      if (text[i] === '\n') {
+        lineNum++;
+      }
+      if (searchText.substring(i, i + searchQuery.length) === searchQuery) {
+        matches.push({ start: i, end: i + searchQuery.length, line: lineNum + 1 });
+      }
+    }
+    this.findMatches = matches;
+    this.findCurrentIndex = matches.length > 0 ? 0 : -1;
+    if (matches.length > 0) {
+      this.navigateToMatch(0);
+    }
+  }
+
+  private navigateToMatch(index: number): void {
+    if (index < 0 || index >= this.findMatches.length) return;
+    this.findCurrentIndex = index;
+    const match = this.findMatches[index];
+    try {
+      this.richEditorController.setCaretOffset(match.start);
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  private findNavigate(direction: 'next' | 'prev'): void {
+    if (this.findMatches.length === 0) return;
+    let newIdx: number;
+    if (direction === 'next') {
+      newIdx = (this.findCurrentIndex + 1) % this.findMatches.length;
+    } else {
+      newIdx = this.findCurrentIndex <= 0
+        ? this.findMatches.length - 1
+        : this.findCurrentIndex - 1;
+    }
+    this.navigateToMatch(newIdx);
+  }
+
+  private replaceCurrent(replacement: string): void {
+    if (this.findMatches.length === 0) return;
+    const match = this.findMatches[this.findCurrentIndex];
+    const text = this.vm.content;
+    const newContent = text.substring(0, match.start) + replacement + text.substring(match.end);
+    this.vm.content = newContent;
+    this.vm.hasUnsavedChanges = true;
+    this.rebuildEditor();
+    this.performFindSearch(this.findMatches.length > 0 ? '' : '', false);
+  }
+
+  private replaceAll(replacement: string): void {
+    if (this.findMatches.length === 0) return;
+    let text = this.vm.content;
+    const sorted = [...this.findMatches].sort((a: FindMatch, b: FindMatch) => b.start - a.start);
+    for (const match of sorted) {
+      text = text.substring(0, match.start) + replacement + text.substring(match.end);
+    }
+    this.vm.content = text;
+    this.vm.hasUnsavedChanges = true;
+    this.rebuildEditor();
+    this.findMatches = [];
+    this.findCurrentIndex = 0;
   }
 
   // ─── 图片 / 附件选择 ──────────────────────────
@@ -252,12 +399,35 @@ export struct MarkdownEditor {
 
   // ─── 自动补全 ──────────────────────────────────
 
-  private checkCompletion(): void {
+  private noteNamesCache: string[] = [];
+
+  private async checkCompletion(): Promise<void> {
     if (!this.vm.content) { this.showCompletions = false; return; }
-    const lines = this.vm.content.split('\n');
-    const lastLine = lines[lines.length - 1];
-    if (shouldShowCompletion(lastLine)) {
-      this.completions = getCompletions(lastLine, lastLine);
+
+    // 获取光标所在行
+    const caret = this.editorCaretOffset >= 0
+      ? this.editorCaretOffset
+      : this.vm.content.length;
+    const textBeforeCursor = this.vm.content.substring(0, caret);
+    const linesBefore = textBeforeCursor.split('\n');
+    const currentLine = linesBefore[linesBefore.length - 1];
+
+    // 确定需要哪些补全数据
+    let noteNames: string[] | undefined = undefined;
+    if (currentLine.trimStart().startsWith('[[')) {
+      // 加载笔记名缓存
+      try {
+        if (this.noteNamesCache.length === 0) {
+          this.noteNamesCache = await fileService.getAllNoteFileNames();
+        }
+        noteNames = this.noteNamesCache;
+      } catch (e) {
+        noteNames = [];
+      }
+    }
+
+    if (shouldShowCompletion(currentLine)) {
+      this.completions = getCompletions(currentLine, currentLine, noteNames);
       this.showCompletions = this.completions.length > 0;
     } else {
       this.showCompletions = false;
@@ -265,13 +435,41 @@ export struct MarkdownEditor {
   }
 
   private applyCompletion(item: CompletionItem): void {
+    const caret = this.editorCaretOffset >= 0
+      ? this.editorCaretOffset
+      : this.vm.content.length;
+    const textBeforeCursor = this.vm.content.substring(0, caret);
+    const textAfterCursor = this.vm.content.substring(caret);
+
+    // 检查是否是 wikilink 补全（光标前有 [[）
+    const wikiMatch = textBeforeCursor.match(/\[\[([^\]]*)$/);
+    if (wikiMatch) {
+      // 替换 [[partial 为 [[completed]]
+      const beforeWiki = textBeforeCursor.substring(0, textBeforeCursor.length - wikiMatch[0].length);
+      this.vm.content = beforeWiki + item.insertText + textAfterCursor;
+      this.vm.hasUnsavedChanges = true;
+      this.showCompletions = false;
+      this.completions = [];
+      this.noteNamesCache = [];
+      this.rebuildEditor();
+      // 光标定位到 ]] 之后
+      const newCaret = beforeWiki.length + item.insertText.length;
+      if (newCaret <= this.vm.content.length) {
+        this.richEditorController.setCaretOffset(newCaret);
+      }
+      return;
+    }
+
+    // 常规补全：替换当前行的触发文本
     const lines = this.vm.content.split('\n');
-    const lastLine = lines[lines.length - 1];
+    const linesBeforeCaret = textBeforeCursor.split('\n');
+    const cursorLineIndex = linesBeforeCaret.length - 1;
+    const lastLine = lines[cursorLineIndex];
     const trimmed = lastLine.trimStart();
     const indent = lastLine.slice(0, lastLine.length - trimmed.length);
-    const beforeReplace = lines.slice(0, -1).join('\n');
-    const newLastLine = indent + item.insertText;
-    this.vm.content = lines.length > 1 ? beforeReplace + '\n' + newLastLine : newLastLine;
+    const newLine = indent + item.insertText;
+    lines[cursorLineIndex] = newLine;
+    this.vm.content = lines.join('\n');
     this.vm.hasUnsavedChanges = true;
     this.showCompletions = false;
     this.completions = [];
@@ -366,6 +564,29 @@ export struct MarkdownEditor {
           .width('100%').height(52).backgroundColor(this.colors.editorBg).padding({ left: 12, right: 12 })
         }
 
+        // 查找替换栏
+        if (this.showFindReplace) {
+          FindReplaceBar({
+            matchCount: this.findMatches.length,
+            currentIndex: this.findCurrentIndex,
+            onSearch: (query: string, caseSensitive: boolean) => {
+              this.performFindSearch(query, caseSensitive);
+            },
+            onNavigate: (direction: 'next' | 'prev') => {
+              this.findNavigate(direction);
+            },
+            onReplace: (replacement: string) => {
+              this.replaceCurrent(replacement);
+            },
+            onReplaceAll: (replacement: string) => {
+              this.replaceAll(replacement);
+            },
+            onClose: () => {
+              this.showFindReplace = false;
+            }
+          })
+        }
+
         // 主体内容区
         Row({ space: 0 }) {
           Column() {
@@ -378,6 +599,35 @@ export struct MarkdownEditor {
                 })
                 .onSelectionChange((range: RichEditorRange) => {
                   this.handleSelectionChange();
+                })
+                .onKeyEvent((event: KeyEvent) => {
+                  const KEYCODE_ESCAPE = 2070;
+                  const KEYCODE_ENTER = 2054;
+                  const KEYCODE_F = 2023;
+
+                  // Ctrl+F 或 仅F 打开查找
+                  if (event.type === KeyType.Down && event.keyCode === KEYCODE_F) {
+                    this.showFindReplace = !this.showFindReplace;
+                    return true;
+                  }
+                  // Esc 关闭查找栏或补全
+                  if (event.type === KeyType.Down && event.keyCode === KEYCODE_ESCAPE) {
+                    if (this.showCompletions && this.completions.length > 0) {
+                      this.showCompletions = false;
+                      this.completions = [];
+                      return true;
+                    }
+                    if (this.showFindReplace) {
+                      this.showFindReplace = false;
+                      return true;
+                    }
+                  }
+                  // Enter 导航下一个匹配
+                  if (event.type === KeyType.Down && event.keyCode === KEYCODE_ENTER && this.showFindReplace && this.findMatches.length > 0) {
+                    this.findNavigate('next');
+                    return true;
+                  }
+                  return false;
                 })
                 .caretColor('#8B5CF6')
                 .borderRadius(12)
@@ -436,6 +686,25 @@ export struct MarkdownEditor {
         onConfirm: () => { this.showModal = false; },
         onCancel: () => { this.showModal = false; }
       })
+
+      // 链接预览卡片
+      LinkPreviewCard({
+        data: this.linkPreviewData,
+        visible: this.showLinkPreview,
+        onOpenNote: () => {
+          // 在当前标签页打开
+          const targetName = this.linkPreviewData.title;
+          // 通知父组件打开笔记的逻辑由 onOpenNote 处理
+          this.showLinkPreview = false;
+        },
+        onClose: () => {
+          this.showLinkPreview = false;
+          if (this.linkPreviewTimer !== -1) {
+            clearTimeout(this.linkPreviewTimer);
+            this.linkPreviewTimer = -1;
+          }
+        }
+      }).position({ x: 20, y: 60 })
     }.width('100%').height('100%')
   }
 }

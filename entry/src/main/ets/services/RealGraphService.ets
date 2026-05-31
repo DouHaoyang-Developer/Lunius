@@ -127,12 +127,25 @@ export class RealGraphService implements IGraphService {
 
     const maxDegree = Math.max(1, ...Array.from(nodeDegree.values()));
 
-    // 构建节点
+    // 构建节点（初始位置）
     const tagColors = new Map<string, string>();
     let colorIdx = 0;
     const palette = ['#7B68EE', '#52C41A', '#FAAD14', '#1890FF', '#FF7BA0', '#F5A623', '#00BCD4', '#E91E63'];
 
-    const angleStep = (2 * Math.PI) / Math.max(fileIds.length, 1);
+    interface ForceNode {
+      id: string;
+      label: string;
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      radius: number;
+      color: string;
+      group: string;
+    }
+
+    const forceNodes: ForceNode[] = [];
+    const nodeMap = new Map<string, ForceNode>();
 
     for (let i = 0; i < fileIds.length; i++) {
       const id = fileIds[i];
@@ -154,15 +167,80 @@ export class RealGraphService implements IGraphService {
       }
 
       const degree = nodeDegree.get(id) || 0;
-      const radius = 16 + (degree / maxDegree) * 24; // 16~40
+      const radius = 16 + (degree / maxDegree) * 24;
 
-      // 环形布局 + 随机扰动
-      const angle = i * angleStep;
-      const baseR = 120 + (fileIds.length > 10 ? fileIds.length * 8 : 0);
-      const x = Math.cos(angle) * baseR + (Math.random() - 0.5) * 40;
-      const y = Math.sin(angle) * baseR + (Math.random() - 0.5) * 40;
+      // 随机初始位置（小范围）
+      const angle = (2 * Math.PI * i) / Math.max(fileIds.length, 1);
+      const r0 = 30 + Math.random() * 20;
+      const x = Math.cos(angle) * r0;
+      const y = Math.sin(angle) * r0;
 
-      nodes.push({ id, label: name.replace('.md', ''), x, y, radius, color, group });
+      const fn: ForceNode = { id, label: name.replace('.md', ''), x, y, vx: 0, vy: 0, radius, color, group };
+      forceNodes.push(fn);
+      nodeMap.set(id, fn);
+    }
+
+    // 力导向模拟
+    const REPULSION = 3000;
+    const ATTRACTION = 0.005;
+    const CENTER = 0.002;
+    const DAMPING = 0.85;
+    const ITERATIONS = 80;
+
+    for (let iter = 0; iter < ITERATIONS; iter++) {
+      // 斥力（全对）
+      for (let i = 0; i < forceNodes.length; i++) {
+        for (let j = i + 1; j < forceNodes.length; j++) {
+          const a = forceNodes[i];
+          const b = forceNodes[j];
+          let dx = a.x - b.x;
+          let dy = a.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy) + 1;
+          const force = REPULSION / (dist * dist);
+          const fx = force * dx / dist;
+          const fy = force * dy / dist;
+          a.vx += fx;
+          a.vy += fy;
+          b.vx -= fx;
+          b.vy -= fy;
+        }
+      }
+
+      // 引力（边弹簧）
+      for (const sourceId of fileIds) {
+        const targets = this.linkIndex.get(sourceId);
+        if (!targets) continue;
+        for (const targetId of targets) {
+          if (!nodeMap.has(targetId)) continue;
+          const a = nodeMap.get(sourceId);
+          const b = nodeMap.get(targetId);
+          if (!a || !b) continue;
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const dist = Math.sqrt(dx * dx + dy * dy) + 1;
+          const force = ATTRACTION * dist;
+          const fx = force * dx / dist;
+          const fy = force * dy / dist;
+          a.vx += fx;
+          a.vy += fy;
+          b.vx -= fx;
+          b.vy -= fy;
+        }
+      }
+
+      // 中心引力 + 阻尼 + 更新位置
+      for (const n of forceNodes) {
+        n.vx -= CENTER * n.x;
+        n.vy -= CENTER * n.y;
+        n.vx *= DAMPING;
+        n.vy *= DAMPING;
+        n.x += n.vx;
+        n.y += n.vy;
+      }
+    }
+
+    for (const fn of forceNodes) {
+      nodes.push({ id: fn.id, label: fn.label, x: fn.x, y: fn.y, radius: fn.radius, color: fn.color, group: fn.group });
     }
 
     // 构建边

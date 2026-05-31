@@ -33,6 +33,9 @@ export interface IFileService {
   // 更新 frontmatter 单个字段
   updateFrontmatterField(noteId: string, key: string, value: FrontmatterValue): Promise<void>;
 
+  // 获取所有笔记文件名（供自动补全等使用）
+  getAllNoteFileNames(): Promise<string[]>;
+
   // 监听文件变化（后端推送）
   onFileChange(callback: (event: FileChangeEvent) => void): void;
 }
@@ -186,6 +189,10 @@ export class MockFileService implements IFileService {
     if (data) {
       data.metadata.updatedAt = Date.now();
     }
+  }
+
+  async getAllNoteFileNames(): Promise<string[]> {
+    return Array.from(this.mockData.keys());
   }
 
   onFileChange(callback: (event: FileChangeEvent) => void): void {

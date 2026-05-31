@@ -155,10 +155,11 @@ export class FileService {
    * 生成唯一文件名（避免重名）
    * @param baseName 基础文件名
    * @param extension 文件扩展名
-   * @returns 唯一文件名
+   * @param subDir 可选的子目录，相对于 filesDir
+   * @returns 唯一文件名（不含路径前缀）
    */
-  public async generateUniqueFileName(baseName: string, extension: string): Promise<string> {
-    const filesDir = this.getFilesDir();
+  public async generateUniqueFileName(baseName: string, extension: string, subDir?: string): Promise<string> {
+    const filesDir = subDir ? `${this.getFilesDir()}/${subDir}` : this.getFilesDir();
     let fileName = `${baseName}.${extension}`;
     let counter = 1;
 
@@ -171,6 +172,50 @@ export class FileService {
   }
 
   /**
+   * 创建目录（如果不存在），返回目录完整路径
+   * @param relativePath 相对于 baseDirectory 的路径
+   * @returns 目录完整路径
+   */
+  public async createDirectory(relativePath: string): Promise<string> {
+    const dirPath = `${this.getFilesDir()}/${relativePath}`;
+    try {
+      const exists = await this.fileExists(dirPath);
+      if (!exists) {
+        await fs.mkdir(dirPath, true);
+        console.info(`Directory created: ${dirPath}`);
+      }
+    } catch (err) {
+      console.error(`Failed to create directory: ${(err as BusinessError).message}`);
+    }
+    return dirPath;
+  }
+
+  /**
+   * 在指定子目录中创建文件
+   * @param fileName 文件名
+   * @param subDir 可选的子目录，相对于 filesDir
+   * @returns 文件完整路径
+   */
+  public async createFileInDir(fileName: string, subDir?: string): Promise<string> {
+    let filePath: string;
+    if (subDir) {
+      await this.createDirectory(subDir);
+      filePath = `${this.getFilesDir()}/${subDir}/${fileName}`;
+    } else {
+      filePath = `${this.getFilesDir()}/${fileName}`;
+    }
+    try {
+      const file = await fs.open(filePath, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE);
+      await fs.close(file);
+      console.info(`File created: ${filePath}`);
+      return filePath;
+    } catch (err) {
+      console.error(`Failed to create file: ${(err as BusinessError).message}`);
+      return '';
+    }
+  }
+
+  /**
    * 获取所有 .md 文件列表
    * @returns 文件路径数组
    */
@@ -178,7 +223,7 @@ export class FileService {
     try {
       const filesDir = this.getFilesDir();
       const listFileOption: ListFileOptions = {
-        recursion: false,
+        recursion: true,
         listNum: 0,
         filter: {
           suffix: ['.md'],

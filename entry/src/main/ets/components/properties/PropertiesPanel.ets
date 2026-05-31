@@ -4,7 +4,7 @@
 import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
 import { NoteMetadata } from '../../services/ApiTypes';
 
-type PropertyType = 'text' | 'number' | 'checkbox' | 'tags' | 'date' | 'list';
+type PropertyType = 'text' | 'number' | 'checkbox' | 'tags' | 'date' | 'select';
 
 export interface PropertyItem {
   key: string;
@@ -34,6 +34,7 @@ export struct PropertiesPanel {
       if (typeof value === 'number') propType = 'number';
       else if (typeof value === 'boolean') propType = 'checkbox';
       else if (Array.isArray(value)) propType = 'tags';
+      else if (typeof value === 'string' && key.toLowerCase().includes('date')) propType = 'date';
       const pi: PropertyItem = { key: key, value: value, type: propType };
       result.push(pi);
     });
@@ -185,6 +186,19 @@ export struct PropertiesPanel {
           .onChange((isOn: boolean) => {
             this.onUpdate?.(prop.key, isOn);
           })
+      } else if (prop.type === 'date') {
+        Text(`${prop.value}`)
+          .fontSize(11)
+          .fontColor('#7B68EE')
+          .layoutWeight(1)
+          .decoration({ type: TextDecorationType.Underline, color: '#7B68EE' })
+      } else if (prop.type === 'number') {
+        Row({ space: 4 }) {
+          Text(`${prop.value}`)
+            .fontSize(12)
+            .fontColor('#52C41A')
+            .layoutWeight(1)
+        }
       } else if (prop.type === 'tags' && Array.isArray(prop.value)) {
         Row({ space: 4 }) {
           ForEach(prop.value as string[], (tag: string, idx: number) => {

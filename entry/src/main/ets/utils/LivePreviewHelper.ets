@@ -309,8 +309,9 @@ export class LivePreviewHelper {
     }
 
     // ─── 语法段 ─────────────────────────────────
-    // 嵌入语法 ![[ 用紫色标识
-    if (seg.text.startsWith('![[') || seg.text.startsWith('[[')) {
+    // Wiki 链接语法 [[ ]] 用紫色标识
+    if (seg.text === '[[' || seg.text === ']]' ||
+        seg.text.startsWith('![[') || seg.text.startsWith('[[')) {
       const embedStyle: RichEditorTextStyle = {
         fontColor: '#9370DB', fontSize: 16, fontFamily: 'monospace',
         fontWeight: FontWeight.Medium
