@@ -9,7 +9,7 @@ import { GraphData, GraphNodeData, GraphEdgeData } from '../services/ApiTypes';
 export struct GraphView {
   @StorageLink('themeMode') themeMode: ThemeMode = ThemeMode.DARK;
   @State graphData: GraphData = { nodes: [], edges: [] };
-  @State scale: number = 1.0;
+  @State zoomScale: number = 1.0;
   @State offsetX: number = 0;
   @State offsetY: number = 0;
   @State isDragging: boolean = false;
@@ -18,6 +18,8 @@ export struct GraphView {
   @State showLocalGraph: boolean = false;
   @State localGraphData: GraphData | null = null;
 
+  private settings: RenderingContextSettings = new RenderingContextSettings(true);
+  private context: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.settings);
   private lastX: number = 0;
   private lastY: number = 0;
 
@@ -58,9 +60,13 @@ export struct GraphView {
     this.showLocalGraph = false;
     this.localGraphData = null;
     this.selectedNodeId = '';
-    this.scale = 1.0;
+    this.zoomScale = 1.0;
     this.offsetX = 0;
     this.offsetY = 0;
+  }
+
+  private onPinchUpdate = (ge: GestureEvent): void => {
+    this.zoomScale = Math.max(0.3, Math.min(3.0, ge.scale));
   }
 
   build() {
@@ -86,20 +92,20 @@ export struct GraphView {
             Text('⊕').fontSize(16).fontColor(this.colors.iconSecondary)
           }
           .width(28).height(28).backgroundColor(this.colors.bgHover)
-          .onClick(() => { this.scale = Math.min(this.scale + 0.2, 3.0); })
+          .onClick(() => { this.zoomScale = Math.min(this.zoomScale + 0.2, 3.0); })
 
           Button({ type: ButtonType.Circle }) {
             Text('⊖').fontSize(16).fontColor(this.colors.iconSecondary)
           }
           .width(28).height(28).backgroundColor(this.colors.bgHover)
-          .onClick(() => { this.scale = Math.max(this.scale - 0.2, 0.3); })
+          .onClick(() => { this.zoomScale = Math.max(this.zoomScale - 0.2, 0.3); })
 
           Button({ type: ButtonType.Circle }) {
             Text('⟲').fontSize(14).fontColor(this.colors.iconSecondary)
           }
           .width(28).height(28).backgroundColor(this.colors.bgHover)
           .onClick(() => {
-            this.scale = 1.0;
+            this.zoomScale = 1.0;
             this.offsetX = 0;
             this.offsetY = 0;
           })
@@ -154,7 +160,8 @@ export struct GraphView {
           // 连线层
           Canvas(this.context)
             .width('100%').height('100%')
-            .onReady((ctx) => {
+            .onReady(() => {
+              const ctx = this.context;
               ctx.strokeStyle = this.colors.divider;
               ctx.lineWidth = 1;
               const nodes = this.displayData.nodes;
@@ -165,12 +172,12 @@ export struct GraphView {
                 if (source && target) {
                   ctx.beginPath();
                   ctx.moveTo(
-                    (source.x + this.offsetX) * this.scale + source.radius * this.scale,
-                    (source.y + this.offsetY) * this.scale + source.radius * this.scale
+                    (source.x + this.offsetX) * this.zoomScale + source.radius * this.zoomScale,
+                    (source.y + this.offsetY) * this.zoomScale + source.radius * this.zoomScale
                   );
                   ctx.lineTo(
-                    (target.x + this.offsetX) * this.scale + target.radius * this.scale,
-                    (target.y + this.offsetY) * this.scale + target.radius * this.scale
+                    (target.x + this.offsetX) * this.zoomScale + target.radius * this.zoomScale,
+                    (target.y + this.offsetY) * this.zoomScale + target.radius * this.zoomScale
                   );
                   ctx.stroke();
                 }
@@ -183,14 +190,14 @@ export struct GraphView {
               Column() {
                 Stack() {
                   Circle()
-                    .width(node.radius * 2 * this.scale)
-                    .height(node.radius * 2 * this.scale)
+                    .width(node.radius * 2 * this.zoomScale)
+                    .height(node.radius * 2 * this.zoomScale)
                     .fill(node.id === this.selectedNodeId ? '#FF4D4F' : node.color)
                     .opacity(0.85)
                     .shadow({ radius: 8, color: node.color, offsetX: 0, offsetY: 4 })
 
                   Text(node.label.substring(0, 1))
-                    .fontSize(Math.max(10, 16 * this.scale))
+                    .fontSize(Math.max(10, 16 * this.zoomScale))
                     .fontColor('#FFFFFF')
                     .fontWeight(FontWeight.Bold)
                 }
@@ -205,8 +212,8 @@ export struct GraphView {
                   .margin({ top: 4 })
               }
               .position({
-                x: (node.x + this.offsetX) * this.scale,
-                y: (node.y + this.offsetY) * this.scale
+                x: (node.x + this.offsetX) * this.zoomScale,
+                y: (node.y + this.offsetY) * this.zoomScale
               })
               .onClick(() => {
                 this.loadLocalGraph(node.id);
@@ -225,8 +232,8 @@ export struct GraphView {
               this.lastY = event.offsetY;
             })
             .onActionUpdate((event: GestureEvent) => {
-              this.offsetX += (event.offsetX - this.lastX) / this.scale;
-              this.offsetY += (event.offsetY - this.lastY) / this.scale;
+              this.offsetX += (event.offsetX - this.lastX) / this.zoomScale;
+              this.offsetY += (event.offsetY - this.lastY) / this.zoomScale;
               this.lastX = event.offsetX;
               this.lastY = event.offsetY;
             })
@@ -234,15 +241,13 @@ export struct GraphView {
         )
         .gesture(
           PinchGesture()
-            .onActionUpdate((event: GestureEvent) => {
-              this.scale = Math.max(0.3, Math.min(3.0, event.scale));
-            })
+            .onActionUpdate(this.onPinchUpdate)
         )
       }
 
       // 底部信息栏
       Row() {
-        Text(`缩放: ${(this.scale * 100).toFixed(0)}%`)
+        Text(`缩放: ${(this.zoomScale * 100).toFixed(0)}%`)
           .fontSize(11).fontColor(this.colors.textMuted)
 
         Text(`节点: ${this.displayData.nodes.length} | 连线: ${this.displayData.edges.length}`)

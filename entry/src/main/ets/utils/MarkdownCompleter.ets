@@ -33,7 +33,7 @@ export function getCompletions(textBeforeCursor: string, fullLine: string, noteN
     const filtered = noteNames.filter((name: string) =>
       name.toLowerCase().includes(searchText)
     );
-    return filtered.slice(0, 15).map((name: string) => ({
+    return filtered.slice(0, 15).map((name: string): CompletionItem => ({
       label: name,
       insertText: name + ']]',
       description: '笔记链接',

@@ -99,11 +99,14 @@ struct FileTreeNode {
           this.onSelect(this.node);
         }
       })
-      .onLongPress(() => {
-        if (this.isPC && this.node.type === NodeType.FILE) {
-          this.showContextMenu = true;
-        }
-      })
+      .gesture(
+        LongPressGesture()
+          .onAction(() => {
+            if (this.isPC && this.node.type === NodeType.FILE) {
+              this.showContextMenu = true;
+            }
+          })
+      )
 
       // PC 右键/长按上下文菜单
       if (this.showContextMenu && this.isPC) {

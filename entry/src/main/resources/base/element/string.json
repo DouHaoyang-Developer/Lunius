@@ -2,23 +2,31 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "Obsidian HarmonyOS Application"
+      "value": "Lunius HarmonyOS Application"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "Obsidian Markdown Editor"
+      "value": "Lunius Markdown Editor"
     },
     {
       "name": "EntryAbility_label",
-      "value": "Obsidian"
+      "value": "Lunius"
     },
     {
       "name": "EntryBackupAbility_label",
-      "value": "Obsidian Backup"
+      "value": "Lunius Backup"
+    },
+    {
+      "name": "read_media_reason",
+      "value": "用于读取笔记文件内容"
+    },
+    {
+      "name": "write_media_reason",
+      "value": "用于创建和保存笔记文件"
     },
     {
       "name": "app_name",
-      "value": "Obsidian"
+      "value": "Lunius"
     },
     {
       "name": "new_file",

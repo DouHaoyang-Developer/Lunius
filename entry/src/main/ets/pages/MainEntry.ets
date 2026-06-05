@@ -1,5 +1,4 @@
 // pages/MainEntry.ets
-// Obsidian ArkTS v3 - 完整工作区，真实文件系统后端
 
 import { display, router, promptAction } from '@kit.ArkUI';
 import { ObsidianColors, ThemeMode, getColors, SidebarWidth } from '../utils/Theme';
