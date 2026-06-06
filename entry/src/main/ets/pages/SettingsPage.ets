@@ -1,7 +1,6 @@
 // pages/SettingsPage.ets
 // Obsidian 设置页 - 通过 router.pushUrl 进入的独立页面
 
-import { router } from '@kit.ArkUI';
 import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
 import { vaultIndex } from '../services/VaultIndex';
 import { VaultStats } from '../services/ApiTypes';
@@ -109,7 +108,11 @@ struct SettingsPage {
         .height(36)
         .backgroundColor(Color.Transparent)
         .onClick(() => {
-          router.back();
+          try {
+            this.getUIContext().getRouter().back();
+          } catch (e) {
+            console.error('back error:', JSON.stringify(e));
+          }
         })
 
         Text('设置')

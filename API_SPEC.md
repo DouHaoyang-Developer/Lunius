@@ -320,5 +320,91 @@ export const fileService: IFileService = new RealFileService('your-token');
 
 ---
 
-*文档版本: v3.0*
-*对应前端版本: Obsidian ArkTS v3.0*
+## 5. 分布式协同接口（Lunius v4.0+）
+
+### 5.1 协同会话管理
+
+基于 HarmonyOS DistributedKVStore 的 P2P 实时协同。
+
+**会话生命周期：**
+
+```
+createSession → [invite devices] → joinSession → [real-time ops] → leaveSession → destroySession
+```
+
+**KVStore Key 空间设计：**
+
+| Key | 用途 | 内容示例 |
+|-----|------|---------|
+| `session:meta:{sessionId}` | 会话元信息 | `{ noteId, hostDeviceId, participants[], createdAt, lastActivityAt }` |
+| `session:content:{sessionId}` | 笔记内容快照 | Markdown 全文（≤4MB） |
+| `session:ops:{sessionId}:{seq}` | 增量操作 | `{ type: 'insert'\|'delete'\|'replace', position, text?, length?, timestamp, deviceId, seqNumber }` |
+| `session:cursor:{sessionId}:{deviceId}` | 设备光标 | `{ deviceId, deviceName, position, selectionStart, selectionEnd, color, timestamp }` |
+
+### 5.2 OT 操作类型
+
+```typescript
+interface CollabOperation {
+  type: 'insert' | 'delete' | 'replace';
+  position: number;
+  text?: string;
+  length?: number;
+  timestamp: number;
+  deviceId: string;
+  seqNumber: number;
+}
+```
+
+### 5.3 冲突解决策略
+
+- **默认策略**：LWW（Last Writer Wins），基于操作时间戳
+- **冲突检测**：seqNumber 跳跃 > 50 时触发全量快照同步
+- **合并粒度**：以 2s 防抖窗口为最小同步单位
+- **降级方案**：检测到多设备冲突时回退到完整内容快照同步
+
+### 5.4 碰一碰分享
+
+通过 Share Kit 实现设备间笔记快速分享：
+
+```typescript
+// 发送端
+harmonyShare.on('knockShare', (target) => {
+  target.share(new systemShare.SharedData({
+    utd: utd.UniformDataType.HYPERLINK,
+    content: `https://lunius.drcn.agconnect.link/edit?noteId=${noteId}`,
+    title: `Lunius 笔记: ${title}`,
+    description: `字数: ${wordCount}`
+  }));
+});
+
+// 接收端：通过 App Linking 深度链接自动打开
+// EntryAbility.handleDeepLink() → AppStorage → MainEntry.handlePendingShareAction()
+```
+
+### 5.5 跨端迁移
+
+通过 HarmonyOS Continuation 实现编辑任务在设备间无缝迁移：
+
+```typescript
+// module.json5 配置
+"continuable": true,
+"continuationType": "local"
+
+// 源设备保存状态
+onContinue(wantParam: Record<string, Object>): OnContinueResult {
+  wantParam.noteId = currentNoteId;
+  wantParam.noteContent = currentContent;
+  return OnContinueResult.AGREE;
+}
+
+// 目标设备恢复
+onCreate(want: Want): void {
+  const noteId = want.parameters?.noteId as string;
+  // 打开笔记并恢复编辑状态
+}
+```
+
+---
+
+*文档版本: v4.0*
+*对应前端版本: Lunius v4.0 — 分布式协同版（SDK 6.1.1(24) / API 12+）*

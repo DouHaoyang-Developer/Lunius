@@ -1,7 +1,6 @@
 // components/MarkdownEditor.ets
 // Markdown 编辑器 v5 — RichEditor 驱动的 Obsidian 风格实时阅览
 
-import { promptAction } from '@kit.ArkUI';
 import { picker } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
 import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
@@ -20,6 +19,7 @@ import { syncService } from '../services/ISyncService';
 import { SyncStatus } from '../services/ApiTypes';
 import { LinkPreviewCard, LinkPreviewData } from './LinkPreviewCard';
 import { FindReplaceBar, FindMatch } from './FindReplaceBar';
+import { RemoteCursorState, DEVICE_CURSOR_COLORS } from '../models/CollaborationTypes';
 
 interface BreadcrumbItem {
   name: string;
@@ -49,6 +49,8 @@ export struct MarkdownEditor {
   @State showFindReplace: boolean = false;
   @State findMatches: FindMatch[] = [];
   @State findCurrentIndex: number = 0;
+  // 远端光标
+  @State remoteCursors: RemoteCursorState[] = [];
   onNavigateBack?: () => void;
   onNavigateForward?: () => void;
 
@@ -61,6 +63,9 @@ export struct MarkdownEditor {
     this.vm.onErrorCallback = (msg: string) => { this.showToast(msg); };
     this.vm.onSaveCallback = (success: boolean) => {
       if (success) this.showToast('已保存');
+    };
+    this.vm.onRemoteCursorsChanged = (cursors: RemoteCursorState[]) => {
+      this.remoteCursors = cursors;
     };
     this.vm.startIntervalSave();
     this.loadSyncStatus();
@@ -79,7 +84,7 @@ export struct MarkdownEditor {
 
   private showToast(message: string): void {
     try {
-      promptAction.showToast({ message: message, duration: 2000 });
+      this.getUIContext().getPromptAction().showToast({ message: message, duration: 2000 });
     } catch (e) {
       console.error('Toast error: ' + JSON.stringify(e));
     }
@@ -658,6 +663,30 @@ export struct MarkdownEditor {
                 .width('100%').layoutWeight(1)
             }
           }.width('100%').layoutWeight(1)
+
+          // 远端光标指示条
+          if (this.vm.isCollaborating && this.remoteCursors.length > 0) {
+            Row({ space: 0 }) {
+              ForEach(this.remoteCursors, (cursor: RemoteCursorState, idx: number) => {
+                Row({ space: 6 }) {
+                  Circle({ width: 6, height: 6 }).fill(cursor.color)
+                  Text(cursor.deviceName)
+                    .fontSize(10)
+                    .fontColor(cursor.color)
+                    .maxLines(1)
+                }
+                .padding({ left: 8, right: 8, top: 3, bottom: 3 })
+                .backgroundColor(this.colors.bgTertiary)
+                .borderRadius(4)
+                .margin({ left: 4 })
+              }, (cursor: RemoteCursorState) => cursor.deviceId)
+            }
+            .width('100%')
+            .height(24)
+            .padding({ left: 8, right: 8 })
+            .backgroundColor(this.colors.bgSecondary)
+            .border({ width: { top: 1 }, color: this.colors.divider })
+          }
 
           if (this.showProperties && this.vm.metadata) {
             PropertiesPanel({

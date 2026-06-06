@@ -1,7 +1,6 @@
 // components/Ribbon.ets
 // Obsidian 左侧 Ribbon 工具栏 - 支持页面跳转与视图切换
 
-import { router } from '@kit.ArkUI';
 import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
 
 interface RibbonAction {
@@ -33,9 +32,13 @@ export struct Ribbon {
   private handleAction(tool: RibbonAction): void {
     switch (tool.action) {
       case 'openSettings':
-        router.pushUrl({
-          url: 'pages/SettingsPage'
-        }, router.RouterMode.Standard);
+        try {
+          this.getUIContext().getRouter().pushUrl({
+            url: 'pages/SettingsPage'
+          });
+        } catch (e) {
+          console.error('navigate error:', JSON.stringify(e));
+        }
         break;
       case 'openSearch':
         // 通知主页面切换到搜索 Tab

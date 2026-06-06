@@ -12,10 +12,19 @@ export { syncService } from './ISyncService';
 export { vaultIndex } from './VaultIndex';
 export { RealFileService } from './RealFileService';
 export { RealGraphService } from './RealGraphService';
+export { CollaborationService } from './CollaborationService';
 export type { IFileService, SearchOptions, FileChangeEvent } from './IFileService';
 export type { IGraphService } from './IGraphService';
 export type { ISyncService } from './ISyncService';
 export type { NoteMetadata, SearchResultItem, GraphData, GraphNodeData, GraphEdgeData, SyncStatus, VaultStats } from './ApiTypes';
+export type {
+  CollaboratorDevice,
+  CollaborationSession,
+  CollabOperation,
+  RemoteCursorState,
+  CollabOperationType,
+  CollaborationSessionState
+} from '../models/CollaborationTypes';
 
 export async function initAllServices(): Promise<void> {
   console.info('Initializing Lunius services...');

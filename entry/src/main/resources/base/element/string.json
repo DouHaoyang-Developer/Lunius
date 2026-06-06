@@ -25,10 +25,6 @@
       "value": "用于创建和保存笔记文件"
     },
     {
-      "name": "app_name",
-      "value": "Lunius"
-    },
-    {
       "name": "new_file",
       "value": "新建笔记"
     },
@@ -43,6 +39,18 @@
     {
       "name": "settings",
       "value": "设置"
+    },
+    {
+      "name": "distributed_sync_reason",
+      "value": "用于跨设备实时协同编辑笔记内容"
+    },
+    {
+      "name": "print_reason",
+      "value": "用于将笔记导出为 PDF 并打印"
+    },
+    {
+      "name": "network_state_reason",
+      "value": "用于检测超级终端设备连接状态"
     }
   ]
 }
