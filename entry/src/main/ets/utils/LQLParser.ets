@@ -189,31 +189,31 @@ export class LQLParser {
     const t = this.peek();
     if (t.type !== TokenType.IDENTIFIER) return null;
 
-    // NOT 前缀
-    let operator: string = 'equals';
+    const property = this.advance().value;
+
+    let useExists = true;
+    let opValue = 'exists';
+    let negate = false;
+
     if (this.matchKeyword('NOT')) {
       this.advance();
-      operator = 'not_equals';
+      negate = true;
     }
 
-    const property = this.advance().value; // consume IDENTIFIER
-
-    // 操作符
     if (this.peek().type === TokenType.OPERATOR) {
+      useExists = false;
       const op = this.advance().value;
-      switch (op) {
-        case '=': operator = operator === 'not_equals' ? 'not_equals' : 'equals'; break;
-        case '!=': operator = 'not_equals'; break;
-        case '>': operator = 'greater_than'; break;
-        case '<': operator = 'less_than'; break;
-        case '>=': operator = 'greater_than'; break;
-        case '<=': operator = 'less_than'; break;
-      }
-    } else if (this.matchKeyword('TRUE')) {
-      return { property: property, operator: 'equals', value: 'true' };
+      if (op === '=') { opValue = negate ? 'not_equals' : 'equals'; }
+      else if (op === '!=') { opValue = 'not_equals'; }
+      else if (op === '>' || op === '>=') { opValue = 'greater_than'; }
+      else if (op === '<' || op === '<=') { opValue = 'less_than'; }
     }
 
-    // 值
+    if (this.matchKeyword('TRUE')) {
+      const cond: FilterCondition = { property: property, operator: 'equals', value: 'true' };
+      return cond;
+    }
+
     let value = '';
     if (this.peek().type === TokenType.STRING) {
       value = this.advance().value;
@@ -221,12 +221,32 @@ export class LQLParser {
       value = this.advance().value;
     } else if (this.peek().type === TokenType.TAG) {
       value = this.advance().value;
-    } else if (operator === 'not_equals' || operator === 'equals') {
-      // 无操作符且无值 → exists 检查
-      return { property: property, operator: 'exists', value: '' };
     }
 
-    return { property: property, operator: operator, value: value };
+    if (useExists) {
+      const cond: FilterCondition = { property: property, operator: 'exists', value: '' };
+      return cond;
+    }
+
+    // 直接构建 FilterCondition（操作符已确定）
+    if (opValue === 'equals') {
+      const cond: FilterCondition = { property: property, operator: 'equals', value: value };
+      return cond;
+    }
+    if (opValue === 'not_equals') {
+      const cond: FilterCondition = { property: property, operator: 'not_equals', value: value };
+      return cond;
+    }
+    if (opValue === 'greater_than') {
+      const cond: FilterCondition = { property: property, operator: 'greater_than', value: value };
+      return cond;
+    }
+    if (opValue === 'less_than') {
+      const cond: FilterCondition = { property: property, operator: 'less_than', value: value };
+      return cond;
+    }
+    const cond: FilterCondition = { property: property, operator: 'contains', value: value };
+    return cond;
   }
 
   private parseSortClause(ast: LQLAst): void {

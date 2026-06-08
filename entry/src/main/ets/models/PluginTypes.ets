@@ -28,20 +28,26 @@ export interface CommandConfig {
   callback: () => void;
 }
 
+export interface PluginVaultAPI {
+  readNote: (noteId: string) => Promise<object>;
+  getFileTree: () => Promise<object[]>;
+  searchNotes: (query: string, options?: object) => Promise<object[]>;
+}
+
+export interface PluginCommandsAPI {
+  register: (config: CommandConfig) => void;
+  unregister: (id: string) => void;
+}
+
+export interface PluginUIAPI {
+  addRibbonButton: (config: RibbonButtonConfig) => void;
+  removeRibbonButton: (id: string) => void;
+}
+
 export interface PluginAPI {
-  vault: {
-    readNote: (noteId: string) => Promise<object>;
-    getFileTree: () => Promise<object[]>;
-    searchNotes: (query: string, options?: object) => Promise<object[]>;
-  };
-  commands: {
-    register: (config: CommandConfig) => void;
-    unregister: (id: string) => void;
-  };
-  ui: {
-    addRibbonButton: (config: RibbonButtonConfig) => void;
-    removeRibbonButton: (id: string) => void;
-  };
+  vault: PluginVaultAPI;
+  commands: PluginCommandsAPI;
+  ui: PluginUIAPI;
 }
 
 export abstract class LuniusPlugin {

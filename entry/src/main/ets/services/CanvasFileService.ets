@@ -3,7 +3,7 @@
 
 import { CanvasData, CanvasNode, CanvasEdge } from '../models/CanvasTypes';
 import { DrawingPath } from '../models/DrawingTypes';
-import { fileIo } from '@kit.CoreFileKit';
+import { fileIo as fs } from '@kit.CoreFileKit';
 
 export class CanvasFileService {
   private basePath: string = '';
@@ -16,7 +16,7 @@ export class CanvasFileService {
     const chars = '0123456789abcdef';
     let id = '';
     for (let i = 0; i < 16; i++) {
-      id += chars[Math.floor(Math.random() * chars.length)];
+      id += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return id;
   }
@@ -24,11 +24,11 @@ export class CanvasFileService {
   readCanvas(filePath: string): CanvasData {
     try {
       const fullPath = this.basePath ? `${this.basePath}/${filePath}` : filePath;
-      const exists = fileIo.accessSync(fullPath);
+      const exists = fs.accessSync(fullPath);
       if (!exists) {
         return { nodes: [], edges: [], drawingPaths: [] };
       }
-      const raw = fileIo.readTextSync(fullPath);
+      const raw = fs.readTextSync(fullPath);
       const data = JSON.parse(raw) as CanvasData;
       return {
         nodes: data.nodes || [],
@@ -45,7 +45,10 @@ export class CanvasFileService {
     try {
       const fullPath = this.basePath ? `${this.basePath}/${filePath}` : filePath;
       const raw = JSON.stringify(data, null, 2);
-      fileIo.writeTextSync(fullPath, raw);
+      const file = fs.openSync(fullPath,
+        fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.TRUNC);
+      fs.writeSync(file.fd, raw);
+      fs.closeSync(file);
     } catch (e) {
       console.error('CanvasFileService write failed: ' + JSON.stringify(e));
     }

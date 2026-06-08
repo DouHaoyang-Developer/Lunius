@@ -11,7 +11,7 @@ import { fileService } from '../services/IFileService';
 
 @Observed
 export class BasesViewModel {
-  @State config: TableViewConfig;
+  config: TableViewConfig;
   rows: TableRowData[] = [];
   isLoading: boolean = false;
   totalCount: number = 0;
@@ -85,12 +85,9 @@ export class BasesViewModel {
   private getFilterCandidates(): string[] {
     const propFilters = this.getPropertyConditions(this.config.filter);
     if (propFilters.length === 0) {
-      // 无属性筛选条件，返回所有文件
-      const stats = vaultIndex.getVaultStats ? null : null;
-      // 使用标签索引的辅助方法获取文件列表
+      // 无属性筛选条件 → 由调用方通过 fileService 获取全量
       const ids: string[] = [];
-      const allTags = this.config.columns.find((c: ColumnDef) => c.key === 'tags');
-      return ids; // 由调用方通过 fileService 获取全量
+      return ids;
     }
     // 有属性筛选：取第一个条件对应的文件 ID 集
     const firstProp = propFilters[0];
@@ -101,11 +98,17 @@ export class BasesViewModel {
 
   private getPropertyConditions(filter: FilterGroup): FilterCondition[] {
     const result: FilterCondition[] = [];
-    for (const cond of filter.conditions) {
-      if ('property' in cond) {
-        result.push(cond as FilterCondition);
+    for (let i = 0; i < filter.conditions.length; i++) {
+      const cond = filter.conditions[i];
+      // FilterCondition 无 conditions 字段，FilterGroup 有
+      const condAsGroup = cond as FilterGroup;
+      if (condAsGroup.conditions) {
+        const nested = this.getPropertyConditions(condAsGroup);
+        for (let j = 0; j < nested.length; j++) {
+          result.push(nested[j]);
+        }
       } else {
-        result.push(...this.getPropertyConditions(cond as FilterGroup));
+        result.push(cond as FilterCondition);
       }
     }
     return result;
@@ -116,11 +119,13 @@ export class BasesViewModel {
   evaluateFilter(metadata: NoteMetadata, filter: FilterGroup): boolean {
     if (filter.conditions.length === 0) return true;
     const results: boolean[] = [];
-    for (const cond of filter.conditions) {
-      if ('property' in cond) {
-        results.push(this.evaluateCondition(metadata, cond as FilterCondition));
+    for (let i = 0; i < filter.conditions.length; i++) {
+      const cond = filter.conditions[i];
+      const condAsGroup = cond as FilterGroup;
+      if (condAsGroup.conditions) {
+        results.push(this.evaluateFilter(metadata, condAsGroup));
       } else {
-        results.push(this.evaluateFilter(metadata, cond as FilterGroup));
+        results.push(this.evaluateCondition(metadata, cond as FilterCondition));
       }
     }
     if (filter.conjunction === 'and') {

@@ -2,7 +2,7 @@
 // 插件管理器 — 注册/启用/禁用/恢复 + PluginStore 持久化
 
 import { LuniusPlugin, PluginAPI } from '../models/PluginTypes';
-import { fileIo } from '@kit.CoreFileKit';
+import { fileIo as fs } from '@kit.CoreFileKit';
 
 const PLUGIN_STATE_FILE = 'plugin_state.json';
 
@@ -23,8 +23,8 @@ class PluginStore {
     if (!this.basePath) return this.states;
     try {
       const fp = `${this.basePath}/${PLUGIN_STATE_FILE}`;
-      if (fileIo.accessSync(fp)) {
-        const raw = fileIo.readTextSync(fp);
+      if (fs.accessSync(fp)) {
+        const raw = fs.readTextSync(fp);
         const arr: PluginState[] = JSON.parse(raw);
         for (const s of arr) {
           this.states.set(s.id, s);
@@ -42,7 +42,10 @@ class PluginStore {
       const arr: PluginState[] = [];
       this.states.forEach((s: PluginState) => arr.push(s));
       const fp = `${this.basePath}/${PLUGIN_STATE_FILE}`;
-      fileIo.writeTextSync(fp, JSON.stringify(arr));
+      const file = await fs.open(fp,
+        fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.TRUNC);
+      await fs.write(file.fd, JSON.stringify(arr));
+      await fs.close(file);
     } catch (e) {
       console.error('PluginStore persist failed: ' + JSON.stringify(e));
     }
@@ -124,15 +127,14 @@ export class PluginManager {
 
   async restore(): Promise<void> {
     this.store.loadAll();
-    for (const [id, state] of this.store.loadAll().entries()) {
+    const allStates: Map<string, PluginState> = this.store.loadAll();
+    allStates.forEach((state: PluginState, pluginId: string) => {
       if (state.enabled) {
-        try {
-          await this.enable(id);
-        } catch (e) {
-          console.error(`PluginManager: failed to restore plugin ${id}: ${JSON.stringify(e)}`);
-        }
+        this.enable(pluginId).catch((e: Error) => {
+          console.error('PluginManager: failed to restore plugin ' + pluginId + ': ' + e.message);
+        });
       }
-    }
+    });
   }
 
   getEnabledPlugins(): LuniusPlugin[] {

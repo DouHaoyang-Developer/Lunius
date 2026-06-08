@@ -55,6 +55,7 @@ export struct MermaidWebView {
 export interface ContentBlock {
   type: 'markdown' | 'mermaid';
   content: string;
+  rendered: string;
 }
 
 export function extractMermaidBlocks(mdContent: string): ContentBlock[] {
@@ -69,14 +70,14 @@ export function extractMermaidBlocks(mdContent: string): ContentBlock[] {
     if (!inMermaid && line.trim().startsWith('```mermaid')) {
       // 进入 Mermaid 块
       if (currentMd.length > 0) {
-        blocks.push({ type: 'markdown', content: currentMd });
+        blocks.push({ type: 'markdown', content: currentMd, rendered: '' });
         currentMd = '';
       }
       inMermaid = true;
       mermaidLines = [];
     } else if (inMermaid && line.trim() === '```') {
       // 结束 Mermaid 块
-      blocks.push({ type: 'mermaid', content: mermaidLines.join('\n') });
+      blocks.push({ type: 'mermaid', content: mermaidLines.join('\n'), rendered: '' });
       inMermaid = false;
       mermaidLines = [];
     } else if (inMermaid) {
@@ -87,11 +88,13 @@ export function extractMermaidBlocks(mdContent: string): ContentBlock[] {
   }
   // 剩余文本
   if (currentMd.length > 0) {
-    blocks.push({ type: 'markdown', content: currentMd });
+    blocks.push({ type: 'markdown', content: currentMd, rendered: '' });
   }
   // 未闭合的 Mermaid 块还原为 markdown
   if (inMermaid && mermaidLines.length > 0) {
-    blocks.push({ type: 'markdown', content: '```mermaid\n' + mermaidLines.join('\n') });
+    const recoveredText: string = '```mermaid\n' + mermaidLines.join('\n');
+    const recoveredBlock: ContentBlock = { type: 'markdown', content: recoveredText, rendered: '' };
+    blocks.push(recoveredBlock);
   }
 
   return blocks;

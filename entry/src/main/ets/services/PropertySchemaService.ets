@@ -2,7 +2,7 @@
 // 属性 Schema 管理 — CRUD + JSON 持久化
 
 import { PropertySchema, PropertyType } from './ApiTypes';
-import { fileIo } from '@kit.CoreFileKit';
+import { fileIo as fs } from '@kit.CoreFileKit';
 
 const SCHEMA_FILE = 'property_schemas.json';
 
@@ -18,9 +18,9 @@ export class PropertySchemaService {
     if (!this.basePath) return;
     try {
       const filePath = `${this.basePath}/${SCHEMA_FILE}`;
-      const exists = fileIo.accessSync(filePath);
+      const exists = fs.accessSync(filePath);
       if (!exists) return;
-      const raw = fileIo.readTextSync(filePath);
+      const raw = fs.readTextSync(filePath);
       const arr: PropertySchema[] = JSON.parse(raw);
       for (const s of arr) {
         this.schemas.set(s.key, s);
@@ -37,7 +37,10 @@ export class PropertySchemaService {
       const arr: PropertySchema[] = [];
       this.schemas.forEach((s: PropertySchema) => arr.push(s));
       const raw = JSON.stringify(arr);
-      fileIo.writeTextSync(filePath, raw);
+      const file = await fs.open(filePath,
+        fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY | fs.OpenMode.TRUNC);
+      await fs.write(file.fd, raw);
+      await fs.close(file);
     } catch (e) {
       console.error('PropertySchemaService save failed: ' + JSON.stringify(e));
     }

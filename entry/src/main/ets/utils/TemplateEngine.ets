@@ -1,7 +1,7 @@
 // utils/TemplateEngine.ets
 // 模板变量引擎 — 支持 {{date}} {{time}} {{title}} + {{#if}}/{{#each}}/{{lql:}}/{{date: offset}}
 
-import { templateExecutor, TemplateContext as ExecutorContext } from './TemplateExecutor';
+import { templateExecutor, TemplateContext as ExecutorContext, VariablesMap } from './TemplateExecutor';
 
 export interface TemplateContext {
   date: string;
@@ -10,13 +10,12 @@ export interface TemplateContext {
   filename: string;
   folder: string;
   tags?: string[];
-  frontmatter?: Record<string, string | string[]>;
 }
 
 export function renderTemplate(template: string, ctx: TemplateContext): string {
   const now = new Date();
-  const dateStr = ctx.date || `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  const timeStr = ctx.time || `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const dateStr = ctx.date || now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+  const timeStr = ctx.time || String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
 
   return template
     .replace(/\{\{date\}\}/g, dateStr)
@@ -27,22 +26,15 @@ export function renderTemplate(template: string, ctx: TemplateContext): string {
 }
 
 export async function renderTemplateAsync(template: string, ctx: TemplateContext): Promise<string> {
-  const vars: Record<string, string | string[]> = {
-    'date': ctx.date,
-    'time': ctx.time,
-    'title': ctx.title,
-    'filename': ctx.filename,
-    'folder': ctx.folder
-  };
+  const vars: VariablesMap = new VariablesMap();
+  vars.set('date', ctx.date);
+  vars.set('time', ctx.time);
+  vars.set('title', ctx.title);
+  vars.set('filename', ctx.filename);
+  vars.set('folder', ctx.folder);
 
   if (ctx.tags) {
-    vars['tags'] = ctx.tags;
-  }
-
-  if (ctx.frontmatter) {
-    for (const key of Object.keys(ctx.frontmatter)) {
-      vars[key] = ctx.frontmatter[key];
-    }
+    vars.set('tags', ctx.tags);
   }
 
   const execCtx: ExecutorContext = { variables: vars };
@@ -51,11 +43,14 @@ export async function renderTemplateAsync(template: string, ctx: TemplateContext
 
 export function makeTemplateContext(title: string, folder?: string): TemplateContext {
   const now = new Date();
-  return {
-    date: `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`,
-    time: `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
+  const dateFull = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+  const timeFull = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  const ctx: TemplateContext = {
+    date: dateFull,
+    time: timeFull,
     title: title,
     filename: title,
     folder: folder || ''
   };
+  return ctx;
 }

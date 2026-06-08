@@ -1,9 +1,8 @@
 // services/PluginAPI.ets
 // PluginAPI 实现 — 向插件暴露的受限服务代理
 
-import { PluginAPI, RibbonButtonConfig, CommandConfig } from '../models/PluginTypes';
+import { PluginAPI, PluginVaultAPI, PluginCommandsAPI, PluginUIAPI, RibbonButtonConfig, CommandConfig } from '../models/PluginTypes';
 import { fileService } from './IFileService';
-import { CommandPaletteManager } from './CommandPaletteManager';
 
 // 命令面板管理器（单例，供插件注册命令）
 export class CommandPaletteManager {
@@ -68,36 +67,46 @@ export class RibbonRegistry {
 }
 
 export function createPluginAPI(): PluginAPI {
-  const cmdMgr = CommandPaletteManager.getInstance();
-  const ribbonReg = RibbonRegistry.getInstance();
+  const cmdMgr: CommandPaletteManager = CommandPaletteManager.getInstance();
+  const ribbonReg: RibbonRegistry = RibbonRegistry.getInstance();
 
-  return {
-    vault: {
-      readNote: async (noteId: string) => {
-        return await fileService.readNote(noteId);
-      },
-      getFileTree: async () => {
-        return await fileService.getFileTree();
-      },
-      searchNotes: async (query: string, options?: object) => {
-        return await fileService.searchNotes(query, options);
-      }
+  const vaultAPI: PluginVaultAPI = {
+    readNote: async (noteId: string): Promise<object> => {
+      const result = await fileService.readNote(noteId);
+      return result as object;
     },
-    commands: {
-      register: (config: CommandConfig) => {
-        cmdMgr.register(config);
-      },
-      unregister: (id: string) => {
-        cmdMgr.unregister(id);
-      }
+    getFileTree: async (): Promise<object[]> => {
+      const result = await fileService.getFileTree();
+      return result as object[];
     },
-    ui: {
-      addRibbonButton: (config: RibbonButtonConfig) => {
-        ribbonReg.add(config);
-      },
-      removeRibbonButton: (id: string) => {
-        ribbonReg.remove(id);
-      }
+    searchNotes: async (query: string, options?: object): Promise<object[]> => {
+      const result = await fileService.searchNotes(query, options);
+      return result as object[];
     }
   };
+
+  const commandsAPI: PluginCommandsAPI = {
+    register: (config: CommandConfig): void => {
+      cmdMgr.register(config);
+    },
+    unregister: (id: string): void => {
+      cmdMgr.unregister(id);
+    }
+  };
+
+  const uiAPI: PluginUIAPI = {
+    addRibbonButton: (config: RibbonButtonConfig): void => {
+      ribbonReg.add(config);
+    },
+    removeRibbonButton: (id: string): void => {
+      ribbonReg.remove(id);
+    }
+  };
+
+  const api: PluginAPI = {
+    vault: vaultAPI,
+    commands: commandsAPI,
+    ui: uiAPI
+  };
+  return api;
 }

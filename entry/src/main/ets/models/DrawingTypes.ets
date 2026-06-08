@@ -28,12 +28,25 @@ export interface DrawingPath {
   maxY: number;
 }
 
-export const BRUSH_PRESETS: Record<BrushType, { label: string; width: number; opacity: number; icon: string }> = {
-  [BrushType.PEN]:         { label: '钢笔', width: 3, opacity: 0.9, icon: '🖊' },
-  [BrushType.PENCIL]:      { label: '铅笔', width: 3.5, opacity: 0.7, icon: '✏' },
-  [BrushType.MARKER]:      { label: '马克笔', width: 6, opacity: 0.35, icon: '🖍' },
-  [BrushType.HIGHLIGHTER]: { label: '荧光笔', width: 10, opacity: 0.2, icon: '🖌' }
-};
+export interface BrushPreset {
+  label: string;
+  width: number;
+  opacity: number;
+  icon: string;
+}
+
+const penPreset: BrushPreset = { label: '钢笔', width: 3, opacity: 0.9, icon: '🖊' };
+const pencilPreset: BrushPreset = { label: '铅笔', width: 3.5, opacity: 0.7, icon: '✏' };
+const markerPreset: BrushPreset = { label: '马克笔', width: 6, opacity: 0.35, icon: '🖍' };
+const highlighterPreset: BrushPreset = { label: '荧光笔', width: 10, opacity: 0.2, icon: '🖌' };
+
+export function getBrushPreset(type: BrushType): BrushPreset {
+  if (type === BrushType.PEN) return penPreset;
+  if (type === BrushType.PENCIL) return pencilPreset;
+  if (type === BrushType.MARKER) return markerPreset;
+  if (type === BrushType.HIGHLIGHTER) return highlighterPreset;
+  return penPreset;
+}
 
 export const PALETTE_COLORS: string[] = [
   '#000000', '#E74C3C', '#E67E22', '#F1C40F',

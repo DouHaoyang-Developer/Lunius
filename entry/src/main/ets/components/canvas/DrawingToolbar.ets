@@ -3,7 +3,7 @@
 
 import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
 import { CanvasViewModel } from '../../viewmodels/CanvasViewModel';
-import { BrushType, BRUSH_PRESETS, PALETTE_COLORS } from '../../models/DrawingTypes';
+import { BrushType, getBrushPreset, PALETTE_COLORS } from '../../models/DrawingTypes';
 
 @Component
 export struct DrawingToolbar {
@@ -23,7 +23,7 @@ export struct DrawingToolbar {
       // ---- 第一行：笔刷类型 ----
       Row({ space: 6 }) {
         ForEach(this.brushTypes, (type: BrushType) => {
-          const preset = BRUSH_PRESETS[type];
+          const preset = getBrushPreset(type);
           Button() {
             Text(preset.icon).fontSize(16)
           }

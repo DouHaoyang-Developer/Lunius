@@ -5,50 +5,71 @@ import { TemplateExpr, TemplateExprType, TemplateParser } from './TemplateParser
 import { lqlExecutor } from './LQLExecutor';
 import { lqlRenderer } from './LQLRenderer';
 
+export class VariablesMap {
+  private data: Map<string, string | string[]> = new Map();
+
+  get(key: string): string | string[] | undefined {
+    return this.data.get(key);
+  }
+
+  set(key: string, value: string | string[]): void {
+    this.data.set(key, value);
+  }
+
+  has(key: string): boolean {
+    return this.data.has(key);
+  }
+
+  keys(): string[] {
+    const result: string[] = [];
+    this.data.forEach((_v: string | string[], k: string) => {
+      result.push(k);
+    });
+    return result;
+  }
+}
+
 export interface TemplateContext {
-  variables: Record<string, string | string[]>;
+  variables: VariablesMap;
+}
+
+interface LQLReplacement {
+  original: string;
+  html: string;
 }
 
 export class TemplateExecutor {
   async applyTemplate(template: string, context: TemplateContext): Promise<string> {
     let result = template;
 
-    // 1. LQL 内联查询: {{lql: TABLE ...}}
     result = await this.applyLqlQueries(result);
-
-    // 2. 条件块: {{#if condition}}body{{else}}alt{{/if}}
     result = this.applyIfBlocks(result, context);
-
-    // 3. 循环块: {{#each array}}item{{/each}}
     result = this.applyEachBlocks(result, context);
-
-    // 4. 日期计算: {{date: +7d}}
     result = this.applyDateCalc(result);
-
-    // 5. 简单变量: {{title}} {{date}}
     result = this.applyVariables(result, context);
 
     return result;
   }
 
   private async applyLqlQueries(template: string): Promise<string> {
-    const lqlRegex = /\{\{lql:\s*([^}]+)\}\}/g;
     let result = template;
-    const matches = template.matchAll(lqlRegex);
-    const replacements: { original: string; html: string }[] = [];
-
-    for (const m of matches) {
+    const lqlRegex = /\{\{lql:\s*([^}]+)\}\}/g;
+    const replacements: LQLReplacement[] = [];
+    let match: RegExpExecArray | null;
+    while ((match = lqlRegex.exec(template)) !== null) {
       try {
-        const lqlText = m[1].trim();
+        const lqlText = match[1].trim();
         const lqlResult = await lqlExecutor.execute(lqlText);
         const html = lqlRenderer.render(lqlResult);
-        replacements.push({ original: m[0], html: `<div style="margin:8px 0;">${html}</div>` });
+        const rep: LQLReplacement = { original: match[0], html: '<div style="margin:8px 0;">' + html + '</div>' };
+        replacements.push(rep);
       } catch (e) {
-        replacements.push({ original: m[0], html: `[LQL错误: ${e}]` });
+        const rep: LQLReplacement = { original: match[0], html: '[LQL错误]' };
+        replacements.push(rep);
       }
     }
-
-    for (const r of replacements) {
+    for (let i = 0; i < replacements.length; i++) {
+      const r = replacements[i];
       result = result.replace(r.original, r.html);
     }
     return result;
@@ -57,7 +78,6 @@ export class TemplateExecutor {
   private applyIfBlocks(template: string, context: TemplateContext): string {
     const ifRegex = /\{\{#if\s+([^}]+)\}\}([\s\S]*?)\{\{\/if\}\}/g;
     return template.replace(ifRegex, (_m: string, condition: string, body: string): string => {
-      // 处理 {{else}}
       let ifBody = body;
       let elseBody = '';
       const elseIdx = body.indexOf('{{else}}');
@@ -68,10 +88,12 @@ export class TemplateExecutor {
 
       const result = this.evaluateCondition(condition.trim(), context);
       if (result) {
-        // 递归处理 ifBody 中的变量
         return this.replaceVariables(ifBody, context);
       }
-      return elseBody ? this.replaceVariables(elseBody, context) : '';
+      if (elseBody !== '') {
+        return this.replaceVariables(elseBody, context);
+      }
+      return '';
     });
   }
 
@@ -82,10 +104,19 @@ export class TemplateExecutor {
       if (arr.length === 0) return '';
 
       let result = '';
-      for (const item of arr) {
-        const itemCtx: TemplateContext = {
-          variables: { ...context.variables, 'this': item }
-        };
+      for (let i = 0; i < arr.length; i++) {
+        const item = arr[i];
+        const itemMap: VariablesMap = new VariablesMap();
+        const ctxKeys = context.variables.keys();
+        for (let k = 0; k < ctxKeys.length; k++) {
+          const ck = ctxKeys[k];
+          const cv = context.variables.get(ck);
+          if (cv !== undefined) {
+            itemMap.set(ck, cv);
+          }
+        }
+        itemMap.set('this', item);
+        const itemCtx: TemplateContext = { variables: itemMap };
         result += this.replaceVariables(body, itemCtx);
       }
       return result;
@@ -106,61 +137,73 @@ export class TemplateExecutor {
 
   private replaceVariables(text: string, context: TemplateContext): string {
     return text.replace(/\{\{(\w+)\}\}/g, (_m: string, varName: string): string => {
-      const val = context.variables[varName];
+      const val = context.variables.get(varName);
+      if (val === undefined) {
+        return '{{' + varName + '}}';
+      }
       if (Array.isArray(val)) {
         return val.join(', ');
       }
-      return val !== undefined ? val : `{{${varName}}}`;
+      return val;
     });
   }
 
   private evaluateCondition(condition: string, context: TemplateContext): boolean {
-    // 简单条件：status == "draft" 或 status != "draft"
     const eqMatch = condition.match(/^(\w+)\s*==\s*"([^"]+)"$/);
-    if (eqMatch) {
-      const val = context.variables[eqMatch[1]];
+    if (eqMatch !== null) {
+      const val = context.variables.get(eqMatch[1]);
       return String(val) === eqMatch[2];
     }
     const neqMatch = condition.match(/^(\w+)\s*!=\s*"([^"]+)"$/);
-    if (neqMatch) {
-      const val = context.variables[neqMatch[1]];
+    if (neqMatch !== null) {
+      const val = context.variables.get(neqMatch[1]);
       return String(val) !== neqMatch[2];
     }
-    // 变量是否存在
     const existsMatch = condition.match(/^(\w+)$/);
-    if (existsMatch) {
-      const val = context.variables[existsMatch[1]];
+    if (existsMatch !== null) {
+      const val = context.variables.get(existsMatch[1]);
       return val !== undefined && val !== '' && val !== 'false';
     }
     return false;
   }
 
   private resolveArray(arrayExpr: string, context: TemplateContext): string[] {
-    // file.tags → context.variables['tags']
     const parts = arrayExpr.split('.');
     const rootVar = parts[parts.length - 1] || parts[0];
-    const val = context.variables[rootVar];
+    const val = context.variables.get(rootVar);
+    if (val === undefined) return [];
     if (Array.isArray(val)) return val;
-    if (typeof val === 'string') return val.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0);
+    if (typeof val === 'string') {
+      return val.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0);
+    }
     return [];
   }
 
   private resolveDate(dateExpr: string): string {
     const now = new Date();
-    let target = now;
+    let targetMs = now.getTime();
+    let targetMonth = now.getMonth();
+    let targetYear = now.getFullYear();
+    let useMonth = false;
+    let useYear = false;
 
-    // 解析偏移量: +7d / -1m / +1y
     const offsetRegex = /([+-]?\d+)([dmy])/g;
     let m: RegExpExecArray | null;
     while ((m = offsetRegex.exec(dateExpr)) !== null) {
       const num = parseInt(m[1]);
       const unit = m[2];
-      if (unit === 'd') target = new Date(target.getTime() + num * 86400000);
-      if (unit === 'm') target = new Date(target.getFullYear(), target.getMonth() + num, target.getDate());
-      if (unit === 'y') target = new Date(target.getFullYear() + num, target.getMonth(), target.getDate());
+      if (unit === 'd') { targetMs += num * 86400000; }
+      if (unit === 'm') { targetMonth += num; useMonth = true; }
+      if (unit === 'y') { targetYear += num; useYear = true; }
     }
 
-    // 格式化
+    let target: Date;
+    if (useMonth || useYear) {
+      target = new Date(targetYear, targetMonth, now.getDate(), now.getHours(), now.getMinutes());
+    } else {
+      target = new Date(targetMs);
+    }
+
     const formatMatch = dateExpr.match(/format\s+"([^"]+)"/);
     const fmt = formatMatch ? formatMatch[1] : 'YYYY-MM-DD';
 
@@ -169,17 +212,22 @@ export class TemplateExecutor {
 
   private formatDate(date: Date, format: string): string {
     const y = String(date.getFullYear());
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    const h = String(date.getHours()).padStart(2, '0');
-    const mi = String(date.getMinutes()).padStart(2, '0');
+    const mStr = '0' + String(date.getMonth() + 1);
+    const m = mStr.substring(mStr.length - 2);
+    const dStr = '0' + String(date.getDate());
+    const d = dStr.substring(dStr.length - 2);
+    const hStr = '0' + String(date.getHours());
+    const h = hStr.substring(hStr.length - 2);
+    const miStr = '0' + String(date.getMinutes());
+    const mi = miStr.substring(miStr.length - 2);
 
-    return format
-      .replace('YYYY', y)
-      .replace('MM', m)
-      .replace('DD', d)
-      .replace('HH', h)
-      .replace('mm', mi);
+    let result = format;
+    result = result.replace('YYYY', y);
+    result = result.replace('MM', m);
+    result = result.replace('DD', d);
+    result = result.replace('HH', h);
+    result = result.replace('mm', mi);
+    return result;
   }
 }
 

@@ -15,7 +15,7 @@ export class ExportHelper {
   }
 
   static async exportAsHtml(noteId: string, content: string, title: string): Promise<string> {
-    const mdHtml = markdownToHtml(content);
+    const mdHtml = await markdownToHtml(content);
     const fullHtml = ExportHelper.wrapHtml(mdHtml, title);
     const fileService = FileService.getInstance();
     const fileName = title.replace(/[<>:"/\\|?*]/g, '_') + '.html';
@@ -35,7 +35,7 @@ export class ExportHelper {
   }
 
   static async exportAsPdf(noteId: string, content: string, title: string): Promise<string> {
-    const mdHtml = markdownToHtml(content);
+    const mdHtml = await markdownToHtml(content);
     const fullHtml = ExportHelper.wrapHtml(mdHtml, title);
     // 先保存 HTML 文件
     const fileService = FileService.getInstance();

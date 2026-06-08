@@ -55,11 +55,11 @@ export class LQLRenderer {
       const title = row.title || row.path;
       html += `<li style="margin:4px 0;"><strong>${title}</strong>`;
       // 额外字段
-      for (const [key, val] of row.cells.entries()) {
-        if (key !== 'title' && key !== 'path' && val) {
-          html += ` <span style="color:var(--text-muted);font-size:11px;">${key}: ${val}</span>`;
+      row.cells.forEach((val: string, key: string) => {
+        if (key !== 'title' && key !== 'path' && val !== '') {
+          html += ' <span style="color:var(--text-muted);font-size:11px;">' + key + ': ' + val + '</span>';
         }
-      }
+      });
       html += '</li>';
     }
     html += '</ul>';

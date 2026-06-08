@@ -2,7 +2,7 @@
 // 画布 ViewModel — 节点/连线 CRUD + 选中/撤销状态
 
 import { CanvasNode, CanvasEdge, CanvasData } from '../models/CanvasTypes';
-import { DrawingPath, BrushType, DrawingMode, BRUSH_PRESETS } from '../models/DrawingTypes';
+import { DrawingPath, BrushType, DrawingMode, getBrushPreset, TouchPoint } from '../models/DrawingTypes';
 import { canvasFileService } from '../services/CanvasFileService';
 import { DrawingExport } from '../utils/DrawingExport';
 
@@ -180,7 +180,7 @@ export class CanvasViewModel {
 
   setBrushType(type: BrushType): void {
     this.brushType = type;
-    const preset = BRUSH_PRESETS[type];
+    const preset = getBrushPreset(type);
     this.brushWidth = preset.width;
   }
 
@@ -218,27 +218,54 @@ export class CanvasViewModel {
   // ─── 撤销/重做 ───────────────────────────────
 
   saveUndo(): void {
-    const snapshot: CanvasData = {
-      nodes: this.nodes.map((n: CanvasNode) => ({
+    const snapshotNodes: CanvasNode[] = [];
+    for (let i = 0; i < this.nodes.length; i++) {
+      const n = this.nodes[i];
+      const copy: CanvasNode = {
         id: n.id, type: n.type, x: n.x, y: n.y,
         width: n.width, height: n.height,
         color: n.color, text: n.text, file: n.file, subpath: n.subpath,
         url: n.url, label: n.label, background: n.background,
         backgroundStyle: n.backgroundStyle,
         penFilePath: n.penFilePath, penPreviewSvg: n.penPreviewSvg
-      })),
-      edges: this.edges.map((e: CanvasEdge) => ({
+      };
+      snapshotNodes.push(copy);
+    }
+
+    const snapshotEdges: CanvasEdge[] = [];
+    for (let i = 0; i < this.edges.length; i++) {
+      const e = this.edges[i];
+      const copy: CanvasEdge = {
         id: e.id, fromNode: e.fromNode, toNode: e.toNode,
         fromSide: e.fromSide, toSide: e.toSide,
         fromEnd: e.fromEnd, toEnd: e.toEnd,
         color: e.color, label: e.label
-      })),
-      drawingPaths: this.drawingPaths.map((p: DrawingPath) => ({
+      };
+      snapshotEdges.push(copy);
+    }
+
+    const snapshotPaths: DrawingPath[] = [];
+    for (let i = 0; i < this.drawingPaths.length; i++) {
+      const p = this.drawingPaths[i];
+      const pathPoints: TouchPoint[] = [];
+      for (let j = 0; j < p.points.length; j++) {
+        const pt = p.points[j];
+        const copyPt: TouchPoint = { x: pt.x, y: pt.y, pressure: pt.pressure, time: pt.time };
+        pathPoints.push(copyPt);
+      }
+      const copy: DrawingPath = {
         id: p.id, brushType: p.brushType, color: p.color,
         baseWidth: p.baseWidth, opacity: p.opacity,
-        points: p.points.map((pt) => ({ x: pt.x, y: pt.y, pressure: pt.pressure, time: pt.time })),
+        points: pathPoints,
         minX: p.minX, minY: p.minY, maxX: p.maxX, maxY: p.maxY
-      }))
+      };
+      snapshotPaths.push(copy);
+    }
+
+    const snapshot: CanvasData = {
+      nodes: snapshotNodes,
+      edges: snapshotEdges,
+      drawingPaths: snapshotPaths
     };
     this.undoStack.push(snapshot);
     if (this.undoStack.length > 50) this.undoStack.shift();

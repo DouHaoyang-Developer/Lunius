@@ -78,8 +78,17 @@ export struct MarkdownEditor {
     this.vm.stopIntervalSave();
   }
 
-  private buildPreviewBlocks(): ContentBlock[] {
-    return extractMermaidBlocks(this.vm.content);
+  @State previewBlocks: ContentBlock[] = [];
+
+  private async buildPreviewBlocks(): Promise<void> {
+    const blocks = extractMermaidBlocks(this.vm.content);
+    for (let i = 0; i < blocks.length; i++) {
+      if (blocks[i].type === 'markdown') {
+        const b = blocks[i];
+        b.rendered = await markdownToHtml(b.content);
+      }
+    }
+    this.previewBlocks = blocks;
   }
 
   private showToast(message: string): void {
@@ -148,6 +157,9 @@ export struct MarkdownEditor {
       this.viewMode = 'split';
     } else {
       this.viewMode = 'live';
+    }
+    if (this.viewMode === 'preview') {
+      this.buildPreviewBlocks();
     }
     if (this.viewMode === 'live' || this.viewMode === 'source') {
       this.rebuildEditor();
@@ -646,12 +658,12 @@ export struct MarkdownEditor {
                   Text(this.vm.title).fontSize(28).fontWeight(FontWeight.Bold).fontColor(this.colors.textPrimary)
                     .width('100%').margin({ bottom: 16 })
                   // 按块渲染：Markdown 文本 + Mermaid 图表交替
-                  ForEach(this.buildPreviewBlocks(), (block: ContentBlock) => {
+                  ForEach(this.previewBlocks, (block: ContentBlock) => {
                     if (block.type === 'mermaid') {
                       MermaidWebView({ mermaidCode: block.content, themeMode: this.themeMode })
                         .width('100%')
                     } else {
-                      Text(markdownToHtml(block.content)).fontSize(14).fontColor(this.colors.textPrimary)
+                      Text(block.rendered).fontSize(14).fontColor(this.colors.textPrimary)
                         .width('100%').lineHeight(24)
                     }
                   }, (block: ContentBlock, index: number): string => index.toString())
