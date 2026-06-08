@@ -12,11 +12,11 @@ struct FilterConditionRow {
   @Prop columns: ColumnDef[];
   onRemove?: () => void;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
-  private get operators(): { label: string, value: string }[] {
+  private operators(): { label: string, value: string }[] {
     return [
       { label: '等于', value: 'equals' },
       { label: '不等于', value: 'not_equals' },
@@ -33,24 +33,24 @@ struct FilterConditionRow {
     Row({ space: 6 }) {
       // 属性选择
       TextInput({ text: $$this.condition.property, placeholder: '属性' })
-        .fontSize(12).fontColor(this.colors.textPrimary)
-        .width(80).height(30).backgroundColor(this.colors.bgTertiary).borderRadius(4)
+        .fontSize(12).fontColor(this.colors().textPrimary)
+        .width(80).height(30).backgroundColor(this.colors().bgTertiary).borderRadius(4)
 
       // 运算符选择
       TextInput({ text: '=', placeholder: '=' })
-        .fontSize(12).fontColor(this.colors.accent).width(30).height(30)
-        .backgroundColor(this.colors.bgTertiary).borderRadius(4)
+        .fontSize(12).fontColor(this.colors().accent).width(30).height(30)
+        .backgroundColor(this.colors().bgTertiary).borderRadius(4)
 
       // 值输入（exists/not_exists 不需要）
       if (this.condition.operator !== 'exists' && this.condition.operator !== 'not_exists') {
         TextInput({ text: $$this.condition.value, placeholder: '值' })
-          .fontSize(12).fontColor(this.colors.textPrimary)
+          .fontSize(12).fontColor(this.colors().textPrimary)
           .layoutWeight(1).height(30)
-          .backgroundColor(this.colors.bgTertiary).borderRadius(4)
+          .backgroundColor(this.colors().bgTertiary).borderRadius(4)
       }
 
       Button({ type: ButtonType.Circle }) {
-        Text('✕').fontSize(10).fontColor(this.colors.textMuted)
+        Text('✕').fontSize(10).fontColor(this.colors().textMuted)
       }
       .width(20).height(20).backgroundColor(Color.Transparent)
       .onClick(() => { if (this.onRemove) this.onRemove(); })
@@ -65,11 +65,11 @@ export struct FilterEditor {
   @ObjectLink vm: BasesViewModel;
   @State isExpanded: boolean = false;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
-  private get filter(): FilterGroup {
+  private filter(): FilterGroup {
     return this.vm.config.filter;
   }
 
@@ -79,19 +79,19 @@ export struct FilterEditor {
         Row({ space: 4 }) {
           Text('🔍').fontSize(12)
           Text('筛选')
-            .fontSize(13).fontWeight(FontWeight.Medium).fontColor(this.colors.textSecondary)
+            .fontSize(13).fontWeight(FontWeight.Medium).fontColor(this.colors().textSecondary)
         }
         .layoutWeight(1)
 
         Text(this.isExpanded ? '收起' : '展开')
-          .fontSize(11).fontColor(this.colors.accent)
+          .fontSize(11).fontColor(this.colors().accent)
           .onClick(() => { this.isExpanded = !this.isExpanded; })
       }
       .width('100%').height(32).padding({ left: 12, right: 12 })
 
       if (this.isExpanded) {
         // 已有条件列表
-        ForEach(this.filter.conditions as (FilterCondition | FilterGroup)[],
+        ForEach(this.filter().conditions as (FilterCondition | FilterGroup)[],
           (cond: FilterCondition | FilterGroup, index: number) => {
             if ('property' in cond) {
               FilterConditionRow({
@@ -104,29 +104,29 @@ export struct FilterEditor {
         // 添加条件按钮
         Row({ space: 8 }) {
           Button('+ 条件')
-            .fontSize(12).fontColor(this.colors.accent)
+            .fontSize(12).fontColor(this.colors().accent)
             .height(28).padding({ left: 8, right: 8 })
-            .backgroundColor(this.colors.bgTertiary).borderRadius(4)
+            .backgroundColor(this.colors().bgTertiary).borderRadius(4)
             .onClick(() => {
               const newCond: FilterCondition = {
                 property: '', operator: 'contains', value: ''
               };
-              (this.filter.conditions as FilterCondition[]).push(newCond);
+              (this.filter().conditions as FilterCondition[]).push(newCond);
             })
 
           Button('清除')
-            .fontSize(12).fontColor(this.colors.textMuted)
+            .fontSize(12).fontColor(this.colors().textMuted)
             .height(28).padding({ left: 8, right: 8 })
-            .backgroundColor(this.colors.bgTertiary).borderRadius(4)
+            .backgroundColor(this.colors().bgTertiary).borderRadius(4)
             .onClick(() => {
-              this.filter.conditions = [];
+              this.filter().conditions = [];
             })
         }
         .width('100%').padding({ left: 12, right: 12 })
       }
     }
     .width('100%')
-    .backgroundColor(this.colors.bgSecondary)
-    .border({ width: { bottom: 1 }, color: this.colors.divider })
+    .backgroundColor(this.colors().bgSecondary)
+    .border({ width: { bottom: 1 }, color: this.colors().divider })
   }
 }

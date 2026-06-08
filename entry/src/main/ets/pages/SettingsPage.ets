@@ -36,7 +36,7 @@ struct SettingsPage {
     this.plugins = pluginManager.getAllPlugins();
   }
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -45,7 +45,7 @@ struct SettingsPage {
     Text(title)
       .fontSize(12)
       .fontWeight(FontWeight.Medium)
-      .fontColor(this.colors.textMuted)
+      .fontColor(this.colors().textMuted)
       .margin({ top: 24, bottom: 8, left: 16, right: 16 })
       .letterSpacing(1)
   }
@@ -55,23 +55,23 @@ struct SettingsPage {
     Row() {
       Text(label)
         .fontSize(14)
-        .fontColor(this.colors.textPrimary)
+        .fontColor(this.colors().textPrimary)
         .layoutWeight(1)
 
       Row({ space: 4 }) {
         Text(value)
           .fontSize(14)
-          .fontColor(this.colors.textMuted)
+          .fontColor(this.colors().textMuted)
         Text('›')
           .fontSize(14)
-          .fontColor(this.colors.textMuted)
+          .fontColor(this.colors().textMuted)
       }
     }
     .width('100%')
     .height(48)
     .padding({ left: 16, right: 16 })
-    .backgroundColor(this.colors.bgPrimary)
-    .border({ width: { bottom: 1 }, color: this.colors.divider })
+    .backgroundColor(this.colors().bgPrimary)
+    .border({ width: { bottom: 1 }, color: this.colors().divider })
     .onClick(() => {
       if (onClick) onClick();
     })
@@ -83,24 +83,24 @@ struct SettingsPage {
       Column({ space: 2 }) {
         Text(label)
           .fontSize(14)
-          .fontColor(this.colors.textPrimary)
+          .fontColor(this.colors().textPrimary)
         Text('重启后生效')
           .fontSize(11)
-          .fontColor(this.colors.textMuted)
+          .fontColor(this.colors().textMuted)
           .visibility(Visibility.None) // 预留提示位
       }
       .alignItems(HorizontalAlign.Start)
       .layoutWeight(1)
 
       Toggle({ type: ToggleType.Switch, isOn: isOn })
-        .selectedColor(this.colors.accent)
+        .selectedColor(this.colors().accent)
         .onChange(onChange)
     }
     .width('100%')
     .height(48)
     .padding({ left: 16, right: 16 })
-    .backgroundColor(this.colors.bgPrimary)
-    .border({ width: { bottom: 1 }, color: this.colors.divider })
+    .backgroundColor(this.colors().bgPrimary)
+    .border({ width: { bottom: 1 }, color: this.colors().divider })
   }
 
   build() {
@@ -110,7 +110,7 @@ struct SettingsPage {
         Button({ type: ButtonType.Circle }) {
           Text('←')
             .fontSize(18)
-            .fontColor(this.colors.textPrimary)
+            .fontColor(this.colors().textPrimary)
         }
         .width(36)
         .height(36)
@@ -126,7 +126,7 @@ struct SettingsPage {
         Text('设置')
           .fontSize(17)
           .fontWeight(FontWeight.Medium)
-          .fontColor(this.colors.textPrimary)
+          .fontColor(this.colors().textPrimary)
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
 
@@ -135,8 +135,8 @@ struct SettingsPage {
       .width('100%')
       .height(52)
       .padding({ left: 12, right: 12 })
-      .backgroundColor(this.colors.bgSecondary)
-      .border({ width: { bottom: 1 }, color: this.colors.divider })
+      .backgroundColor(this.colors().bgSecondary)
+      .border({ width: { bottom: 1 }, color: this.colors().divider })
 
       Scroll() {
         Column() {
@@ -180,7 +180,7 @@ struct SettingsPage {
 
           if (this.plugins.length === 0) {
             Text('暂无插件')
-              .fontSize(13).fontColor(this.colors.textMuted)
+              .fontSize(13).fontColor(this.colors().textMuted)
               .width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 })
           } else {
             ForEach(this.plugins, (plugin: LuniusPlugin) => {
@@ -188,17 +188,17 @@ struct SettingsPage {
                 Row() {
                   Column({ space: 2 }) {
                     Text(plugin.manifest.name)
-                      .fontSize(14).fontColor(this.colors.textPrimary)
+                      .fontSize(14).fontColor(this.colors().textPrimary)
                     Text(plugin.manifest.description)
-                      .fontSize(11).fontColor(this.colors.textMuted)
+                      .fontSize(11).fontColor(this.colors().textMuted)
                       .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
                     Text(`v${plugin.manifest.version} · ${plugin.manifest.author}`)
-                      .fontSize(10).fontColor(this.colors.textMuted)
+                      .fontSize(10).fontColor(this.colors().textMuted)
                   }
                   .alignItems(HorizontalAlign.Start).layoutWeight(1)
 
                   Toggle({ type: ToggleType.Switch, isOn: plugin.isEnabled })
-                    .selectedColor(this.colors.accent)
+                    .selectedColor(this.colors().accent)
                     .onChange(async (isOn: boolean) => {
                       if (isOn) {
                         await pluginManager.enable(plugin.manifest.id);
@@ -210,8 +210,8 @@ struct SettingsPage {
                 }
                 .width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 })
               }
-              .width('100%').backgroundColor(this.colors.bgPrimary)
-              .border({ width: { bottom: 1 }, color: this.colors.divider })
+              .width('100%').backgroundColor(this.colors().bgPrimary)
+              .border({ width: { bottom: 1 }, color: this.colors().divider })
             }, (plugin: LuniusPlugin) => plugin.manifest.id)
           }
 
@@ -227,11 +227,11 @@ struct SettingsPage {
       }
       .width('100%')
       .layoutWeight(1)
-      .backgroundColor(this.colors.bgPrimary)
+      .backgroundColor(this.colors().bgPrimary)
       .scrollBar(BarState.Auto)
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.colors.bgPrimary)
+    .backgroundColor(this.colors().bgPrimary)
   }
 }

@@ -21,11 +21,11 @@ export struct CommandPalette {
   onClose?: () => void;
   onCommand?: (commandId: string) => void;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
-  private get commands(): CommandItem[] {
+  private commands(): CommandItem[] {
     const all: CommandItem[] = [
       { id: 'new', name: '新建笔记', icon: '📝', shortcut: 'Ctrl+N', category: '文件', action: () => {} },
       { id: 'open', name: '快速打开', icon: '📂', shortcut: 'Ctrl+O', category: '文件', action: () => {} },
@@ -68,11 +68,11 @@ export struct CommandPalette {
         Row({ space: 8 }) {
           Text('⌘')
             .fontSize(16)
-            .fontColor(this.colors.textMuted)
+            .fontColor(this.colors().textMuted)
 
           TextInput({ placeholder: '输入命令或搜索...', text: $$this.query })
-            .placeholderColor(this.colors.textMuted)
-            .fontColor(this.colors.textPrimary)
+            .placeholderColor(this.colors().textMuted)
+            .fontColor(this.colors().textPrimary)
             .fontSize(14)
             .height(40)
             .backgroundColor(Color.Transparent)
@@ -82,7 +82,7 @@ export struct CommandPalette {
             Button({ type: ButtonType.Circle }) {
               Text('✕')
                 .fontSize(12)
-                .fontColor(this.colors.textMuted)
+                .fontColor(this.colors().textMuted)
             }
             .width(24)
             .height(24)
@@ -95,12 +95,12 @@ export struct CommandPalette {
         .width('100%')
         .height(48)
         .padding({ left: 16, right: 16 })
-        .backgroundColor(this.colors.bgSecondary)
-        .border({ width: { bottom: 1 }, color: this.colors.divider })
+        .backgroundColor(this.colors().bgSecondary)
+        .border({ width: { bottom: 1 }, color: this.colors().divider })
 
         // 命令列表
         List({ space: 0 }) {
-          ForEach(this.commands, (cmd: CommandItem, index: number) => {
+          ForEach(this.commands(), (cmd: CommandItem, index: number) => {
             ListItem() {
               Row({ space: 12 }) {
                 Text(cmd.icon)
@@ -110,12 +110,12 @@ export struct CommandPalette {
                 Column({ space: 2 }) {
                   Text(cmd.name)
                     .fontSize(14)
-                    .fontColor(this.colors.textPrimary)
+                    .fontColor(this.colors().textPrimary)
                     .fontWeight(index === this.selectedIndex ? FontWeight.Medium : FontWeight.Regular)
 
                   Text(cmd.category)
                     .fontSize(10)
-                    .fontColor(this.colors.textMuted)
+                    .fontColor(this.colors().textMuted)
                 }
                 .alignItems(HorizontalAlign.Start)
                 .layoutWeight(1)
@@ -123,8 +123,8 @@ export struct CommandPalette {
                 if (cmd.shortcut) {
                   Text(cmd.shortcut)
                     .fontSize(11)
-                    .fontColor(this.colors.textMuted)
-                    .backgroundColor(this.colors.bgTertiary)
+                    .fontColor(this.colors().textMuted)
+                    .backgroundColor(this.colors().bgTertiary)
                     .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                     .borderRadius(4)
                 }
@@ -132,7 +132,7 @@ export struct CommandPalette {
               .width('100%')
               .height(44)
               .padding({ left: 16, right: 16 })
-              .backgroundColor(index === this.selectedIndex ? this.colors.bgActive : Color.Transparent)
+              .backgroundColor(index === this.selectedIndex ? this.colors().bgActive : Color.Transparent)
               .onClick(() => {
                 cmd.action();
                 if (this.onClose) { this.onClose(); }
@@ -148,23 +148,23 @@ export struct CommandPalette {
         Row({ space: 16 }) {
           Text('↑↓ 选择')
             .fontSize(10)
-            .fontColor(this.colors.textMuted)
+            .fontColor(this.colors().textMuted)
           Text('Enter 执行')
             .fontSize(10)
-            .fontColor(this.colors.textMuted)
+            .fontColor(this.colors().textMuted)
           Text('Esc 关闭')
             .fontSize(10)
-            .fontColor(this.colors.textMuted)
+            .fontColor(this.colors().textMuted)
         }
         .width('100%')
         .height(32)
         .padding({ left: 16, right: 16 })
-        .backgroundColor(this.colors.bgSecondary)
-        .border({ width: { top: 1 }, color: this.colors.divider })
+        .backgroundColor(this.colors().bgSecondary)
+        .border({ width: { top: 1 }, color: this.colors().divider })
       }
       .width('80%')
       .constraintSize({ maxHeight: 480 })
-      .backgroundColor(this.colors.bgPrimary)
+      .backgroundColor(this.colors().bgPrimary)
       .borderRadius(8)
       .shadow({ radius: 16, color: 'rgba(0,0,0,0.3)', offsetX: 0, offsetY: 8 })
       .position({ x: '10%', y: '15%' })

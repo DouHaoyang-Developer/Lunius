@@ -31,11 +31,11 @@ export struct QuickSwitcher {
   onSelect?: (noteId: string) => void;
   onClose?: () => void;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
-  private get filtered(): SwitcherItem[] {
+  private filtered(): SwitcherItem[] {
     if (!this.query) {
       const result: SwitcherItem[] = [];
       const names = this.noteNames.slice(0, 20);
@@ -73,10 +73,10 @@ export struct QuickSwitcher {
           Row({ space: 8 }) {
             Text('🔍')
               .fontSize(14)
-              .fontColor(this.colors.textMuted)
+              .fontColor(this.colors().textMuted)
             TextInput({ placeholder: '搜索笔记...', text: $$this.query })
-              .placeholderColor(this.colors.textMuted)
-              .fontColor(this.colors.textPrimary)
+              .placeholderColor(this.colors().textMuted)
+              .fontColor(this.colors().textPrimary)
               .fontSize(14)
               .height(40)
               .backgroundColor(Color.Transparent)
@@ -88,19 +88,19 @@ export struct QuickSwitcher {
           .width('100%')
           .height(48)
           .padding({ left: 16, right: 16 })
-          .backgroundColor(this.colors.bgSecondary)
-          .border({ width: { bottom: 1 }, color: this.colors.divider })
+          .backgroundColor(this.colors().bgSecondary)
+          .border({ width: { bottom: 1 }, color: this.colors().divider })
 
           // 文件列表
           List({ space: 0 }) {
-            ForEach(this.filtered, (item: SwitcherItem, index: number) => {
+            ForEach(this.filtered(), (item: SwitcherItem, index: number) => {
               ListItem() {
                 Row({ space: 10 }) {
                   Text('📄')
                     .fontSize(14)
                   Text(item.name)
                     .fontSize(14)
-                    .fontColor(this.colors.textPrimary)
+                    .fontColor(this.colors().textPrimary)
                     .layoutWeight(1)
                     .textOverflow({ overflow: TextOverflow.Ellipsis })
                     .maxLines(1)
@@ -108,7 +108,7 @@ export struct QuickSwitcher {
                 .width('100%')
                 .height(40)
                 .padding({ left: 16, right: 16 })
-                .backgroundColor(index === this.selectedIndex ? this.colors.bgActive : Color.Transparent)
+                .backgroundColor(index === this.selectedIndex ? this.colors().bgActive : Color.Transparent)
                 .onClick(() => {
                   if (this.onSelect) this.onSelect(item.id);
                 })
@@ -123,16 +123,16 @@ export struct QuickSwitcher {
           Row() {
             Text('↑↓ 选择  Enter 打开  Esc 关闭')
               .fontSize(10)
-              .fontColor(this.colors.textMuted)
+              .fontColor(this.colors().textMuted)
           }
           .width('100%')
           .height(28)
           .padding({ left: 16, right: 16 })
-          .backgroundColor(this.colors.bgSecondary)
-          .border({ width: { top: 1 }, color: this.colors.divider })
+          .backgroundColor(this.colors().bgSecondary)
+          .border({ width: { top: 1 }, color: this.colors().divider })
         }
         .width('70%')
-        .backgroundColor(this.colors.bgPrimary)
+        .backgroundColor(this.colors().bgPrimary)
         .borderRadius(8)
         .shadow({ radius: 16, color: 'rgba(0,0,0,0.3)', offsetX: 0, offsetY: 8 })
         .position({ x: '15%', y: '20%' })

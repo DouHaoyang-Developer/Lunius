@@ -22,11 +22,11 @@ export struct PropertiesPanel {
   onUpdate?: (key: string, value: string | number | boolean | string[]) => void;
   onAddProperty?: (key: string, value: string | number | boolean | string[]) => void;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
-  private get properties(): PropertyItem[] {
+  private properties(): PropertyItem[] {
     if (!this.metadata?.frontmatter) return [];
     const result: PropertyItem[] = [];
     this.metadata.frontmatter.forEach((value: string | number | boolean | string[], key: string) => {
@@ -50,13 +50,13 @@ export struct PropertiesPanel {
           Text('属性')
             .fontSize(14)
             .fontWeight(FontWeight.Medium)
-            .fontColor(this.colors.textSecondary)
+            .fontColor(this.colors().textSecondary)
         }
         .layoutWeight(1)
 
         Text(this.isExpanded ? '▼' : '▶')
           .fontSize(10)
-          .fontColor(this.colors.textMuted)
+          .fontColor(this.colors().textMuted)
           .onClick(() => {
             this.isExpanded = !this.isExpanded;
           })
@@ -64,7 +64,7 @@ export struct PropertiesPanel {
         Button({ type: ButtonType.Circle }) {
           Text('+')
             .fontSize(16)
-            .fontColor(this.colors.accent)
+            .fontColor(this.colors().accent)
         }
         .width(24)
         .height(24)
@@ -77,7 +77,7 @@ export struct PropertiesPanel {
       .width('100%')
       .height(36)
       .padding({ left: 12, right: 12 })
-      .backgroundColor(this.colors.sidebarBg)
+      .backgroundColor(this.colors().sidebarBg)
 
       if (this.isExpanded) {
         Column({ space: 0 }) {
@@ -89,10 +89,10 @@ export struct PropertiesPanel {
         }
         .width('100%')
         .padding({ top: 4, bottom: 4 })
-        .border({ width: { bottom: 1 }, color: this.colors.divider })
+        .border({ width: { bottom: 1 }, color: this.colors().divider })
 
         List({ space: 0 }) {
-          ForEach(this.properties, (prop: PropertyItem, index: number) => {
+          ForEach(this.properties(), (prop: PropertyItem, index: number) => {
             ListItem() {
               this.PropertyRow(prop)
             }
@@ -106,24 +106,24 @@ export struct PropertiesPanel {
           Row({ space: 8 }) {
             TextInput({ placeholder: '属性名', text: $$this.editingKey })
               .fontSize(12)
-              .fontColor(this.colors.textPrimary)
+              .fontColor(this.colors().textPrimary)
               .width(80)
               .height(28)
-              .backgroundColor(this.colors.bgTertiary)
+              .backgroundColor(this.colors().bgTertiary)
               .borderRadius(4)
 
             TextInput({ placeholder: '值', text: $$this.editingValue })
               .fontSize(12)
-              .fontColor(this.colors.textPrimary)
+              .fontColor(this.colors().textPrimary)
               .layoutWeight(1)
               .height(28)
-              .backgroundColor(this.colors.bgTertiary)
+              .backgroundColor(this.colors().bgTertiary)
               .borderRadius(4)
 
             Button({ type: ButtonType.Circle }) {
               Text('✓')
                 .fontSize(12)
-                .fontColor(this.colors.accent)
+                .fontColor(this.colors().accent)
             }
             .width(24)
             .height(24)
@@ -143,7 +143,7 @@ export struct PropertiesPanel {
       }
     }
     .width('100%')
-    .backgroundColor(this.colors.sidebarBg)
+    .backgroundColor(this.colors().sidebarBg)
     .borderRadius(4)
   }
 
@@ -152,11 +152,11 @@ export struct PropertiesPanel {
     Row() {
       Text(label)
         .fontSize(11)
-        .fontColor(this.colors.textMuted)
+        .fontColor(this.colors().textMuted)
         .width(60)
       Text(value)
         .fontSize(11)
-        .fontColor(this.colors.textSecondary)
+        .fontColor(this.colors().textSecondary)
         .layoutWeight(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .maxLines(1)
@@ -171,14 +171,14 @@ export struct PropertiesPanel {
     Row({ space: 8 }) {
       Text(prop.key)
         .fontSize(12)
-        .fontColor(this.colors.textMuted)
+        .fontColor(this.colors().textMuted)
         .width(70)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .maxLines(1)
 
       if (prop.type === 'checkbox') {
         Toggle({ type: ToggleType.Checkbox, isOn: prop.value as boolean })
-          .selectedColor(this.colors.accent)
+          .selectedColor(this.colors().accent)
           .width(20)
           .height(20)
           .onChange((isOn: boolean) => {
@@ -204,8 +204,8 @@ export struct PropertiesPanel {
           ForEach(prop.value as string[], (tag: string, idx: number) => {
             Text(tag)
               .fontSize(10)
-              .fontColor(this.colors.tagText)
-              .backgroundColor(this.colors.tagBg)
+              .fontColor(this.colors().tagText)
+              .backgroundColor(this.colors().tagBg)
               .padding({ left: 4, right: 4, top: 1, bottom: 1 })
               .borderRadius(8)
           }, (tag: string) => tag)
@@ -214,7 +214,7 @@ export struct PropertiesPanel {
       } else {
         Text(String(prop.value))
           .fontSize(12)
-          .fontColor(this.colors.textPrimary)
+          .fontColor(this.colors().textPrimary)
           .layoutWeight(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .maxLines(1)

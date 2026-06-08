@@ -17,11 +17,11 @@ struct FileTreeNode {
   onToggle?: (node: FileNode) => void;
   onOpenInNewWindow?: (node: FileNode) => void;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
-  private get icon(): string {
+  private icon(): string {
     if (this.node.type === NodeType.VAULT) return '💎';
     if (this.node.type === NodeType.FOLDER) {
       return this.node.isExpanded ? '📂' : '📁';
@@ -29,11 +29,11 @@ struct FileTreeNode {
     return '📄';
   }
 
-  private get iconColor(): string {
+  private iconColor(): string {
     if (this.node.type === NodeType.FOLDER || this.node.type === NodeType.VAULT) {
-      return this.colors.folderIcon;
+      return this.colors().folderIcon;
     }
-    return this.colors.fileIcon;
+    return this.colors().fileIcon;
   }
 
   private async openInNewWindow(): Promise<void> {
@@ -53,7 +53,7 @@ struct FileTreeNode {
         if (this.node.type !== NodeType.FILE && this.node.children && this.node.children.length > 0) {
           Text(this.node.isExpanded ? '▼' : '▶')
             .fontSize(10)
-            .fontColor(this.colors.textMuted)
+            .fontColor(this.colors().textMuted)
             .width(16)
             .textAlign(TextAlign.Center)
             .onClick(() => {
@@ -65,14 +65,14 @@ struct FileTreeNode {
           Row().width(16)
         }
 
-        Text(this.icon)
+        Text(this.icon())
           .fontSize(16)
-          .fontColor(this.iconColor)
+          .fontColor(this.iconColor())
           .margin({ right: 6 })
 
         Text(this.node.name)
           .fontSize(13)
-          .fontColor(this.node.isActive ? this.colors.accent : this.colors.textPrimary)
+          .fontColor(this.node.isActive ? this.colors().accent : this.colors().textPrimary)
           .fontWeight(this.node.isActive ? FontWeight.Medium : FontWeight.Regular)
           .layoutWeight(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -81,15 +81,15 @@ struct FileTreeNode {
         if (this.node.type === NodeType.FILE && this.node.wordCount) {
           Text(`${this.node.wordCount}`)
             .fontSize(10)
-            .fontColor(this.colors.textMuted)
+            .fontColor(this.colors().textMuted)
             .margin({ left: 4 })
         }
       }
       .width('100%')
       .height(36)
       .padding({ left: 8, right: 12 })
-      .backgroundColor(this.isHovered ? this.colors.bgHover : 
-        (this.node.isActive ? this.colors.bgActive : Color.Transparent))
+      .backgroundColor(this.isHovered ? this.colors().bgHover : 
+        (this.node.isActive ? this.colors().bgActive : Color.Transparent))
       .borderRadius(4)
       .onHover((isHover: boolean) => {
         this.isHovered = isHover;
@@ -114,12 +114,12 @@ struct FileTreeNode {
           ForEach(['在新窗口打开', '重命名', '移动', '删除'], (action: string, idx: number) => {
             Text(action)
               .fontSize(12)
-              .fontColor(idx === 0 ? this.colors.accent : this.colors.textPrimary)
+              .fontColor(idx === 0 ? this.colors().accent : this.colors().textPrimary)
               .width('100%')
               .height(32)
               .padding({ left: 12, right: 12 })
-              .backgroundColor(this.colors.bgSecondary)
-              .border({ width: { bottom: 1 }, color: this.colors.divider })
+              .backgroundColor(this.colors().bgSecondary)
+              .border({ width: { bottom: 1 }, color: this.colors().divider })
               .onClick(() => {
                 if (idx === 0) {
                   this.openInNewWindow();
@@ -129,7 +129,7 @@ struct FileTreeNode {
           }, (action: string) => action)
         }
         .width(140)
-        .backgroundColor(this.colors.bgSecondary)
+        .backgroundColor(this.colors().bgSecondary)
         .borderRadius(6)
         .shadow({ radius: 8, color: 'rgba(0,0,0,0.2)', offsetX: 2, offsetY: 2 })
         .position({ x: 40, y: 30 })
@@ -166,7 +166,7 @@ export struct FileTree {
   onCreateNew?: () => void;
   onCreateFromTemplate?: () => void;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -196,11 +196,11 @@ export struct FileTree {
     Column() {
       Row({ space: 8 }) {
         TextInput({ placeholder: '搜索文件...', text: $$this.searchQuery })
-          .placeholderColor(this.colors.textMuted)
-          .fontColor(this.colors.textPrimary)
+          .placeholderColor(this.colors().textMuted)
+          .fontColor(this.colors().textPrimary)
           .fontSize(13)
           .height(32)
-          .backgroundColor(this.colors.bgTertiary)
+          .backgroundColor(this.colors().bgTertiary)
           .borderRadius(4)
           .layoutWeight(1)
           .padding({ left: 8, right: 8 })
@@ -208,11 +208,11 @@ export struct FileTree {
         Button({ type: ButtonType.Circle }) {
           Text('+')
             .fontSize(18)
-            .fontColor(this.colors.accent)
+            .fontColor(this.colors().accent)
         }
         .width(28)
         .height(28)
-        .backgroundColor(this.colors.bgHover)
+        .backgroundColor(this.colors().bgHover)
         .onClick(() => {
           if (this.onCreateNew) {
             this.onCreateNew();
@@ -230,7 +230,7 @@ export struct FileTree {
       .width('100%')
       .height(48)
       .padding({ left: 12, right: 12 })
-      .backgroundColor(this.colors.sidebarBg)
+      .backgroundColor(this.colors().sidebarBg)
 
       List({ space: 2 }) {
         ForEach(this.data, (root: FileNode) => {
@@ -249,23 +249,23 @@ export struct FileTree {
       .width('100%')
       .layoutWeight(1)
       .padding({ top: 4, bottom: 4 })
-      .backgroundColor(this.colors.sidebarBg)
+      .backgroundColor(this.colors().sidebarBg)
       .scrollBar(BarState.Auto)
 
       Row() {
         Text(`${this.countFiles(this.data)} 个文件`)
           .fontSize(11)
-          .fontColor(this.colors.textMuted)
+          .fontColor(this.colors().textMuted)
       }
       .width('100%')
       .height(28)
       .padding({ left: 12, right: 12 })
-      .backgroundColor(this.colors.sidebarBg)
-      .border({ width: { top: 1 }, color: this.colors.divider })
+      .backgroundColor(this.colors().sidebarBg)
+      .border({ width: { top: 1 }, color: this.colors().divider })
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.colors.sidebarBg)
+    .backgroundColor(this.colors().sidebarBg)
   }
 
   private countFiles(nodes: FileNode[]): number {

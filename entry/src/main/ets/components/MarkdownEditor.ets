@@ -118,11 +118,11 @@ export struct MarkdownEditor {
     }
   }
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
-  private get breadcrumbItems(): BreadcrumbItem[] {
+  private breadcrumbItems(): BreadcrumbItem[] {
     if (!this.vm.metadata) return [];
     const parts: string[] = this.vm.metadata.path.split('/').filter((p: string): boolean => p.length > 0);
     const items: BreadcrumbItem[] = [];
@@ -136,7 +136,7 @@ export struct MarkdownEditor {
     return items;
   }
 
-  private get viewModeLabel(): string {
+  private viewModeLabel(): string {
     switch (this.viewMode) {
       case 'live': return '实时阅览';
       case 'source': return '源码';
@@ -497,7 +497,7 @@ export struct MarkdownEditor {
     Stack() {
       Column({ space: 0 }) {
         Breadcrumb({
-          items: this.breadcrumbItems,
+          items: this.breadcrumbItems(),
           currentFile: this.vm.hasUnsavedChanges ? this.vm.title : ''
         }).width('100%')
 
@@ -505,59 +505,59 @@ export struct MarkdownEditor {
         Row({ space: 8 }) {
           // 历史导航
           Button({ type: ButtonType.Circle }) {
-            Text('←').fontSize(14).fontColor(this.colors.iconSecondary)
+            Text('←').fontSize(14).fontColor(this.colors().iconSecondary)
           }
-          .width(28).height(28).backgroundColor(this.colors.bgHover)
+          .width(28).height(28).backgroundColor(this.colors().bgHover)
           .onClick(() => { if (this.onNavigateBack) this.onNavigateBack(); })
 
           Button({ type: ButtonType.Circle }) {
-            Text('→').fontSize(14).fontColor(this.colors.iconSecondary)
+            Text('→').fontSize(14).fontColor(this.colors().iconSecondary)
           }
-          .width(28).height(28).backgroundColor(this.colors.bgHover)
+          .width(28).height(28).backgroundColor(this.colors().bgHover)
           .onClick(() => { if (this.onNavigateForward) this.onNavigateForward(); })
 
-          Divider().vertical(true).height(20).color(this.colors.divider)
+          Divider().vertical(true).height(20).color(this.colors().divider)
 
           Button({ type: ButtonType.Normal }) {
-            Text(this.viewModeLabel)
-              .fontSize(12).fontColor(this.colors.accent).fontWeight(FontWeight.Medium)
+            Text(this.viewModeLabel())
+              .fontSize(12).fontColor(this.colors().accent).fontWeight(FontWeight.Medium)
           }
-          .backgroundColor(this.colors.bgHover).borderRadius(4).height(28).padding({ left: 8, right: 8 })
+          .backgroundColor(this.colors().bgHover).borderRadius(4).height(28).padding({ left: 8, right: 8 })
           .onClick(() => this.cycleViewMode())
 
-          Divider().vertical(true).height(20).color(this.colors.divider)
+          Divider().vertical(true).height(20).color(this.colors().divider)
 
           Button({ type: ButtonType.Circle }) {
-            Text('B').fontSize(14).fontWeight(FontWeight.Bold).fontColor(this.colors.textSecondary)
-          }.width(28).height(28).backgroundColor(this.colors.bgHover)
+            Text('B').fontSize(14).fontWeight(FontWeight.Bold).fontColor(this.colors().textSecondary)
+          }.width(28).height(28).backgroundColor(this.colors().bgHover)
           Button({ type: ButtonType.Circle }) {
-            Text('I').fontSize(14).fontStyle(FontStyle.Italic).fontColor(this.colors.textSecondary)
-          }.width(28).height(28).backgroundColor(this.colors.bgHover)
+            Text('I').fontSize(14).fontStyle(FontStyle.Italic).fontColor(this.colors().textSecondary)
+          }.width(28).height(28).backgroundColor(this.colors().bgHover)
           Button({ type: ButtonType.Circle }) {
-            Text('H').fontSize(14).fontColor(this.colors.textSecondary)
-          }.width(28).height(28).backgroundColor(this.colors.bgHover)
+            Text('H').fontSize(14).fontColor(this.colors().textSecondary)
+          }.width(28).height(28).backgroundColor(this.colors().bgHover)
 
-          Divider().vertical(true).height(20).color(this.colors.divider)
+          Divider().vertical(true).height(20).color(this.colors().divider)
 
           Button({ type: ButtonType.Circle }) {
-            Text('🖼').fontSize(14).fontColor(this.colors.textSecondary)
-          }.width(28).height(28).backgroundColor(this.colors.bgHover).onClick(() => this.handleInsertImage())
+            Text('🖼').fontSize(14).fontColor(this.colors().textSecondary)
+          }.width(28).height(28).backgroundColor(this.colors().bgHover).onClick(() => this.handleInsertImage())
           Button({ type: ButtonType.Circle }) {
-            Text('📎').fontSize(14).fontColor(this.colors.textSecondary)
-          }.width(28).height(28).backgroundColor(this.colors.bgHover).onClick(() => this.handleInsertAttachment())
+            Text('📎').fontSize(14).fontColor(this.colors().textSecondary)
+          }.width(28).height(28).backgroundColor(this.colors().bgHover).onClick(() => this.handleInsertAttachment())
 
           Blank()
 
           Button({ type: ButtonType.Circle }) {
-            Text('📋').fontSize(14).fontColor(this.showProperties ? this.colors.accent : this.colors.textSecondary)
-          }.width(28).height(28).backgroundColor(this.colors.bgHover).onClick(() => { this.showProperties = !this.showProperties; })
+            Text('📋').fontSize(14).fontColor(this.showProperties ? this.colors().accent : this.colors().textSecondary)
+          }.width(28).height(28).backgroundColor(this.colors().bgHover).onClick(() => { this.showProperties = !this.showProperties; })
           Button({ type: ButtonType.Circle }) {
             Text(this.vm.isSaving ? '⟳' : '💾').fontSize(14)
-              .fontColor(this.vm.hasUnsavedChanges ? this.colors.accent : this.colors.textSecondary)
-          }.width(28).height(28).backgroundColor(this.colors.bgHover).onClick(() => this.vm.saveNote())
+              .fontColor(this.vm.hasUnsavedChanges ? this.colors().accent : this.colors().textSecondary)
+          }.width(28).height(28).backgroundColor(this.colors().bgHover).onClick(() => this.vm.saveNote())
         }
         .width('100%').height(40).padding({ left: 12, right: 12 })
-        .backgroundColor(this.colors.editorBg).border({ width: { bottom: 1 }, color: this.colors.divider })
+        .backgroundColor(this.colors().editorBg).border({ width: { bottom: 1 }, color: this.colors().divider })
 
         // 自动补全面板
         if (this.showCompletions && this.completions.length > 0) {
@@ -566,19 +566,19 @@ export struct MarkdownEditor {
               ForEach(this.completions, (item: CompletionItem) => {
                 Button() {
                   Column() {
-                    Text(item.label).fontSize(14).fontColor(this.colors.accent).fontWeight(FontWeight.Medium)
+                    Text(item.label).fontSize(14).fontColor(this.colors().accent).fontWeight(FontWeight.Medium)
                       .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
-                    Text(item.description).fontSize(11).fontColor(this.colors.textMuted).maxLines(1)
+                    Text(item.description).fontSize(11).fontColor(this.colors().textMuted).maxLines(1)
                   }.alignItems(HorizontalAlign.Start).padding({ left: 10, right: 10 })
                 }
-                .height(44).backgroundColor(this.colors.bgSecondary).borderRadius(10)
-                .border({ width: 1, color: this.colors.divider, style: BorderStyle.Solid }).margin({ right: 8 })
+                .height(44).backgroundColor(this.colors().bgSecondary).borderRadius(10)
+                .border({ width: 1, color: this.colors().divider, style: BorderStyle.Solid }).margin({ right: 8 })
                 .onClick(() => this.applyCompletion(item))
               }, (item: CompletionItem) => item.label)
             }.padding({ left: 4, right: 4 })
           }
           .scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off)
-          .width('100%').height(52).backgroundColor(this.colors.editorBg).padding({ left: 12, right: 12 })
+          .width('100%').height(52).backgroundColor(this.colors().editorBg).padding({ left: 12, right: 12 })
         }
 
         // 查找替换栏
@@ -655,7 +655,7 @@ export struct MarkdownEditor {
               // 阅读模式：MarkdownToHtml + Mermaid WebView 混合渲染
               Scroll() {
                 Column({ space: 12 }) {
-                  Text(this.vm.title).fontSize(28).fontWeight(FontWeight.Bold).fontColor(this.colors.textPrimary)
+                  Text(this.vm.title).fontSize(28).fontWeight(FontWeight.Bold).fontColor(this.colors().textPrimary)
                     .width('100%').margin({ bottom: 16 })
                   // 按块渲染：Markdown 文本 + Mermaid 图表交替
                   ForEach(this.previewBlocks, (block: ContentBlock) => {
@@ -663,7 +663,7 @@ export struct MarkdownEditor {
                       MermaidWebView({ mermaidCode: block.content, themeMode: this.themeMode })
                         .width('100%')
                     } else {
-                      Text(block.rendered).fontSize(14).fontColor(this.colors.textPrimary)
+                      Text(block.rendered).fontSize(14).fontColor(this.colors().textPrimary)
                         .width('100%').lineHeight(24)
                     }
                   }, (block: ContentBlock, index: number): string => index.toString())
@@ -688,7 +688,7 @@ export struct MarkdownEditor {
                     .maxLines(1)
                 }
                 .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-                .backgroundColor(this.colors.bgTertiary)
+                .backgroundColor(this.colors().bgTertiary)
                 .borderRadius(4)
                 .margin({ left: 4 })
               }, (cursor: RemoteCursorState) => cursor.deviceId)
@@ -696,8 +696,8 @@ export struct MarkdownEditor {
             .width('100%')
             .height(24)
             .padding({ left: 8, right: 8 })
-            .backgroundColor(this.colors.bgSecondary)
-            .border({ width: { top: 1 }, color: this.colors.divider })
+            .backgroundColor(this.colors().bgSecondary)
+            .border({ width: { top: 1 }, color: this.colors().divider })
           }
 
           if (this.showProperties && this.vm.metadata) {
@@ -709,7 +709,7 @@ export struct MarkdownEditor {
               onAddProperty: (key: string, value: string | number | boolean | string[]) => {
                 this.vm.updateFrontmatter(key, value);
               }
-            }).width(240).height('100%').border({ width: { left: 1 }, color: this.colors.divider })
+            }).width(240).height('100%').border({ width: { left: 1 }, color: this.colors().divider })
           }
         }.width('100%').layoutWeight(1)
 
@@ -720,7 +720,7 @@ export struct MarkdownEditor {
           onViewChange: (view: string) => this.viewMode = view
         }).width('100%')
       }
-      .width('100%').height('100%').backgroundColor(this.colors.editorBg)
+      .width('100%').height('100%').backgroundColor(this.colors().editorBg)
 
       Modal({
         config: this.modalConfig, isVisible: this.showModal,

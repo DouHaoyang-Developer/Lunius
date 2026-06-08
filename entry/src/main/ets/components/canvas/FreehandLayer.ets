@@ -17,7 +17,7 @@ export struct FreehandLayer {
   private isDrawing: boolean = false;
   private lastRenderTime: number = 0;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 

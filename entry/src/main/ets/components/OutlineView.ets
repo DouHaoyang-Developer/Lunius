@@ -11,7 +11,7 @@ export struct OutlineView {
   @State activeLine: number = -1;
   onJump?: (line: number) => void;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -38,18 +38,18 @@ export struct OutlineView {
         Text('大纲')
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor(this.colors.textSecondary)
+          .fontColor(this.colors().textSecondary)
 
         Text(`${this.data.length} 节`)
           .fontSize(11)
-          .fontColor(this.colors.textMuted)
+          .fontColor(this.colors().textMuted)
       }
       .width('100%')
       .height(40)
       .padding({ left: 16, right: 16 })
       .justifyContent(FlexAlign.SpaceBetween)
-      .backgroundColor(this.colors.sidebarBg)
-      .border({ width: { bottom: 1 }, color: this.colors.divider })
+      .backgroundColor(this.colors().sidebarBg)
+      .border({ width: { bottom: 1 }, color: this.colors().divider })
 
       // 大纲列表
       List({ space: 0 }) {
@@ -62,7 +62,7 @@ export struct OutlineView {
 
               Text('H' + item.level)
                 .fontSize(9)
-                .fontColor(this.colors.textMuted)
+                .fontColor(this.colors().textMuted)
                 .width(20)
                 .textAlign(TextAlign.Center)
                 .margin({ right: 4 })
@@ -71,8 +71,8 @@ export struct OutlineView {
                 .fontSize(this.getFontSize(item.level))
                 .fontWeight(this.getFontWeight(item.level))
                 .fontColor(this.activeLine === item.line 
-                  ? this.colors.accent 
-                  : this.colors.textPrimary)
+                  ? this.colors().accent 
+                  : this.colors().textPrimary)
                 .layoutWeight(1)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
                 .maxLines(1)
@@ -81,7 +81,7 @@ export struct OutlineView {
             .height(32)
             .padding({ left: 12, right: 16 })
             .backgroundColor(this.activeLine === item.line 
-              ? this.colors.bgActive 
+              ? this.colors().bgActive 
               : Color.Transparent)
             .borderRadius(4)
             .onClick(() => {
@@ -96,11 +96,11 @@ export struct OutlineView {
       .width('100%')
       .layoutWeight(1)
       .padding({ top: 4 })
-      .backgroundColor(this.colors.sidebarBg)
+      .backgroundColor(this.colors().sidebarBg)
       .scrollBar(BarState.Auto)
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.colors.sidebarBg)
+    .backgroundColor(this.colors().sidebarBg)
   }
 }

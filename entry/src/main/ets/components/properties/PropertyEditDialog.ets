@@ -50,7 +50,7 @@ export struct PropertyEditDialog {
     return this.editValue;
   }
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -73,43 +73,43 @@ export struct PropertyEditDialog {
           Text('编辑属性')
             .fontSize(17)
             .fontWeight(FontWeight.Medium)
-            .fontColor(this.colors.textPrimary)
+            .fontColor(this.colors().textPrimary)
             .layoutWeight(1)
 
           Button({ type: ButtonType.Circle }) {
-            Text('✕').fontSize(14).fontColor(this.colors.textMuted)
+            Text('✕').fontSize(14).fontColor(this.colors().textMuted)
           }
           .width(28).height(28).backgroundColor(Color.Transparent)
           .onClick(() => { if (this.onCancel) this.onCancel(); })
         }
         .width('100%')
 
-        Divider().color(this.colors.divider)
+        Divider().color(this.colors().divider)
 
         // 属性键名
         Column({ space: 6 }) {
           Text('属性名')
-            .fontSize(12).fontColor(this.colors.textMuted)
+            .fontSize(12).fontColor(this.colors().textMuted)
           TextInput({ text: $$this.editKey, placeholder: 'property_name' })
-            .fontSize(14).fontColor(this.colors.textPrimary)
+            .fontSize(14).fontColor(this.colors().textPrimary)
             .height(40).borderRadius(6)
-            .backgroundColor(this.colors.bgTertiary)
+            .backgroundColor(this.colors().bgTertiary)
             .width('100%')
         }.width('100%').alignItems(HorizontalAlign.Start)
 
         // 属性类型
         Column({ space: 6 }) {
           Text('类型')
-            .fontSize(12).fontColor(this.colors.textMuted)
+            .fontSize(12).fontColor(this.colors().textMuted)
           Row() {
             Text(this.typeLabel(this.editType))
-              .fontSize(14).fontColor(this.colors.accent)
+              .fontSize(14).fontColor(this.colors().accent)
               .layoutWeight(1)
             Image($r('sys.media.ohos_ic_public_arrow_down'))
-              .width(16).height(16).fillColor(this.colors.textMuted)
+              .width(16).height(16).fillColor(this.colors().textMuted)
           }
           .width('100%').height(40).padding({ left: 12, right: 12 })
-          .backgroundColor(this.colors.bgTertiary).borderRadius(6)
+          .backgroundColor(this.colors().bgTertiary).borderRadius(6)
           .onClick(() => { this.showTypePicker = !this.showTypePicker; })
 
           if (this.showTypePicker) {
@@ -120,15 +120,15 @@ export struct PropertyEditDialog {
                 (t: PropertyType) => {
                   Row() {
                     Text(this.typeLabel(t))
-                      .fontSize(14).fontColor(t === this.editType ? this.colors.accent : this.colors.textPrimary)
+                      .fontSize(14).fontColor(t === this.editType ? this.colors().accent : this.colors().textPrimary)
                       .layoutWeight(1)
                     if (t === this.editType) {
-                      Text('✓').fontSize(14).fontColor(this.colors.accent)
+                      Text('✓').fontSize(14).fontColor(this.colors().accent)
                     }
                   }
                   .width('100%').height(36).padding({ left: 12, right: 12 })
-                  .backgroundColor(this.colors.bgSecondary)
-                  .border({ width: { bottom: 0.5 }, color: this.colors.divider })
+                  .backgroundColor(this.colors().bgSecondary)
+                  .border({ width: { bottom: 0.5 }, color: this.colors().divider })
                   .onClick(() => {
                     this.editType = t;
                     this.showTypePicker = false;
@@ -143,59 +143,59 @@ export struct PropertyEditDialog {
         // 值编辑器（按类型）
         Column({ space: 6 }) {
           Text('值')
-            .fontSize(12).fontColor(this.colors.textMuted)
+            .fontSize(12).fontColor(this.colors().textMuted)
 
           if (this.editType === PropertyType.CHECKBOX) {
             Row({ space: 8 }) {
               Toggle({ type: ToggleType.Checkbox, isOn: $$this.editChecked })
-                .selectedColor(this.colors.accent)
+                .selectedColor(this.colors().accent)
               Text(this.editChecked ? '是' : '否')
-                .fontSize(14).fontColor(this.colors.textSecondary)
+                .fontSize(14).fontColor(this.colors().textSecondary)
             }
           } else if (this.editType === PropertyType.TAGS) {
             TextInput({ text: $$this.editValue, placeholder: 'tag1, tag2, tag3' })
-              .fontSize(14).fontColor(this.colors.textPrimary)
+              .fontSize(14).fontColor(this.colors().textPrimary)
               .height(40).borderRadius(6)
-              .backgroundColor(this.colors.bgTertiary).width('100%')
+              .backgroundColor(this.colors().bgTertiary).width('100%')
           } else if (this.editType === PropertyType.NUMBER) {
             TextInput({ text: $$this.editValue, placeholder: '0' })
               .type(InputType.Number)
-              .fontSize(14).fontColor(this.colors.textPrimary)
+              .fontSize(14).fontColor(this.colors().textPrimary)
               .height(40).borderRadius(6)
-              .backgroundColor(this.colors.bgTertiary).width('100%')
+              .backgroundColor(this.colors().bgTertiary).width('100%')
           } else if (this.editType === PropertyType.DATE) {
             TextInput({ text: $$this.editValue, placeholder: 'YYYY-MM-DD' })
-              .fontSize(14).fontColor(this.colors.textPrimary)
+              .fontSize(14).fontColor(this.colors().textPrimary)
               .height(40).borderRadius(6)
-              .backgroundColor(this.colors.bgTertiary).width('100%')
+              .backgroundColor(this.colors().bgTertiary).width('100%')
           } else {
             TextInput({ text: $$this.editValue, placeholder: 'value' })
-              .fontSize(14).fontColor(this.colors.textPrimary)
+              .fontSize(14).fontColor(this.colors().textPrimary)
               .height(40).borderRadius(6)
-              .backgroundColor(this.colors.bgTertiary).width('100%')
+              .backgroundColor(this.colors().bgTertiary).width('100%')
           }
         }.width('100%').alignItems(HorizontalAlign.Start)
 
-        Divider().color(this.colors.divider)
+        Divider().color(this.colors().divider)
 
         // 底部按钮
         Row({ space: 12 }) {
           Button('删除')
             .fontSize(14).fontColor('#E74C3C')
             .height(36).layoutWeight(1)
-            .backgroundColor(this.colors.bgTertiary).borderRadius(6)
+            .backgroundColor(this.colors().bgTertiary).borderRadius(6)
             .onClick(() => { if (this.onDelete) this.onDelete(this.propertyKey); })
 
           Button('取消')
-            .fontSize(14).fontColor(this.colors.textSecondary)
+            .fontSize(14).fontColor(this.colors().textSecondary)
             .height(36).layoutWeight(1)
-            .backgroundColor(this.colors.bgTertiary).borderRadius(6)
+            .backgroundColor(this.colors().bgTertiary).borderRadius(6)
             .onClick(() => { if (this.onCancel) this.onCancel(); })
 
           Button('确认')
             .fontSize(14).fontColor(Color.White)
             .height(36).layoutWeight(1)
-            .backgroundColor(this.colors.accent).borderRadius(6)
+            .backgroundColor(this.colors().accent).borderRadius(6)
             .onClick(() => {
               if (this.onConfirm) {
                 this.onConfirm(this.editKey, this.buildResult(), this.editType);
@@ -206,7 +206,7 @@ export struct PropertyEditDialog {
       }
       .width('100%')
       .padding(20)
-      .backgroundColor(this.colors.bgPrimary)
+      .backgroundColor(this.colors().bgPrimary)
       .borderRadius(12)
     }
     .width('100%').height('100%')

@@ -21,7 +21,7 @@ export struct ContextMenu {
   onAction?: (actionId: string) => void;
   onClose?: () => void;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -38,7 +38,7 @@ export struct ContextMenu {
               }
               Text(action.label)
                 .fontSize(13)
-                .fontColor(action.danger ? '#E53935' : this.colors.textPrimary)
+                .fontColor(action.danger ? '#E53935' : this.colors().textPrimary)
                 .layoutWeight(1)
             }
             .width('100%')
@@ -56,9 +56,9 @@ export struct ContextMenu {
           }, (action: ContextMenuAction) => action.id)
         }
         .width(160)
-        .backgroundColor(this.colors.bgSecondary)
+        .backgroundColor(this.colors().bgSecondary)
         .borderRadius(6)
-        .border({ width: 1, color: this.colors.divider })
+        .border({ width: 1, color: this.colors().divider })
         .shadow({ radius: 8, color: 'rgba(0,0,0,0.2)', offsetX: 2, offsetY: 2 })
         .position({ x: this.x, y: this.y })
         .zIndex(300)

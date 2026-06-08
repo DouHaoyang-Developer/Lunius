@@ -11,7 +11,7 @@ export struct BacklinksView {
   @Prop tags: string[] = [];
   @State activeTab: number = 0;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -22,12 +22,12 @@ export struct BacklinksView {
         Text(label)
           .fontSize(12)
           .fontWeight(this.activeTab === index ? FontWeight.Medium : FontWeight.Regular)
-          .fontColor(this.activeTab === index ? this.colors.accent : this.colors.textSecondary)
+          .fontColor(this.activeTab === index ? this.colors().accent : this.colors().textSecondary)
 
         Text(`${count}`)
           .fontSize(10)
-          .fontColor(this.activeTab === index ? this.colors.accent : this.colors.textMuted)
-          .backgroundColor(this.activeTab === index ? this.colors.tagBg : this.colors.bgTertiary)
+          .fontColor(this.activeTab === index ? this.colors().accent : this.colors().textMuted)
+          .backgroundColor(this.activeTab === index ? this.colors().tagBg : this.colors().bgTertiary)
           .padding({ left: 4, right: 4, top: 1, bottom: 1 })
           .borderRadius(8)
       }
@@ -36,7 +36,7 @@ export struct BacklinksView {
     .padding({ left: 12, right: 12 })
     .border({
       width: { bottom: 2 },
-      color: this.activeTab === index ? this.colors.accent : Color.Transparent
+      color: this.activeTab === index ? this.colors().accent : Color.Transparent
     })
     .onClick(() => {
       this.activeTab = index;
@@ -53,8 +53,8 @@ export struct BacklinksView {
       .width('100%')
       .height(40)
       .padding({ left: 8, right: 8 })
-      .backgroundColor(this.colors.sidebarBg)
-      .border({ width: { bottom: 1 }, color: this.colors.divider })
+      .backgroundColor(this.colors().sidebarBg)
+      .border({ width: { bottom: 1 }, color: this.colors().divider })
 
       // 内容区
       if (this.activeTab === 0) {
@@ -65,7 +65,7 @@ export struct BacklinksView {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.colors.sidebarBg)
+    .backgroundColor(this.colors().sidebarBg)
   }
 
   @Builder
@@ -81,7 +81,7 @@ export struct BacklinksView {
               Text(link.source)
                 .fontSize(12)
                 .fontWeight(FontWeight.Medium)
-                .fontColor(this.colors.linkColor)
+                .fontColor(this.colors().linkColor)
                 .layoutWeight(1)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
                 .maxLines(1)
@@ -90,7 +90,7 @@ export struct BacklinksView {
 
             Text(link.context)
               .fontSize(11)
-              .fontColor(this.colors.textSecondary)
+              .fontColor(this.colors().textSecondary)
               .margin({ top: 4, left: 18 })
               .maxLines(2)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -98,9 +98,9 @@ export struct BacklinksView {
           }
           .width('100%')
           .padding(12)
-          .backgroundColor(this.colors.bgSecondary)
+          .backgroundColor(this.colors().bgSecondary)
           .borderRadius(6)
-          .border({ width: { left: 3 }, color: this.colors.accent })
+          .border({ width: { left: 3 }, color: this.colors().accent })
         }
       }, (link: Backlink, index: number) => index.toString())
     }
@@ -116,8 +116,8 @@ export struct BacklinksView {
         ListItem() {
           Text(`#${tag}`)
             .fontSize(12)
-            .fontColor(this.colors.tagText)
-            .backgroundColor(this.colors.tagBg)
+            .fontColor(this.colors().tagText)
+            .backgroundColor(this.colors().tagBg)
             .padding({ left: 8, right: 8, top: 4, bottom: 4 })
             .borderRadius(12)
         }

@@ -17,7 +17,7 @@ export struct RightSidebar {
   @Prop panelWidth: number = SidebarWidth.PC_RIGHT;
   onClose?: () => void;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -53,18 +53,18 @@ export struct RightSidebar {
     Column() {
       Row()
         .width(4).height('100%')
-        .backgroundColor(this.colors.divider)
+        .backgroundColor(this.colors().divider)
         .position({ x: 0 })
 
       Column() {
         Row() {
           Text('面板')
             .fontSize(14).fontWeight(FontWeight.Medium)
-            .fontColor(this.colors.textSecondary)
+            .fontColor(this.colors().textSecondary)
 
           if (!this.responsive.isPC) {
             Button({ type: ButtonType.Circle }) {
-              Text('✕').fontSize(12).fontColor(this.colors.textMuted)
+              Text('✕').fontSize(12).fontColor(this.colors().textMuted)
             }
             .width(24).height(24).backgroundColor(Color.Transparent)
             .onClick(() => {
@@ -75,13 +75,13 @@ export struct RightSidebar {
         .width('100%').height(40)
         .padding({ left: 16, right: 12 })
         .justifyContent(FlexAlign.SpaceBetween)
-        .backgroundColor(this.colors.sidebarBg)
-        .border({ width: { bottom: 1 }, color: this.colors.divider })
+        .backgroundColor(this.colors().sidebarBg)
+        .border({ width: { bottom: 1 }, color: this.colors().divider })
 
         OutlineView({ data: this.getOutline() })
           .height('50%')
 
-        Divider().color(this.colors.divider).strokeWidth(1)
+        Divider().color(this.colors().divider).strokeWidth(1)
 
         BacklinksView({
           backlinks: this.getBacklinks(),
@@ -94,8 +94,8 @@ export struct RightSidebar {
     }
     .width(this.isVisible ? this.panelWidth : 0)
     .height('100%')
-    .backgroundColor(this.colors.sidebarBg)
-    .border({ width: { left: 1 }, color: this.colors.divider })
+    .backgroundColor(this.colors().sidebarBg)
+    .border({ width: { left: 1 }, color: this.colors().divider })
     .animation({ duration: 300, curve: Curve.EaseInOut })
   }
 }

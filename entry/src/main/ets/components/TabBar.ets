@@ -20,7 +20,7 @@ export struct TabBar {
   onTabClose?: (tabId: string) => void;
   onTabPin?: (tabId: string) => void;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -36,17 +36,17 @@ export struct TabBar {
 
               Text('📄')
                 .fontSize(12)
-                .fontColor(tab.isActive ? this.colors.fileIcon : this.colors.iconSecondary)
+                .fontColor(tab.isActive ? this.colors().fileIcon : this.colors().iconSecondary)
 
               Text(tab.title + (tab.isModified ? ' ●' : ''))
                 .fontSize(12)
-                .fontColor(tab.isActive ? this.colors.textPrimary : this.colors.textMuted)
+                .fontColor(tab.isActive ? this.colors().textPrimary : this.colors().textMuted)
                 .fontWeight(tab.isActive ? FontWeight.Medium : FontWeight.Regular)
                 .maxLines(1)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
 
               Button({ type: ButtonType.Circle }) {
-                Text('📌').fontSize(8).fontColor(this.colors.textMuted)
+                Text('📌').fontSize(8).fontColor(this.colors().textMuted)
               }
               .width(14).height(14)
               .backgroundColor(Color.Transparent)
@@ -60,7 +60,7 @@ export struct TabBar {
               Button({ type: ButtonType.Circle }) {
                 Text('✕')
                   .fontSize(10)
-                  .fontColor(this.colors.textMuted)
+                  .fontColor(this.colors().textMuted)
               }
               .width(16).height(16)
               .backgroundColor(Color.Transparent)
@@ -73,10 +73,10 @@ export struct TabBar {
             }
             .height(36)
             .padding({ left: 12, right: 8 })
-            .backgroundColor(tab.isActive ? this.colors.tabActiveBg : this.colors.tabBg)
+            .backgroundColor(tab.isActive ? this.colors().tabActiveBg : this.colors().tabBg)
             .border({
               width: { top: tab.isActive ? 2 : 0, right: 1 },
-              color: tab.isActive ? this.colors.accent : this.colors.divider
+              color: tab.isActive ? this.colors().accent : this.colors().divider
             })
             .onClick(() => {
               if (this.onTabChange) {
@@ -95,14 +95,14 @@ export struct TabBar {
         Button({ type: ButtonType.Circle }) {
           Text('⋯')
             .fontSize(16)
-            .fontColor(this.colors.iconSecondary)
+            .fontColor(this.colors().iconSecondary)
         }
         .width(28).height(28).backgroundColor(Color.Transparent)
 
         Button({ type: ButtonType.Circle }) {
           Text('⇄')
             .fontSize(14)
-            .fontColor(this.colors.iconSecondary)
+            .fontColor(this.colors().iconSecondary)
         }
         .width(28).height(28).backgroundColor(Color.Transparent)
       }
@@ -111,7 +111,7 @@ export struct TabBar {
     }
     .width('100%')
     .height(40)
-    .backgroundColor(this.colors.tabBg)
-    .border({ width: { bottom: 1 }, color: this.colors.divider })
+    .backgroundColor(this.colors().tabBg)
+    .border({ width: { bottom: 1 }, color: this.colors().divider })
   }
 }

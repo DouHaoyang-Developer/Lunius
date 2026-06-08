@@ -17,7 +17,7 @@ export struct BookmarkView {
     this.loadBookmarks();
   }
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -45,27 +45,27 @@ export struct BookmarkView {
         Text('书签')
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor(this.colors.textSecondary)
+          .fontColor(this.colors().textSecondary)
         Text(`${this.bookmarks.length}`)
           .fontSize(11)
-          .fontColor(this.colors.textMuted)
+          .fontColor(this.colors().textMuted)
       }
       .width('100%')
       .height(40)
       .padding({ left: 16, right: 16 })
       .justifyContent(FlexAlign.SpaceBetween)
-      .backgroundColor(this.colors.sidebarBg)
-      .border({ width: { bottom: 1 }, color: this.colors.divider })
+      .backgroundColor(this.colors().sidebarBg)
+      .border({ width: { bottom: 1 }, color: this.colors().divider })
 
       if (this.isLoading) {
         Text('加载中...')
           .fontSize(12)
-          .fontColor(this.colors.textMuted)
+          .fontColor(this.colors().textMuted)
           .margin(16)
       } else if (this.bookmarks.length === 0) {
         Text('暂无书签')
           .fontSize(12)
-          .fontColor(this.colors.textMuted)
+          .fontColor(this.colors().textMuted)
           .margin(16)
       } else {
         List({ space: 4 }) {
@@ -77,12 +77,12 @@ export struct BookmarkView {
                 Column({ space: 2 }) {
                   Text(bm.title)
                     .fontSize(13)
-                    .fontColor(this.colors.textPrimary)
+                    .fontColor(this.colors().textPrimary)
                     .textOverflow({ overflow: TextOverflow.Ellipsis })
                     .maxLines(1)
                   Text(bm.anchor || bm.noteId)
                     .fontSize(10)
-                    .fontColor(this.colors.textMuted)
+                    .fontColor(this.colors().textMuted)
                 }
                 .alignItems(HorizontalAlign.Start)
                 .layoutWeight(1)
@@ -90,7 +90,7 @@ export struct BookmarkView {
                 Button({ type: ButtonType.Circle }) {
                   Text('✕')
                     .fontSize(10)
-                    .fontColor(this.colors.textMuted)
+                    .fontColor(this.colors().textMuted)
                 }
                 .width(20)
                 .height(20)
@@ -117,6 +117,6 @@ export struct BookmarkView {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.colors.sidebarBg)
+    .backgroundColor(this.colors().sidebarBg)
   }
 }

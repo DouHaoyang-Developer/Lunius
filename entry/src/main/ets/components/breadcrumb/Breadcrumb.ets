@@ -16,7 +16,7 @@ export struct Breadcrumb {
   @Prop currentFile: string = '';
   onNavigate?: (path: string) => void;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -33,12 +33,12 @@ export struct Breadcrumb {
         Row({ space: 4 }) {
           Text('›')
             .fontSize(12)
-            .fontColor(this.colors.textMuted)
+            .fontColor(this.colors().textMuted)
             .margin({ left: 2, right: 2 })
 
           Text(item.name)
             .fontSize(12)
-            .fontColor(index === this.items.length - 1 ? this.colors.textPrimary : this.colors.textSecondary)
+            .fontColor(index === this.items.length - 1 ? this.colors().textPrimary : this.colors().textSecondary)
             .fontWeight(index === this.items.length - 1 ? FontWeight.Medium : FontWeight.Regular)
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -52,14 +52,14 @@ export struct Breadcrumb {
       if (this.currentFile) {
         Text('●')
           .fontSize(8)
-          .fontColor(this.colors.accent)
+          .fontColor(this.colors().accent)
           .margin({ left: 4 })
       }
     }
     .width('100%')
     .height(32)
     .padding({ left: 16, right: 16 })
-    .backgroundColor(this.colors.editorBg)
-    .border({ width: { bottom: 1 }, color: this.colors.divider })
+    .backgroundColor(this.colors().editorBg)
+    .border({ width: { bottom: 1 }, color: this.colors().divider })
   }
 }

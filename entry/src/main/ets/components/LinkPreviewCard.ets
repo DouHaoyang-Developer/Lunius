@@ -18,7 +18,7 @@ export struct LinkPreviewCard {
   onOpenInNewTab?: () => void;
   onClose?: () => void;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -30,7 +30,7 @@ export struct LinkPreviewCard {
           Text(this.data.title)
             .fontSize(14)
             .fontWeight(FontWeight.Medium)
-            .fontColor(this.colors.textPrimary)
+            .fontColor(this.colors().textPrimary)
             .layoutWeight(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .maxLines(1)
@@ -38,7 +38,7 @@ export struct LinkPreviewCard {
           Button({ type: ButtonType.Circle }) {
             Text('✕')
               .fontSize(10)
-              .fontColor(this.colors.textMuted)
+              .fontColor(this.colors().textMuted)
           }
           .width(20)
           .height(20)
@@ -55,7 +55,7 @@ export struct LinkPreviewCard {
         // 内容摘要
         Text(this.data.snippet)
           .fontSize(12)
-          .fontColor(this.colors.textSecondary)
+          .fontColor(this.colors().textSecondary)
           .maxLines(5)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .lineHeight(18)
@@ -66,14 +66,14 @@ export struct LinkPreviewCard {
         Row({ space: 8 }) {
           Text(`${this.data.wordCount} 词`)
             .fontSize(11)
-            .fontColor(this.colors.textMuted)
+            .fontColor(this.colors().textMuted)
 
           Blank()
 
           Button('打开')
             .fontSize(11)
-            .fontColor(this.colors.accent)
-            .backgroundColor(this.colors.bgHover)
+            .fontColor(this.colors().accent)
+            .backgroundColor(this.colors().bgHover)
             .height(28)
             .borderRadius(4)
             .padding({ left: 12, right: 12 })
@@ -85,12 +85,12 @@ export struct LinkPreviewCard {
         }
         .width('100%')
         .padding({ left: 12, right: 12, top: 4, bottom: 10 })
-        .border({ width: { top: 1 }, color: this.colors.divider })
+        .border({ width: { top: 1 }, color: this.colors().divider })
       }
       .width(280)
-      .backgroundColor(this.colors.bgSecondary)
+      .backgroundColor(this.colors().bgSecondary)
       .borderRadius(8)
-      .border({ width: 1, color: this.colors.divider })
+      .border({ width: 1, color: this.colors().divider })
       .shadow({ radius: 12, color: 'rgba(0,0,0,0.25)', offsetX: 0, offsetY: 4 })
       .position({ x: 'auto', y: 0 })
       .zIndex(250)

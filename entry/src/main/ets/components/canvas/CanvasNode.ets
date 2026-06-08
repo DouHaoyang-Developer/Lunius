@@ -20,11 +20,11 @@ export struct CanvasNodeComponent {
   @State private dragStartX: number = 0;
   @State private dragStartY: number = 0;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
-  private get nodeColor(): string {
+  private nodeColor(): string {
     if (this.node.color) {
       const idx = parseInt(this.node.color);
       if (!isNaN(idx) && idx >= 1 && idx <= 6) {
@@ -32,7 +32,7 @@ export struct CanvasNodeComponent {
       }
       if (this.node.color.startsWith('#')) return this.node.color;
     }
-    return this.colors.accent;
+    return this.colors().accent;
   }
 
   private truncatedText(text: string, maxLen: number): string {
@@ -48,14 +48,14 @@ export struct CanvasNodeComponent {
           if (this.node.label) {
             Text(this.node.label)
               .fontSize(13).fontWeight(FontWeight.Medium)
-              .fontColor(this.colors.textPrimary)
+              .fontColor(this.colors().textPrimary)
               .padding({ left: 8, right: 8, top: 4, bottom: 4 })
           }
         }
         .width(this.node.width * this.zoomScale)
         .height(this.node.height * this.zoomScale)
-        .backgroundColor(this.nodeColor + '20')
-        .border({ width: 1.5, color: this.nodeColor, style: BorderStyle.Dashed })
+        .backgroundColor(this.nodeColor() + '20')
+        .border({ width: 1.5, color: this.nodeColor(), style: BorderStyle.Dashed })
         .borderRadius(8)
         .alignItems(HorizontalAlign.Start)
         .justifyContent(FlexAlign.Start)
@@ -76,7 +76,7 @@ export struct CanvasNodeComponent {
               .fontSize(14)
             Text(this.nodeTitle())
               .fontSize(12).fontWeight(FontWeight.Medium)
-              .fontColor(this.colors.textPrimary)
+              .fontColor(this.colors().textPrimary)
               .layoutWeight(1).maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
           }
@@ -85,20 +85,20 @@ export struct CanvasNodeComponent {
 
           // 内容预览
           Text(this.nodePreview())
-            .fontSize(11).fontColor(this.colors.textSecondary)
+            .fontSize(11).fontColor(this.colors().textSecondary)
             .width('100%').maxLines(3)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .padding({ left: 8, right: 8, bottom: 6 })
         }
         .width(this.node.width * this.zoomScale)
         .height(this.node.height * this.zoomScale)
-        .backgroundColor(this.colors.bgSecondary)
+        .backgroundColor(this.colors().bgSecondary)
         .border({
           width: this.isSelected ? 2 : 1,
-          color: this.isSelected ? this.colors.accent : this.colors.divider
+          color: this.isSelected ? this.colors().accent : this.colors().divider
         })
         .borderRadius(6)
-        .shadow(this.isSelected ? { radius: 8, color: this.colors.accent + '40' } : {})
+        .shadow(this.isSelected ? { radius: 8, color: this.colors().accent + '40' } : {})
       }
 
       // 连线端口（四个边缘中点）
@@ -131,7 +131,7 @@ export struct CanvasNodeComponent {
   PortDot(side: string) {
     Stack()
       .width(12).height(12)
-      .backgroundColor(this.colors.accent)
+      .backgroundColor(this.colors().accent)
       .borderRadius(6)
       .position(this.portPosition(side))
       .onClick(() => { if (this.onPortDragStart) this.onPortDragStart(side); })

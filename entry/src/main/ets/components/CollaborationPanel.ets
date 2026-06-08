@@ -24,7 +24,7 @@ export struct CollaborationPanel {
 
   @State joinSessionId: string = '';
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -37,11 +37,11 @@ export struct CollaborationPanel {
             Text('超级终端协同')
               .fontSize(15)
               .fontWeight(FontWeight.Medium)
-              .fontColor(this.colors.textPrimary)
+              .fontColor(this.colors().textPrimary)
               .layoutWeight(1)
 
             Button({ type: ButtonType.Circle }) {
-              Text('✕').fontSize(12).fontColor(this.colors.iconSecondary)
+              Text('✕').fontSize(12).fontColor(this.colors().iconSecondary)
             }
             .width(24)
             .height(24)
@@ -51,8 +51,8 @@ export struct CollaborationPanel {
           .width('100%')
           .height(44)
           .padding({ left: 14, right: 8 })
-          .backgroundColor(this.colors.sidebarBg)
-          .border({ width: { bottom: 1 }, color: this.colors.divider })
+          .backgroundColor(this.colors().sidebarBg)
+          .border({ width: { bottom: 1 }, color: this.colors().divider })
 
           // 会话状态
           if (this.session && this.session.state !== CollaborationSessionState.IDLE) {
@@ -71,7 +71,7 @@ export struct CollaborationPanel {
             if (!this.session || this.session.state === CollaborationSessionState.IDLE) {
               Button('创建协同会话')
                 .fontSize(13)
-                .backgroundColor(this.colors.accent)
+                .backgroundColor(this.colors().accent)
                 .borderRadius(6)
                 .layoutWeight(1)
                 .onClick(() => this.onStartSession())
@@ -87,12 +87,12 @@ export struct CollaborationPanel {
           }
           .width('100%')
           .padding({ left: 14, right: 14, top: 10, bottom: 14 })
-          .backgroundColor(this.colors.sidebarBg)
+          .backgroundColor(this.colors().sidebarBg)
         }
         .width(280)
-        .backgroundColor(this.colors.sidebarBg)
+        .backgroundColor(this.colors().sidebarBg)
         .borderRadius(10)
-        .border({ width: 1, color: this.colors.divider })
+        .border({ width: 1, color: this.colors().divider })
         .shadow({ radius: 16, color: 'rgba(0,0,0,0.25)', offsetX: 0, offsetY: 4 })
       }
     }
@@ -107,14 +107,14 @@ export struct CollaborationPanel {
 
         Text(this.getStateLabel(this.session!.state))
           .fontSize(12)
-          .fontColor(this.colors.textSecondary)
+          .fontColor(this.colors().textSecondary)
       }
       .width('100%')
       .padding({ left: 14, top: 10 })
 
       Text(`笔记: ${this.session!.noteTitle}`)
         .fontSize(12)
-        .fontColor(this.colors.textMuted)
+        .fontColor(this.colors().textMuted)
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .width('100%')
@@ -122,13 +122,13 @@ export struct CollaborationPanel {
 
       Text(`${this.session!.participants.length} 台设备在线`)
         .fontSize(11)
-        .fontColor(this.colors.textMuted)
+        .fontColor(this.colors().textMuted)
         .width('100%')
         .padding({ left: 14, bottom: 6 })
     }
     .width('100%')
-    .backgroundColor(this.colors.bgTertiary)
-    .border({ width: { bottom: 1 }, color: this.colors.divider })
+    .backgroundColor(this.colors().bgTertiary)
+    .border({ width: { bottom: 1 }, color: this.colors().divider })
   }
 
   @Builder
@@ -136,7 +136,7 @@ export struct CollaborationPanel {
     Column({ space: 2 }) {
       Text('在线设备')
         .fontSize(11)
-        .fontColor(this.colors.textMuted)
+        .fontColor(this.colors().textMuted)
         .fontWeight(FontWeight.Medium)
         .width('100%')
         .padding({ left: 14, top: 10, bottom: 6 })
@@ -150,11 +150,11 @@ export struct CollaborationPanel {
           Column({ space: 2 }) {
             Text(device.deviceName)
               .fontSize(13)
-              .fontColor(this.colors.textPrimary)
+              .fontColor(this.colors().textPrimary)
 
             Text(this.getDeviceTypeLabel(device.deviceType))
               .fontSize(10)
-              .fontColor(this.colors.textMuted)
+              .fontColor(this.colors().textMuted)
           }
           .alignItems(HorizontalAlign.Start)
           .layoutWeight(1)
@@ -162,9 +162,9 @@ export struct CollaborationPanel {
           if (device.isHost) {
             Text('主持人')
               .fontSize(10)
-              .fontColor(this.colors.accent)
+              .fontColor(this.colors().accent)
               .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-              .backgroundColor(this.colors.bgActive)
+              .backgroundColor(this.colors().bgActive)
               .borderRadius(4)
           }
 
@@ -175,11 +175,11 @@ export struct CollaborationPanel {
         .width('100%')
         .height(42)
         .padding({ left: 14, right: 14 })
-        .backgroundColor(this.colors.bgPrimary)
+        .backgroundColor(this.colors().bgPrimary)
       }, (device: CollaboratorDevice) => device.deviceId)
     }
     .width('100%')
-    .border({ width: { bottom: 1 }, color: this.colors.divider })
+    .border({ width: { bottom: 1 }, color: this.colors().divider })
   }
 
   @Builder
@@ -191,11 +191,11 @@ export struct CollaborationPanel {
 
         Text('未连接到协同会话')
           .fontSize(14)
-          .fontColor(this.colors.textPrimary)
+          .fontColor(this.colors().textPrimary)
 
         Text('创建一个协同会话后，其他设备可以加入并实时编辑同一份笔记')
           .fontSize(12)
-          .fontColor(this.colors.textMuted)
+          .fontColor(this.colors().textMuted)
           .textAlign(TextAlign.Center)
           .width('85%')
       }
@@ -209,9 +209,9 @@ export struct CollaborationPanel {
           .fontSize(12)
           .height(36)
           .layoutWeight(1)
-          .backgroundColor(this.colors.bgPrimary)
+          .backgroundColor(this.colors().bgPrimary)
           .borderRadius(6)
-          .border({ width: 1, color: this.colors.divider })
+          .border({ width: 1, color: this.colors().divider })
           .onChange((value: string) => {
             this.joinSessionId = value;
           })
@@ -219,7 +219,7 @@ export struct CollaborationPanel {
         Button('加入')
           .fontSize(12)
           .height(36)
-          .backgroundColor(this.colors.accent)
+          .backgroundColor(this.colors().accent)
           .borderRadius(6)
           .padding({ left: 12, right: 12 })
           .onClick(() => {

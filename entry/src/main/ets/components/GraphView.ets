@@ -23,11 +23,11 @@ export struct GraphView {
   private lastX: number = 0;
   private lastY: number = 0;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
-  private get displayData(): GraphData {
+  private displayData(): GraphData {
     return this.showLocalGraph && this.localGraphData ? this.localGraphData : this.graphData;
   }
 
@@ -76,12 +76,12 @@ export struct GraphView {
         Row({ space: 8 }) {
           Text(this.showLocalGraph ? '局部图谱' : '关系图谱')
             .fontSize(14).fontWeight(FontWeight.Medium)
-            .fontColor(this.colors.textSecondary)
+            .fontColor(this.colors().textSecondary)
 
           if (this.showLocalGraph) {
             Button('← 返回全局')
-              .fontSize(11).fontColor(this.colors.accent)
-              .backgroundColor(this.colors.bgHover)
+              .fontSize(11).fontColor(this.colors().accent)
+              .backgroundColor(this.colors().bgHover)
               .height(24).borderRadius(4)
               .onClick(() => this.resetToGlobal())
           }
@@ -89,21 +89,21 @@ export struct GraphView {
 
         Row({ space: 8 }) {
           Button({ type: ButtonType.Circle }) {
-            Text('⊕').fontSize(16).fontColor(this.colors.iconSecondary)
+            Text('⊕').fontSize(16).fontColor(this.colors().iconSecondary)
           }
-          .width(28).height(28).backgroundColor(this.colors.bgHover)
+          .width(28).height(28).backgroundColor(this.colors().bgHover)
           .onClick(() => { this.zoomScale = Math.min(this.zoomScale + 0.2, 3.0); })
 
           Button({ type: ButtonType.Circle }) {
-            Text('⊖').fontSize(16).fontColor(this.colors.iconSecondary)
+            Text('⊖').fontSize(16).fontColor(this.colors().iconSecondary)
           }
-          .width(28).height(28).backgroundColor(this.colors.bgHover)
+          .width(28).height(28).backgroundColor(this.colors().bgHover)
           .onClick(() => { this.zoomScale = Math.max(this.zoomScale - 0.2, 0.3); })
 
           Button({ type: ButtonType.Circle }) {
-            Text('⟲').fontSize(14).fontColor(this.colors.iconSecondary)
+            Text('⟲').fontSize(14).fontColor(this.colors().iconSecondary)
           }
-          .width(28).height(28).backgroundColor(this.colors.bgHover)
+          .width(28).height(28).backgroundColor(this.colors().bgHover)
           .onClick(() => {
             this.zoomScale = 1.0;
             this.offsetX = 0;
@@ -111,34 +111,34 @@ export struct GraphView {
           })
 
           Button({ type: ButtonType.Circle }) {
-            Text('🔄').fontSize(12).fontColor(this.colors.iconSecondary)
+            Text('🔄').fontSize(12).fontColor(this.colors().iconSecondary)
           }
-          .width(28).height(28).backgroundColor(this.colors.bgHover)
+          .width(28).height(28).backgroundColor(this.colors().bgHover)
           .onClick(() => this.loadGraph())
         }
       }
       .width('100%').height(40).padding({ left: 16, right: 16 })
       .justifyContent(FlexAlign.SpaceBetween)
-      .backgroundColor(this.colors.sidebarBg)
-      .border({ width: { bottom: 1 }, color: this.colors.divider })
+      .backgroundColor(this.colors().sidebarBg)
+      .border({ width: { bottom: 1 }, color: this.colors().divider })
 
       if (this.isLoading) {
         Column() {
           Text('⏳').fontSize(32)
-          Text('加载图谱...').fontSize(14).fontColor(this.colors.textSecondary).margin({ top: 8 })
+          Text('加载图谱...').fontSize(14).fontColor(this.colors().textSecondary).margin({ top: 8 })
         }
         .width('100%').layoutWeight(1)
         .justifyContent(FlexAlign.Center)
-        .backgroundColor(this.colors.bgPrimary)
-      } else if (this.displayData.nodes.length === 0) {
+        .backgroundColor(this.colors().bgPrimary)
+      } else if (this.displayData().nodes.length === 0) {
         Column() {
           Text('🕸️').fontSize(48)
-          Text('暂无图谱数据').fontSize(16).fontColor(this.colors.textSecondary)
-          Text('在笔记中使用 [[wikilink]] 创建链接').fontSize(12).fontColor(this.colors.textMuted).margin({ top: 4 })
+          Text('暂无图谱数据').fontSize(16).fontColor(this.colors().textSecondary)
+          Text('在笔记中使用 [[wikilink]] 创建链接').fontSize(12).fontColor(this.colors().textMuted).margin({ top: 4 })
         }
         .width('100%').layoutWeight(1)
         .justifyContent(FlexAlign.Center)
-        .backgroundColor(this.colors.bgPrimary)
+        .backgroundColor(this.colors().bgPrimary)
       } else {
         Stack() {
           // 背景网格
@@ -148,7 +148,7 @@ export struct GraphView {
                 ForEach([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], (col: number) => {
                   Row()
                     .width(60).height(60)
-                    .border({ width: 0.5, color: this.colors.divider })
+                    .border({ width: 0.5, color: this.colors().divider })
                     .opacity(0.3)
                 }, (col: number) => col.toString())
               }
@@ -162,11 +162,11 @@ export struct GraphView {
             .width('100%').height('100%')
             .onReady(() => {
               const ctx = this.context;
-              ctx.strokeStyle = this.colors.divider;
+              ctx.strokeStyle = this.colors().divider;
               ctx.lineWidth = 1;
-              const nodes = this.displayData.nodes;
+              const nodes = this.displayData().nodes;
               const nodeMap = new Map(nodes.map(n => [n.id, n]));
-              this.displayData.edges.forEach(edge => {
+              this.displayData().edges.forEach(edge => {
                 const source = nodeMap.get(edge.source);
                 const target = nodeMap.get(edge.target);
                 if (source && target) {
@@ -186,7 +186,7 @@ export struct GraphView {
 
           // 节点层
           Stack() {
-            ForEach(this.displayData.nodes, (node: GraphNodeData) => {
+            ForEach(this.displayData().nodes, (node: GraphNodeData) => {
               Column() {
                 Stack() {
                   Circle()
@@ -204,7 +204,7 @@ export struct GraphView {
 
                 Text(node.label)
                   .fontSize(11)
-                  .fontColor(this.colors.textPrimary)
+                  .fontColor(this.colors().textPrimary)
                   .maxLines(2)
                   .textOverflow({ overflow: TextOverflow.Ellipsis })
                   .textAlign(TextAlign.Center)
@@ -223,7 +223,7 @@ export struct GraphView {
           .width('100%').height('100%')
         }
         .width('100%').layoutWeight(1)
-        .backgroundColor(this.colors.bgPrimary)
+        .backgroundColor(this.colors().bgPrimary)
         .gesture(
           PanGesture()
             .onActionStart((event: GestureEvent) => {
@@ -248,23 +248,23 @@ export struct GraphView {
       // 底部信息栏
       Row() {
         Text(`缩放: ${(this.zoomScale * 100).toFixed(0)}%`)
-          .fontSize(11).fontColor(this.colors.textMuted)
+          .fontSize(11).fontColor(this.colors().textMuted)
 
-        Text(`节点: ${this.displayData.nodes.length} | 连线: ${this.displayData.edges.length}`)
-          .fontSize(11).fontColor(this.colors.textMuted)
+        Text(`节点: ${this.displayData().nodes.length} | 连线: ${this.displayData().edges.length}`)
+          .fontSize(11).fontColor(this.colors().textMuted)
 
         if (this.selectedNodeId) {
           Text(`选中: ${this.selectedNodeId}`)
-            .fontSize(11).fontColor(this.colors.accent)
+            .fontSize(11).fontColor(this.colors().accent)
         }
       }
       .width('100%').height(28)
       .padding({ left: 16, right: 16 })
       .justifyContent(FlexAlign.SpaceBetween)
-      .backgroundColor(this.colors.sidebarBg)
-      .border({ width: { top: 1 }, color: this.colors.divider })
+      .backgroundColor(this.colors().sidebarBg)
+      .border({ width: { top: 1 }, color: this.colors().divider })
     }
     .width('100%').height('100%')
-    .backgroundColor(this.colors.bgPrimary)
+    .backgroundColor(this.colors().bgPrimary)
   }
 }

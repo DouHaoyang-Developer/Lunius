@@ -13,7 +13,7 @@ export struct GlobalPropertyPanel {
   @State searchFilter: string = '';
   @State selectedProperty: PropertyUsage | null = null;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -32,7 +32,7 @@ export struct GlobalPropertyPanel {
     this.isLoading = false;
   }
 
-  private get filteredProperties(): PropertyUsage[] {
+  private filteredProperties(): PropertyUsage[] {
     if (!this.searchFilter) return this.properties;
     const filter = this.searchFilter.toLowerCase();
     return this.properties.filter((p: PropertyUsage) => p.key.toLowerCase().includes(filter));
@@ -55,7 +55,7 @@ export struct GlobalPropertyPanel {
       case PropertyType.CHECKBOX: return '#7B68EE';
       case PropertyType.DATE: return '#E67E22';
       case PropertyType.TAGS: return '#3498DB';
-      default: return this.colors.textSecondary;
+      default: return this.colors().textSecondary;
     }
   }
 
@@ -72,31 +72,31 @@ export struct GlobalPropertyPanel {
         Text('全局属性')
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor(this.colors.textSecondary)
+          .fontColor(this.colors().textSecondary)
           .layoutWeight(1)
 
         Button({ type: ButtonType.Circle }) {
-          Text('↻').fontSize(14).fontColor(this.colors.accent)
+          Text('↻').fontSize(14).fontColor(this.colors().accent)
         }
         .width(28).height(28).backgroundColor(Color.Transparent)
         .onClick(() => { this.loadProperties(); })
       }
       .width('100%').height(36).padding({ left: 12, right: 12 })
-      .backgroundColor(this.colors.sidebarBg)
+      .backgroundColor(this.colors().sidebarBg)
 
       if (this.isLoading) {
         Text('加载中...')
-          .fontSize(12).fontColor(this.colors.textMuted).margin(20)
+          .fontSize(12).fontColor(this.colors().textMuted).margin(20)
       } else {
         // 搜索过滤
         TextInput({ placeholder: '过滤属性名...', text: $$this.searchFilter })
-          .fontSize(12).fontColor(this.colors.textPrimary)
-          .height(32).backgroundColor(this.colors.bgTertiary).borderRadius(6)
+          .fontSize(12).fontColor(this.colors().textPrimary)
+          .height(32).backgroundColor(this.colors().bgTertiary).borderRadius(6)
           .width('100%').margin({ left: 8, right: 8, top: 4, bottom: 4 })
 
         // 属性列表
         List({ space: 0 }) {
-          ForEach(this.filteredProperties, (prop: PropertyUsage, index: number) => {
+          ForEach(this.filteredProperties(), (prop: PropertyUsage, index: number) => {
             ListItem() {
               Row({ space: 8 }) {
                 Text(this.typeIcon(prop.type))
@@ -105,25 +105,25 @@ export struct GlobalPropertyPanel {
 
                 Column({ space: 2 }) {
                   Text(prop.key)
-                    .fontSize(13).fontColor(this.colors.textPrimary)
+                    .fontSize(13).fontColor(this.colors().textPrimary)
                     .textOverflow({ overflow: TextOverflow.Ellipsis }).maxLines(1)
                   Text(`${prop.count} 个笔记`)
-                    .fontSize(11).fontColor(this.colors.textMuted)
+                    .fontSize(11).fontColor(this.colors().textMuted)
                 }
                 .layoutWeight(1).alignItems(HorizontalAlign.Start)
 
                 Row({ space: 2 }) {
                   ForEach(prop.values.slice(0, 3), (v: FrontmatterValue, vi: number) => {
                     Text(this.formatValue(v))
-                      .fontSize(10).fontColor(this.colors.tagText)
-                      .backgroundColor(this.colors.tagBg)
+                      .fontSize(10).fontColor(this.colors().tagText)
+                      .backgroundColor(this.colors().tagBg)
                       .padding({ left: 4, right: 4, top: 1, bottom: 1 })
                       .borderRadius(8).maxLines(1)
                   }, (_v: FrontmatterValue, vi: number) => `${vi}`)
                 }
               }
               .width('100%').height(40).padding({ left: 12, right: 12 })
-              .backgroundColor(index % 2 === 0 ? this.colors.bgPrimary : this.colors.bgSecondary)
+              .backgroundColor(index % 2 === 0 ? this.colors().bgPrimary : this.colors().bgSecondary)
             }
           }, (prop: PropertyUsage) => prop.key)
         }
@@ -131,6 +131,6 @@ export struct GlobalPropertyPanel {
       }
     }
     .width('100%').height('100%')
-    .backgroundColor(this.colors.sidebarBg)
+    .backgroundColor(this.colors().sidebarBg)
   }
 }

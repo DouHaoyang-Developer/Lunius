@@ -13,7 +13,7 @@ export struct CanvasEdgeLayer {
   private settings: RenderingContextSettings = new RenderingContextSettings(true);
   private ctx: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.settings);
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -29,7 +29,7 @@ export struct CanvasEdgeLayer {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, 9999, 9999);
 
-    const edgeColor = this.colors.textMuted;
+    const edgeColor = this.colors().textMuted;
     for (const edge of this.vm.edges) {
       const fromNode = this.vm.nodes.find((n: CanvasNode) => n.id === edge.fromNode);
       const toNode = this.vm.nodes.find((n: CanvasNode) => n.id === edge.toNode);
@@ -62,7 +62,7 @@ export struct CanvasEdgeLayer {
         const mx = (sx + ex) / 2;
         const my = (sy + ey) / 2 - 8;
         ctx.font = '10px sans-serif';
-        ctx.fillStyle = this.colors.textSecondary;
+        ctx.fillStyle = this.colors().textSecondary;
         ctx.fillText(edge.label, mx, my);
       }
     }

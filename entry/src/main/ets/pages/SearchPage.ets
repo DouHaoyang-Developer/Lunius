@@ -23,7 +23,7 @@ struct SearchContent {
   @State searchCaseSensitive: boolean = false;
   @State searchUseRegex: boolean = false;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -96,11 +96,11 @@ struct SearchContent {
       // 搜索栏
       Row({ space: 8 }) {
         TextInput({ placeholder: '搜索笔记、标签、内容...', text: $$this.query })
-          .placeholderColor(this.colors.textMuted)
-          .fontColor(this.colors.textPrimary)
+          .placeholderColor(this.colors().textMuted)
+          .fontColor(this.colors().textPrimary)
           .fontSize(14)
           .height(40)
-          .backgroundColor(this.colors.bgTertiary)
+          .backgroundColor(this.colors().bgTertiary)
           .borderRadius(8)
           .layoutWeight(1)
           .padding({ left: 12, right: 12 })
@@ -112,7 +112,7 @@ struct SearchContent {
         Button({ type: ButtonType.Circle }) {
           Text('✕')
             .fontSize(14)
-            .fontColor(this.colors.textMuted)
+            .fontColor(this.colors().textMuted)
         }
         .width(32)
         .height(32)
@@ -126,15 +126,15 @@ struct SearchContent {
       .width('100%')
       .height(56)
       .padding({ left: 16, right: 16 })
-      .backgroundColor(this.colors.bgSecondary)
-      .border({ width: { bottom: 1 }, color: this.colors.divider })
+      .backgroundColor(this.colors().bgSecondary)
+      .border({ width: { bottom: 1 }, color: this.colors().divider })
 
       if (this.query.length === 0) {
         // 历史记录与建议
         Column({ space: 16 }) {
           Text('最近搜索')
             .fontSize(12)
-            .fontColor(this.colors.textMuted)
+            .fontColor(this.colors().textMuted)
             .width('100%')
             .padding({ left: 16, right: 16, top: 16 })
 
@@ -142,8 +142,8 @@ struct SearchContent {
             ForEach(this.searchHistory, (item: string, index: number) => {
               Text(item)
                 .fontSize(13)
-                .fontColor(this.colors.textSecondary)
-                .backgroundColor(this.colors.bgTertiary)
+                .fontColor(this.colors().textSecondary)
+                .backgroundColor(this.colors().bgTertiary)
                 .padding({ left: 12, right: 12, top: 6, bottom: 6 })
                 .borderRadius(16)
                 .margin(4)
@@ -158,7 +158,7 @@ struct SearchContent {
 
           Text('搜索选项')
             .fontSize(12)
-            .fontColor(this.colors.textMuted)
+            .fontColor(this.colors().textMuted)
             .width('100%')
             .padding({ left: 16, right: 16, top: 24 })
 
@@ -166,16 +166,16 @@ struct SearchContent {
             Row() {
               Text('仅搜索标题')
                 .fontSize(14)
-                .fontColor(this.colors.textPrimary)
+                .fontColor(this.colors().textPrimary)
                 .layoutWeight(1)
               Toggle({ type: ToggleType.Checkbox, isOn: $$this.searchTitleOnly })
-                .selectedColor(this.colors.accent)
+                .selectedColor(this.colors().accent)
             }
             .width('100%')
             .height(44)
             .padding({ left: 16, right: 16 })
-            .backgroundColor(this.colors.bgPrimary)
-            .border({ width: { bottom: 1 }, color: this.colors.divider })
+            .backgroundColor(this.colors().bgPrimary)
+            .border({ width: { bottom: 1 }, color: this.colors().divider })
             .onClick(() => {
               this.searchTitleOnly = !this.searchTitleOnly;
               // 仅标题与包含内容互斥
@@ -187,16 +187,16 @@ struct SearchContent {
             Row() {
               Text('包含内容')
                 .fontSize(14)
-                .fontColor(this.colors.textPrimary)
+                .fontColor(this.colors().textPrimary)
                 .layoutWeight(1)
               Toggle({ type: ToggleType.Checkbox, isOn: $$this.searchIncludeContent })
-                .selectedColor(this.colors.accent)
+                .selectedColor(this.colors().accent)
             }
             .width('100%')
             .height(44)
             .padding({ left: 16, right: 16 })
-            .backgroundColor(this.colors.bgPrimary)
-            .border({ width: { bottom: 1 }, color: this.colors.divider })
+            .backgroundColor(this.colors().bgPrimary)
+            .border({ width: { bottom: 1 }, color: this.colors().divider })
             .onClick(() => {
               this.searchIncludeContent = !this.searchIncludeContent;
               if (this.searchIncludeContent) {
@@ -207,16 +207,16 @@ struct SearchContent {
             Row() {
               Text('区分大小写')
                 .fontSize(14)
-                .fontColor(this.colors.textPrimary)
+                .fontColor(this.colors().textPrimary)
                 .layoutWeight(1)
               Toggle({ type: ToggleType.Checkbox, isOn: $$this.searchCaseSensitive })
-                .selectedColor(this.colors.accent)
+                .selectedColor(this.colors().accent)
             }
             .width('100%')
             .height(44)
             .padding({ left: 16, right: 16 })
-            .backgroundColor(this.colors.bgPrimary)
-            .border({ width: { bottom: 1 }, color: this.colors.divider })
+            .backgroundColor(this.colors().bgPrimary)
+            .border({ width: { bottom: 1 }, color: this.colors().divider })
             .onClick(() => {
               this.searchCaseSensitive = !this.searchCaseSensitive;
             })
@@ -224,16 +224,16 @@ struct SearchContent {
             Row() {
               Text('正则表达式')
                 .fontSize(14)
-                .fontColor(this.colors.textPrimary)
+                .fontColor(this.colors().textPrimary)
                 .layoutWeight(1)
               Toggle({ type: ToggleType.Checkbox, isOn: $$this.searchUseRegex })
-                .selectedColor(this.colors.accent)
+                .selectedColor(this.colors().accent)
             }
             .width('100%')
             .height(44)
             .padding({ left: 16, right: 16 })
-            .backgroundColor(this.colors.bgPrimary)
-            .border({ width: { bottom: 1 }, color: this.colors.divider })
+            .backgroundColor(this.colors().bgPrimary)
+            .border({ width: { bottom: 1 }, color: this.colors().divider })
             .onClick(() => {
               this.searchUseRegex = !this.searchUseRegex;
             })
@@ -254,19 +254,19 @@ struct SearchContent {
                   Text(res.file.name)
                     .fontSize(14)
                     .fontWeight(FontWeight.Medium)
-                    .fontColor(this.colors.textPrimary)
+                    .fontColor(this.colors().textPrimary)
                     .layoutWeight(1)
                     .textOverflow({ overflow: TextOverflow.Ellipsis })
                     .maxLines(1)
                   Text(`${res.file.wordCount} 字`)
                     .fontSize(11)
-                    .fontColor(this.colors.textMuted)
+                    .fontColor(this.colors().textMuted)
                 }
                 .width('100%')
 
                 Text(res.matches[0])
                   .fontSize(12)
-                  .fontColor(this.colors.textSecondary)
+                  .fontColor(this.colors().textSecondary)
                   .maxLines(2)
                   .textOverflow({ overflow: TextOverflow.Ellipsis })
                   .margin({ left: 22 })
@@ -277,8 +277,8 @@ struct SearchContent {
                     ForEach(res.file.tags, (tag: string) => {
                       Text(`#${tag}`)
                         .fontSize(11)
-                        .fontColor(this.colors.tagText)
-                        .backgroundColor(this.colors.tagBg)
+                        .fontColor(this.colors().tagText)
+                        .backgroundColor(this.colors().tagBg)
                         .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                         .borderRadius(10)
                     }, (tag: string) => tag)
@@ -289,8 +289,8 @@ struct SearchContent {
               }
               .width('100%')
               .padding(12)
-              .backgroundColor(this.colors.bgPrimary)
-              .border({ width: { bottom: 1 }, color: this.colors.divider })
+              .backgroundColor(this.colors().bgPrimary)
+              .border({ width: { bottom: 1 }, color: this.colors().divider })
               .onClick(() => {
                 // 进入搜索结果详情页（Navigation 栈推进）
                 this.searchPathStack.pushPathByName('searchDetail', new Object());
@@ -306,7 +306,7 @@ struct SearchContent {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.colors.bgPrimary)
+    .backgroundColor(this.colors().bgPrimary)
   }
 }
 

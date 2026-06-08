@@ -22,7 +22,7 @@ export struct Modal {
   onConfirm?: (value?: string) => void;
   onCancel?: () => void;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -48,13 +48,13 @@ export struct Modal {
             Text(this.config.title)
               .fontSize(16)
               .fontWeight(FontWeight.Medium)
-              .fontColor(this.colors.textPrimary)
+              .fontColor(this.colors().textPrimary)
               .width('100%')
               .textAlign(TextAlign.Center)
 
             Text(this.config.message)
               .fontSize(14)
-              .fontColor(this.colors.textSecondary)
+              .fontColor(this.colors().textSecondary)
               .width('100%')
               .textAlign(TextAlign.Center)
               .lineHeight(20)
@@ -62,10 +62,10 @@ export struct Modal {
             if (this.config.type === 'prompt') {
               TextInput({ placeholder: this.config.inputPlaceholder, text: $$this.inputValue })
                 .fontSize(14)
-                .fontColor(this.colors.textPrimary)
+                .fontColor(this.colors().textPrimary)
                 .width('100%')
                 .height(40)
-                .backgroundColor(this.colors.bgTertiary)
+                .backgroundColor(this.colors().bgTertiary)
                 .borderRadius(6)
                 .padding({ left: 12, right: 12 })
             }
@@ -75,8 +75,8 @@ export struct Modal {
                 Button(this.config.cancelText ?? '取消') {
                 }
                 .fontSize(14)
-                .fontColor(this.colors.textSecondary)
-                .backgroundColor(this.colors.bgHover)
+                .fontColor(this.colors().textSecondary)
+                .backgroundColor(this.colors().bgHover)
                 .borderRadius(6)
                 .layoutWeight(1)
                 .height(36)
@@ -89,7 +89,7 @@ export struct Modal {
               }
               .fontSize(14)
               .fontColor('#FFFFFF')
-              .backgroundColor(this.colors.accent)
+              .backgroundColor(this.colors().accent)
               .borderRadius(6)
               .layoutWeight(1)
               .height(36)
@@ -105,7 +105,7 @@ export struct Modal {
           }
           .width('80%')
           .padding(24)
-          .backgroundColor(this.colors.bgPrimary)
+          .backgroundColor(this.colors().bgPrimary)
           .borderRadius(12)
           .shadow({ radius: 20, color: 'rgba(0,0,0,0.4)', offsetX: 0, offsetY: 8 })
           .position({ x: '10%', y: '30%' })

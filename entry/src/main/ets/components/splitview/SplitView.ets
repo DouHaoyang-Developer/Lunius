@@ -11,7 +11,7 @@ export struct SplitView {
   @State editorWidth: number = 50; // 百分比
   @State isDragging: boolean = false;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -23,9 +23,9 @@ export struct SplitView {
           .width('100%')
           .height('100%')
           .fontSize(14)
-          .fontColor(this.colors.textPrimary)
+          .fontColor(this.colors().textPrimary)
           .fontFamily('monospace')
-          .backgroundColor(this.colors.editorBg)
+          .backgroundColor(this.colors().editorBg)
           .padding(16)
           .onChange((value: string) => {
             this.vm.updateContent(value);
@@ -33,14 +33,14 @@ export struct SplitView {
       }
       .width(`${this.editorWidth}%`)
       .height('100%')
-      .border({ width: { right: 1 }, color: this.colors.divider })
+      .border({ width: { right: 1 }, color: this.colors().divider })
 
       // 拖拽条
       Column() {
         Row()
           .width(4)
           .height('100%')
-          .backgroundColor(this.isDragging ? this.colors.accent : this.colors.divider)
+          .backgroundColor(this.isDragging ? this.colors().accent : this.colors().divider)
           .borderRadius(2)
       }
       .width(8)
@@ -69,12 +69,12 @@ export struct SplitView {
             Text(this.vm.title)
               .fontSize(24)
               .fontWeight(FontWeight.Bold)
-              .fontColor(this.colors.textPrimary)
+              .fontColor(this.colors().textPrimary)
               .width('100%')
 
             Text(this.vm.content.substring(0, 500) + '...')
               .fontSize(14)
-              .fontColor(this.colors.textPrimary)
+              .fontColor(this.colors().textPrimary)
               .width('100%')
               .lineHeight(22)
           }
@@ -90,6 +90,6 @@ export struct SplitView {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.colors.editorBg)
+    .backgroundColor(this.colors().editorBg)
   }
 }

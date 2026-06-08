@@ -66,7 +66,7 @@ struct ObsidianApp {
 
   // 碰一碰回调 —— 必须在组件级别保存引用以便注销
   private knockCallback: (target: harmonyShare.SharableTarget) => void = (target) => {
-    const tab = this.activeTab;
+    const tab = this.activeTab();
     if (!tab) return;
 
     const shareData = new systemShare.SharedData({
@@ -78,7 +78,7 @@ struct ObsidianApp {
     target.share(shareData);
   };
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -275,7 +275,7 @@ struct ObsidianApp {
   // ─── 协同操作方法 ────────────────────────────
 
   private async startCollaboration(): Promise<void> {
-    const tab = this.activeTab;
+    const tab = this.activeTab();
     if (!tab || !this.collabService) return;
 
     try {
@@ -295,7 +295,7 @@ struct ObsidianApp {
   }
 
   private async joinCollaboration(sessionId: string): Promise<void> {
-    const tab = this.activeTab;
+    const tab = this.activeTab();
     if (!tab || !this.collabService) return;
 
     try {
@@ -310,7 +310,7 @@ struct ObsidianApp {
   }
 
   private async leaveCollaboration(): Promise<void> {
-    const tab = this.activeTab;
+    const tab = this.activeTab();
     if (!tab || !this.collabService) return;
 
     try {
@@ -331,7 +331,7 @@ struct ObsidianApp {
   // ─── 导出 ────────────────────────────────────
 
   private async handleExportCommand(commandId: string): Promise<void> {
-    const tab = this.activeTab;
+    const tab = this.activeTab();
     if (!tab) return;
     try {
       if (commandId === 'exportHtml') {
@@ -401,14 +401,14 @@ struct ObsidianApp {
   }
 
   // 获取当前激活的 Tab
-  private get activeTab(): TabState | undefined {
+  private activeTab(): TabState | undefined {
     const pane = this.workspace.panes.find(p => p.id === this.workspace.activePaneId);
     if (!pane) return undefined;
     return pane.tabs.find(t => t.id === pane.activeTabId);
   }
 
   // 从 WorkspaceViewModel 构建 TabBar 所需的 TabItem 数组
-  private get tabBarItems(): TabBarItem[] {
+  private tabBarItems(): TabBarItem[] {
     const pane = this.workspace.panes.find(p => p.id === this.workspace.activePaneId);
     if (!pane) return [];
     const items: TabBarItem[] = [];
@@ -426,7 +426,7 @@ struct ObsidianApp {
     return items;
   }
 
-  private get tabBarActiveId(): string {
+  private tabBarActiveId(): string {
     const pane = this.workspace.panes.find(p => p.id === this.workspace.activePaneId);
     return pane?.activeTabId ?? '';
   }
@@ -457,7 +457,7 @@ struct ObsidianApp {
           })
           .width(this.responsive.isPC ? SidebarWidth.PC_LEFT : SidebarWidth.TABLET_LEFT)
           .height('100%')
-          .border({ width: { right: 1 }, color: this.colors.divider })
+          .border({ width: { right: 1 }, color: this.colors().divider })
         }
 
         // 主编辑区
@@ -466,32 +466,32 @@ struct ObsidianApp {
           if (this.responsive.isPhone) {
             Row() {
               Button({ type: ButtonType.Circle }) {
-                Text('☰').fontSize(18).fontColor(this.colors.iconPrimary)
+                Text('☰').fontSize(18).fontColor(this.colors().iconPrimary)
               }
               .width(36).height(36).backgroundColor(Color.Transparent)
               .onClick(() => this.showMobileSidebar = true)
 
-              Text(this.activeTab?.title ?? 'Lunius')
+              Text(this.activeTab()?.title ?? 'Lunius')
                 .fontSize(14).fontWeight(FontWeight.Medium)
-                .fontColor(this.colors.textPrimary)
+                .fontColor(this.colors().textPrimary)
                 .layoutWeight(1).textAlign(TextAlign.Center)
                 .textOverflow({ overflow: TextOverflow.Ellipsis }).maxLines(1)
 
               Button({ type: ButtonType.Circle }) {
-                Text('⌘').fontSize(18).fontColor(this.colors.iconPrimary)
+                Text('⌘').fontSize(18).fontColor(this.colors().iconPrimary)
               }
               .width(36).height(36).backgroundColor(Color.Transparent)
               .onClick(() => this.showCommandPalette = true)
             }
             .width('100%').height(48).padding({ left: 8, right: 8 })
-            .backgroundColor(this.colors.bgSecondary)
-            .border({ width: { bottom: 1 }, color: this.colors.divider })
+            .backgroundColor(this.colors().bgSecondary)
+            .border({ width: { bottom: 1 }, color: this.colors().divider })
           } else {
             // PC/平板：TabBar + 协同按钮 + 命令面板
             Row() {
               TabBar({
-                tabs: this.tabBarItems,
-                activeTabId: this.tabBarActiveId,
+                tabs: this.tabBarItems(),
+                activeTabId: this.tabBarActiveId(),
                 onTabChange: (tabId: string) => {
                   this.workspace.activateTab(tabId);
                 },
@@ -508,17 +508,17 @@ struct ObsidianApp {
               // 协同按钮
               Button({ type: ButtonType.Circle }) {
                 Text('⊞').fontSize(14).fontColor(
-                  this.activeTab?.viewModel.isCollaborating ? '#2ECC71' : this.colors.iconSecondary
+                  this.activeTab()?.viewModel?.isCollaborating ? '#2ECC71' : this.colors().iconSecondary
                 )
               }
-              .width(28).height(28).backgroundColor(this.colors.bgHover)
+              .width(28).height(28).backgroundColor(this.colors().bgHover)
               .margin({ right: 4 })
               .onClick(() => this.toggleCollaborationPanel())
 
               Button({ type: ButtonType.Circle }) {
-                Text('⌘').fontSize(14).fontColor(this.colors.iconSecondary)
+                Text('⌘').fontSize(14).fontColor(this.colors().iconSecondary)
               }
-              .width(28).height(28).backgroundColor(this.colors.bgHover)
+              .width(28).height(28).backgroundColor(this.colors().bgHover)
               .margin({ right: 8 })
               .onClick(() => this.showCommandPalette = true)
             }
@@ -526,9 +526,9 @@ struct ObsidianApp {
           }
 
           // 内容区：编辑器或图谱
-          if (this.currentView === 'editor' && this.activeTab) {
+          if (this.currentView === 'editor' && this.activeTab()) {
             MarkdownEditor({
-              vm: this.activeTab.viewModel,
+              vm: this.activeTab()!.viewModel,
               isSplitView: this.workspace.isSplitView,
               onNavigateBack: () => { this.workspace.navigateBack(); },
               onNavigateForward: () => { this.workspace.navigateForward(); }
@@ -542,28 +542,28 @@ struct ObsidianApp {
             Column({ space: 12 }) {
               Text('📝').fontSize(48)
               Text('欢迎使用 Lunius').fontSize(22).fontWeight(FontWeight.Bold)
-                .fontColor(this.colors.textPrimary)
+                .fontColor(this.colors().textPrimary)
               Text('点击左侧 "+" 创建新笔记，或选择文件开始编辑')
-                .fontSize(14).fontColor(this.colors.textSecondary)
+                .fontSize(14).fontColor(this.colors().textSecondary)
               Button('创建新笔记')
-                .backgroundColor(this.colors.accent)
+                .backgroundColor(this.colors().accent)
                 .borderRadius(8)
                 .margin({ top: 8 })
                 .onClick(() => this.handleCreateNewNote())
             }
             .width('100%').layoutWeight(1)
             .justifyContent(FlexAlign.Center)
-            .backgroundColor(this.colors.editorBg)
+            .backgroundColor(this.colors().editorBg)
           }
         }
         .width('100%').height('100%').layoutWeight(1)
-        .backgroundColor(this.colors.editorBg)
+        .backgroundColor(this.colors().editorBg)
 
         // 右侧边栏
-        if (this.workspace.rightSidebarVisible && !this.responsive.isPhone && this.activeTab) {
+        if (this.workspace.rightSidebarVisible && !this.responsive.isPhone && this.activeTab()) {
           RightSidebar({
             responsive: this.responsive,
-            vm: this.activeTab.viewModel,
+            vm: this.activeTab()!.viewModel,
             isVisible: true,
             panelWidth: this.responsive.isPC ? SidebarWidth.PC_RIGHT : SidebarWidth.TABLET_RIGHT,
             onClose: () => { this.workspace.rightSidebarVisible = false; }
@@ -571,16 +571,16 @@ struct ObsidianApp {
           .height('100%')
         }
       }
-      .width('100%').height('100%').backgroundColor(this.colors.bgPrimary)
+      .width('100%').height('100%').backgroundColor(this.colors().bgPrimary)
 
       // 加载中遮罩
       if (this.isLoading) {
         Column() {
           Text('⏳').fontSize(32)
-          Text('加载中...').fontSize(14).fontColor(this.colors.textSecondary).margin({ top: 8 })
+          Text('加载中...').fontSize(14).fontColor(this.colors().textSecondary).margin({ top: 8 })
         }
         .width('100%').height('100%')
-        .backgroundColor(this.colors.bgPrimary)
+        .backgroundColor(this.colors().bgPrimary)
         .justifyContent(FlexAlign.Center)
       }
 
@@ -627,17 +627,17 @@ struct ObsidianApp {
           Column() {
             Column() {
               Row() {
-                Text('文件列表').fontSize(16).fontWeight(FontWeight.Medium).fontColor(this.colors.textPrimary)
+                Text('文件列表').fontSize(16).fontWeight(FontWeight.Medium).fontColor(this.colors().textPrimary)
                 Button({ type: ButtonType.Circle }) {
-                  Text('✕').fontSize(14).fontColor(this.colors.textMuted)
+                  Text('✕').fontSize(14).fontColor(this.colors().textMuted)
                 }
                 .width(32).height(32).backgroundColor(Color.Transparent)
                 .onClick(() => this.showMobileSidebar = false)
               }
               .width('100%').height(48).padding({ left: 16, right: 16 })
               .justifyContent(FlexAlign.SpaceBetween)
-              .backgroundColor(this.colors.sidebarBg)
-              .border({ width: { bottom: 1 }, color: this.colors.divider })
+              .backgroundColor(this.colors().sidebarBg)
+              .border({ width: { bottom: 1 }, color: this.colors().divider })
 
               FileTree({
                 data: this.fileTreeData,
@@ -649,7 +649,7 @@ struct ObsidianApp {
               })
               .layoutWeight(1)
             }
-            .width('100%').height('100%').backgroundColor(this.colors.sidebarBg)
+            .width('100%').height('100%').backgroundColor(this.colors().sidebarBg)
           }
           .width('80%').height('100%').alignItems(HorizontalAlign.Start)
 
@@ -661,7 +661,7 @@ struct ObsidianApp {
         .animation({ duration: 250, curve: Curve.EaseOut })
       }
     }
-    .width('100%').height('100%').backgroundColor(this.colors.bgPrimary)
+    .width('100%').height('100%').backgroundColor(this.colors().bgPrimary)
   }
 
   build() {
@@ -672,21 +672,21 @@ struct ObsidianApp {
       TabContent() {
         Column() {
           Text('全局搜索').fontSize(20).fontWeight(FontWeight.Bold)
-            .fontColor(this.colors.textPrimary).margin(24)
+            .fontColor(this.colors().textPrimary).margin(24)
           Button('打开独立搜索页')
-            .backgroundColor(this.colors.accent)
+            .backgroundColor(this.colors().accent)
             .onClick(() => {
               this.navigateTo('pages/SearchPage');
             })
         }
-        .width('100%').height('100%').backgroundColor(this.colors.bgPrimary)
+        .width('100%').height('100%').backgroundColor(this.colors().bgPrimary)
       }
       .tabBar(this.TabBarBuilder('搜索', '🔍', 1))
 
       TabContent() {
         Column({ space: 16 }) {
           Text('工具').fontSize(20).fontWeight(FontWeight.Bold)
-            .fontColor(this.colors.textPrimary).margin({ top: 24, left: 24, right: 24 })
+            .fontColor(this.colors().textPrimary).margin({ top: 24, left: 24, right: 24 })
 
           Column({ space: 0 }) {
             ForEach([
@@ -705,23 +705,23 @@ struct ObsidianApp {
             ], (item: ToolMenuItem, index: number) => {
               Row({ space: 12 }) {
                 Text(item.icon).fontSize(20)
-                Text(item.label).fontSize(15).fontColor(this.colors.textPrimary).layoutWeight(1)
-                Text('›').fontSize(16).fontColor(this.colors.textMuted)
+                Text(item.label).fontSize(15).fontColor(this.colors().textPrimary).layoutWeight(1)
+                Text('›').fontSize(16).fontColor(this.colors().textMuted)
               }
               .width('100%').height(52).padding({ left: 24, right: 24 })
-              .backgroundColor(this.colors.bgPrimary)
-              .border({ width: { bottom: 1 }, color: this.colors.divider })
+              .backgroundColor(this.colors().bgPrimary)
+              .border({ width: { bottom: 1 }, color: this.colors().divider })
               .onClick(item.action)
             }, (item: ToolMenuItem) => item.label)
           }
           .width('100%').layoutWeight(1)
         }
-        .width('100%').height('100%').backgroundColor(this.colors.bgPrimary)
+        .width('100%').height('100%').backgroundColor(this.colors().bgPrimary)
       }
       .tabBar(this.TabBarBuilder('更多', '⋯', 2))
     }
     .width('100%').height('100%')
-    .backgroundColor(this.colors.bgPrimary)
+    .backgroundColor(this.colors().bgPrimary)
     .onChange((index: number) => {})
     .scrollable(true)
     .animationDuration(300)
@@ -733,9 +733,9 @@ struct ObsidianApp {
   TabBarBuilder(title: string, icon: string, index: number) {
     Column({ space: 2 }) {
       Text(icon).fontSize(20)
-        .fontColor(this.colors.iconSecondary)
+        .fontColor(this.colors().iconSecondary)
       Text(title).fontSize(10)
-        .fontColor(this.colors.textMuted)
+        .fontColor(this.colors().textMuted)
     }
     .width('100%').height('100%').justifyContent(FlexAlign.Center)
   }

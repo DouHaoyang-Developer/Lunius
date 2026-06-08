@@ -226,10 +226,7 @@ export class FileService {
         recursion: true,
         listNum: 0,
         filter: {
-          suffix: ['.md'],
-          displayName: [],
-          fileSizeOver: 0,
-          lastModifiedAfter: 0
+          suffix: ['.md']
         }
       };
       const files = await fs.listFile(filesDir, listFileOption);

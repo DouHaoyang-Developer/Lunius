@@ -24,11 +24,11 @@ export struct CanvasView {
   private palmRejection: PalmRejection = new PalmRejection();
   private shapeCancelled: boolean = false;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
-  private get isDrawingActive(): boolean {
+  private isDrawingActive(): boolean {
     return this.vm.drawingMode === 'freehand' || this.vm.drawingMode === 'eraser' || this.vm.drawingMode === 'shape';
   }
 
@@ -178,7 +178,7 @@ export struct CanvasView {
       // 背景网格
       Column()
         .width('100%').height('100%')
-        .backgroundColor(this.colors.bgPrimary)
+        .backgroundColor(this.colors().bgPrimary)
 
       // 连线层
       CanvasEdgeLayer({ vm: this.vm })
@@ -220,7 +220,7 @@ export struct CanvasView {
       }, (node: CanvasNode) => node.id)
 
       // 绘制模式触控覆盖层（透明，仅在绘制/橡皮擦模式激活）
-      if (this.isDrawingActive) {
+      if (this.isDrawingActive()) {
         Stack()
           .width('100%').height('100%')
           .zIndex(50)
@@ -231,7 +231,7 @@ export struct CanvasView {
       }
 
       // 工具栏（根据模式切换）
-      if (this.isDrawingActive) {
+      if (this.isDrawingActive()) {
         DrawingToolbar({ vm: this.vm })
           .position({ x: 0, y: '100%' }).translate({ y: -120 }).zIndex(60)
       } else {

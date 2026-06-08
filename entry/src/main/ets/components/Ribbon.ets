@@ -17,7 +17,7 @@ export struct Ribbon {
   @Prop activeTool: string = 'file-explorer';
   onToolAction?: (action: string) => void;
 
-  private get colors(): ObsidianColors {
+  private colors(): ObsidianColors {
     return getColors(this.themeMode);
   }
 
@@ -69,13 +69,13 @@ export struct Ribbon {
       Column() {
         Text('◈')
           .fontSize(24)
-          .fontColor(this.colors.accent)
+          .fontColor(this.colors().accent)
           .fontWeight(FontWeight.Bold)
       }
       .width('100%')
       .height(56)
       .justifyContent(FlexAlign.Center)
-      .backgroundColor(this.colors.ribbonBg)
+      .backgroundColor(this.colors().ribbonBg)
 
       // 工具按钮列表
       List({ space: 4 }) {
@@ -85,15 +85,15 @@ export struct Ribbon {
               Text(tool.icon)
                 .fontSize(20)
                 .fontColor(tool.label === this.activeTool || tool.isActive 
-                  ? this.colors.accent 
-                  : this.colors.iconSecondary)
+                  ? this.colors().accent 
+                  : this.colors().iconSecondary)
               if (!this.isCollapsed) {
                 Text(tool.label === 'file-explorer' ? '文件' : 
                      tool.label === 'search' ? '搜索' :
                      tool.label === 'graph' ? '图谱' :
                      tool.label === 'daily-note' ? '日记' : '设置')
                   .fontSize(10)
-                  .fontColor(this.colors.textMuted)
+                  .fontColor(this.colors().textMuted)
                   .margin({ top: 2 })
                   .maxLines(1)
                   .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -103,7 +103,7 @@ export struct Ribbon {
             .height(this.isCollapsed ? 44 : 60)
             .justifyContent(FlexAlign.Center)
             .backgroundColor(tool.label === this.activeTool 
-              ? this.colors.bgActive 
+              ? this.colors().bgActive 
               : Color.Transparent)
             .borderRadius(6)
             .onClick(() => {
@@ -125,7 +125,7 @@ export struct Ribbon {
         }
         .width(36)
         .height(36)
-        .backgroundColor(this.colors.bgHover)
+        .backgroundColor(this.colors().bgHover)
         .onClick(() => {
           this.themeMode = this.themeMode === ThemeMode.DARK 
             ? ThemeMode.LIGHT 
@@ -135,19 +135,19 @@ export struct Ribbon {
         Button({ type: ButtonType.Circle }) {
           Text('?')
             .fontSize(16)
-            .fontColor(this.colors.textSecondary)
+            .fontColor(this.colors().textSecondary)
         }
         .width(36)
         .height(36)
-        .backgroundColor(this.colors.bgHover)
+        .backgroundColor(this.colors().bgHover)
       }
       .width('100%')
       .padding(8)
-      .backgroundColor(this.colors.ribbonBg)
+      .backgroundColor(this.colors().ribbonBg)
     }
     .width(this.isCollapsed ? 56 : 72)
     .height('100%')
-    .backgroundColor(this.colors.ribbonBg)
-    .border({ width: { right: 1 }, color: this.colors.divider })
+    .backgroundColor(this.colors().ribbonBg)
+    .border({ width: { right: 1 }, color: this.colors().divider })
   }
 }
