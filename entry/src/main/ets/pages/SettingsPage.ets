@@ -4,6 +4,8 @@
 import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
 import { vaultIndex } from '../services/VaultIndex';
 import { VaultStats } from '../services/ApiTypes';
+import { pluginManager } from '../services/PluginManager';
+import { LuniusPlugin } from '../models/PluginTypes';
 
 @Entry
 @Component
@@ -15,9 +17,11 @@ struct SettingsPage {
   @State autoSave: boolean = true;
   @State showLineNumber: boolean = false;
   @State vaultStats: VaultStats | null = null;
+  @State plugins: LuniusPlugin[] = [];
 
   aboutToAppear(): void {
     this.loadStats();
+    this.loadPlugins();
   }
 
   async loadStats(): Promise<void> {
@@ -26,6 +30,10 @@ struct SettingsPage {
     } catch (e) {
       console.error('Failed to load vault stats: ' + JSON.stringify(e));
     }
+  }
+
+  async loadPlugins(): Promise<void> {
+    this.plugins = pluginManager.getAllPlugins();
   }
 
   private get colors(): ObsidianColors {
@@ -166,6 +174,46 @@ struct SettingsPage {
           this.SettingItem('总词数', `${this.vaultStats?.totalWords ?? '...'}`, () => {});
           this.SettingItem('总链接数', `${this.vaultStats?.totalLinks ?? '...'}`, () => {});
           this.SettingItem('总标签数', `${this.vaultStats?.totalTags ?? '...'}`, () => {});
+
+          // 插件管理
+          this.SectionTitle('插件管理');
+
+          if (this.plugins.length === 0) {
+            Text('暂无插件')
+              .fontSize(13).fontColor(this.colors.textMuted)
+              .width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 })
+          } else {
+            ForEach(this.plugins, (plugin: LuniusPlugin) => {
+              Column() {
+                Row() {
+                  Column({ space: 2 }) {
+                    Text(plugin.manifest.name)
+                      .fontSize(14).fontColor(this.colors.textPrimary)
+                    Text(plugin.manifest.description)
+                      .fontSize(11).fontColor(this.colors.textMuted)
+                      .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
+                    Text(`v${plugin.manifest.version} · ${plugin.manifest.author}`)
+                      .fontSize(10).fontColor(this.colors.textMuted)
+                  }
+                  .alignItems(HorizontalAlign.Start).layoutWeight(1)
+
+                  Toggle({ type: ToggleType.Switch, isOn: plugin.isEnabled })
+                    .selectedColor(this.colors.accent)
+                    .onChange(async (isOn: boolean) => {
+                      if (isOn) {
+                        await pluginManager.enable(plugin.manifest.id);
+                      } else {
+                        await pluginManager.disable(plugin.manifest.id);
+                      }
+                      this.loadPlugins();
+                    })
+                }
+                .width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 })
+              }
+              .width('100%').backgroundColor(this.colors.bgPrimary)
+              .border({ width: { bottom: 1 }, color: this.colors.divider })
+            }, (plugin: LuniusPlugin) => plugin.manifest.id)
+          }
 
           // 关于
           this.SectionTitle('关于');

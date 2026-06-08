@@ -5,11 +5,16 @@ import { fileService } from './IFileService';
 import { graphService } from './IGraphService';
 import { syncService } from './ISyncService';
 import { vaultIndex } from './VaultIndex';
+import { pluginManager } from './PluginManager';
+import { createPluginAPI } from './PluginAPI';
+import { bookmarkPlugin } from '../plugins/BookmarkPlugin';
 
 export { fileService } from './IFileService';
 export { graphService } from './IGraphService';
 export { syncService } from './ISyncService';
 export { vaultIndex } from './VaultIndex';
+export { pluginManager, createPluginAPI } from './PluginAPI';
+export type { LuniusPlugin } from '../models/PluginTypes';
 export { RealFileService } from './RealFileService';
 export { RealGraphService } from './RealGraphService';
 export { CollaborationService } from './CollaborationService';
@@ -28,13 +33,26 @@ export type {
 
 export async function initAllServices(): Promise<void> {
   console.info('Initializing Lunius services...');
-  // 预热文件树
   await fileService.getFileTree();
-  // 预热图谱索引
   await graphService.getGraphData();
-  // 预热标签索引
   await vaultIndex.ensureBuilt(true);
-  // 预热同步状态
   await syncService.getStatus();
   console.info('All Lunius services initialized.');
+}
+
+export function initAllPlugins(basePath: string): void {
+  // 设置 PluginManager 路径
+  pluginManager.setBasePath(basePath);
+
+  // 创建 PluginAPI 并注入
+  const api = createPluginAPI();
+  pluginManager.setAPI(api);
+
+  // 注册内置插件
+  pluginManager.register(bookmarkPlugin);
+
+  // 恢复启用状态
+  pluginManager.restore();
+
+  console.info('Plugin system initialized.');
 }

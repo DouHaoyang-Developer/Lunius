@@ -3,14 +3,26 @@
  * 输出仅包含 RTV parseHTMLAsAST 支持的标签：<p> <strong> <b> <i> <u> <s> <a> <span>
  */
 
-export function markdownToHtml(md: string): string {
+import { lqlExecutor } from './LQLExecutor';
+import { lqlRenderer } from './LQLRenderer';
+
+export async function markdownToHtml(md: string): Promise<string> {
   if (!md) {
     return '';
   }
 
-  // 1. 提取代码块（用缩进+背景色模拟），Mermaid 特殊处理
+  // 1. 提取代码块（用缩进+背景色模拟），Mermaid / LQL 特殊处理
   const codeBlocks: string[] = [];
+
+  // 1a. 先处理 LQL 块（async 查询需要提前完成）
+  const lqlBlocks: { placeholder: string; code: string }[] = [];
+  let blockIndex = 0;
   let processed = md.replace(/```(\w*)\n([\s\S]*?)```/g, (_m: string, lang: string, code: string): string => {
+    const idx = blockIndex++;
+    if (lang === 'lql') {
+      lqlBlocks.push({ placeholder: `@@LQLBLOCK_${idx}@@`, code: code });
+      return `\n@@LQLBLOCK_${idx}@@\n`;
+    }
     if (lang === 'mermaid') {
       const lineCount = code.trim().split('\n').length;
       codeBlocks.push(`<p><span style="fontFamily:monospace;background-color:#F8F0FF;color:#9C27B0;fontWeight:bold;padding:8px;display:block;border-left:4px solid #9C27B0">[Mermaid 图表 — 共 ${lineCount} 行]</span></p>`);
@@ -23,6 +35,20 @@ export function markdownToHtml(md: string): string {
       }
       codeBlocks.push(`<p><span style="fontFamily:monospace;background-color:#F0F0F0;padding:4">${escaped}</span></p>`);
     }
+
+    return `\n@@CODEBLOCK_${codeBlocks.length - 1}@@\n`;
+  });
+
+  // 1b. 执行 LQL 查询并替换占位符
+  for (const lb of lqlBlocks) {
+    try {
+      const result = await lqlExecutor.execute(lb.code);
+      const html = lqlRenderer.render(result);
+      processed = processed.replace(lb.placeholder, `<div style="margin:12px 0;">${html}</div>`);
+    } catch (e) {
+      processed = processed.replace(lb.placeholder, `<p><span style="color:#E74C3C;font-size:12px;">LQL 查询错误: ${JSON.stringify(e)}</span></p>`);
+    }
+  }
     return `\n@@CODEBLOCK_${codeBlocks.length - 1}@@\n`;
   });
 
