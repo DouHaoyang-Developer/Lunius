@@ -92,3 +92,30 @@ export interface PluginManifest {
   author: string;
   isEnabled: boolean;
 }
+
+// ─── Properties 增强类型 ──────────────────
+
+export enum PropertyType {
+  TEXT = 'text',
+  NUMBER = 'number',
+  CHECKBOX = 'checkbox',
+  DATE = 'date',
+  TAGS = 'tags',
+  LIST = 'list'
+}
+
+export interface PropertySchema {
+  key: string;
+  type: PropertyType;
+  label: string;
+  default?: FrontmatterValue;
+  options?: string[];
+  required: boolean;
+}
+
+export interface PropertyUsage {
+  key: string;
+  type: PropertyType;
+  count: number;
+  values: FrontmatterValue[];
+}

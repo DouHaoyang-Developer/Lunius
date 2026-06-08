@@ -3,7 +3,7 @@
 
 import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
 import { FileNode, NodeType } from '../models/FileNode';
-import { fileService } from '../services/IFileService';
+import { fileService, SearchOptions } from '../services/IFileService';
 
 interface SearchResult {
   file: FileNode;
@@ -18,6 +18,10 @@ struct SearchContent {
   @State query: string = '';
   @State results: SearchResult[] = [];
   @State searchHistory: string[] = ['ArkTS', '响应式', '性能优化', 'HarmonyOS'];
+  @State searchTitleOnly: boolean = false;
+  @State searchIncludeContent: boolean = true;
+  @State searchCaseSensitive: boolean = false;
+  @State searchUseRegex: boolean = false;
 
   private get colors(): ObsidianColors {
     return getColors(this.themeMode);
@@ -29,7 +33,13 @@ struct SearchContent {
       return;
     }
     try {
-      const searchResults = await fileService.searchNotes(keyword, { includeContent: true, scope: 'vault' });
+      const searchOptions: SearchOptions = {
+        includeContent: this.searchIncludeContent,
+        caseSensitive: this.searchCaseSensitive,
+        regex: this.searchUseRegex,
+        scope: 'vault'
+      };
+      const searchResults = await fileService.searchNotes(keyword, searchOptions);
       const fileTree = await fileService.getFileTree();
       const allFiles: FileNode[] = [];
       const collect = (nodes: FileNode[]) => {
@@ -45,14 +55,21 @@ struct SearchContent {
       for (let i = 0; i < allFiles.length; i++) {
         const f = allFiles[i];
         const id = f.id;
-        let isMatch = matchMap.has(id) || f.name.toLowerCase().includes(keyword.toLowerCase());
+        let isMatch = matchMap.has(id);
+        if (!isMatch) {
+          const targetName = this.searchCaseSensitive ? f.name : f.name.toLowerCase();
+          const targetKeyword = this.searchCaseSensitive ? keyword : keyword.toLowerCase();
+          isMatch = targetName.includes(targetKeyword);
+        }
         // 别名匹配
         if (!isMatch) {
           try {
             const meta = await fileService.getMetadata(id);
             const aliases: string[] = meta.aliases || [];
             for (let j = 0; j < aliases.length; j++) {
-              if (aliases[j].toLowerCase().includes(keyword.toLowerCase())) {
+              const targetAlias = this.searchCaseSensitive ? aliases[j] : aliases[j].toLowerCase();
+              const targetKeyword = this.searchCaseSensitive ? keyword : keyword.toLowerCase();
+              if (targetAlias.includes(targetKeyword)) {
                 isMatch = true;
                 break;
               }
@@ -146,21 +163,80 @@ struct SearchContent {
             .padding({ left: 16, right: 16, top: 24 })
 
           Column({ space: 0 }) {
-            ForEach(['仅搜索标题', '包含内容', '区分大小写', '正则表达式'], (opt: string, idx: number) => {
-              Row() {
-                Text(opt)
-                  .fontSize(14)
-                  .fontColor(this.colors.textPrimary)
-                  .layoutWeight(1)
-                Toggle({ type: ToggleType.Checkbox, isOn: idx === 0 })
-                  .selectedColor(this.colors.accent)
+            Row() {
+              Text('仅搜索标题')
+                .fontSize(14)
+                .fontColor(this.colors.textPrimary)
+                .layoutWeight(1)
+              Toggle({ type: ToggleType.Checkbox, isOn: $$this.searchTitleOnly })
+                .selectedColor(this.colors.accent)
+            }
+            .width('100%')
+            .height(44)
+            .padding({ left: 16, right: 16 })
+            .backgroundColor(this.colors.bgPrimary)
+            .border({ width: { bottom: 1 }, color: this.colors.divider })
+            .onClick(() => {
+              this.searchTitleOnly = !this.searchTitleOnly;
+              // 仅标题与包含内容互斥
+              if (this.searchTitleOnly) {
+                this.searchIncludeContent = false;
               }
-              .width('100%')
-              .height(44)
-              .padding({ left: 16, right: 16 })
-              .backgroundColor(this.colors.bgPrimary)
-              .border({ width: { bottom: 1 }, color: this.colors.divider })
-            }, (opt: string) => opt)
+            })
+
+            Row() {
+              Text('包含内容')
+                .fontSize(14)
+                .fontColor(this.colors.textPrimary)
+                .layoutWeight(1)
+              Toggle({ type: ToggleType.Checkbox, isOn: $$this.searchIncludeContent })
+                .selectedColor(this.colors.accent)
+            }
+            .width('100%')
+            .height(44)
+            .padding({ left: 16, right: 16 })
+            .backgroundColor(this.colors.bgPrimary)
+            .border({ width: { bottom: 1 }, color: this.colors.divider })
+            .onClick(() => {
+              this.searchIncludeContent = !this.searchIncludeContent;
+              if (this.searchIncludeContent) {
+                this.searchTitleOnly = false;
+              }
+            })
+
+            Row() {
+              Text('区分大小写')
+                .fontSize(14)
+                .fontColor(this.colors.textPrimary)
+                .layoutWeight(1)
+              Toggle({ type: ToggleType.Checkbox, isOn: $$this.searchCaseSensitive })
+                .selectedColor(this.colors.accent)
+            }
+            .width('100%')
+            .height(44)
+            .padding({ left: 16, right: 16 })
+            .backgroundColor(this.colors.bgPrimary)
+            .border({ width: { bottom: 1 }, color: this.colors.divider })
+            .onClick(() => {
+              this.searchCaseSensitive = !this.searchCaseSensitive;
+            })
+
+            Row() {
+              Text('正则表达式')
+                .fontSize(14)
+                .fontColor(this.colors.textPrimary)
+                .layoutWeight(1)
+              Toggle({ type: ToggleType.Checkbox, isOn: $$this.searchUseRegex })
+                .selectedColor(this.colors.accent)
+            }
+            .width('100%')
+            .height(44)
+            .padding({ left: 16, right: 16 })
+            .backgroundColor(this.colors.bgPrimary)
+            .border({ width: { bottom: 1 }, color: this.colors.divider })
+            .onClick(() => {
+              this.searchUseRegex = !this.searchUseRegex;
+            })
           }
           .width('100%')
         }

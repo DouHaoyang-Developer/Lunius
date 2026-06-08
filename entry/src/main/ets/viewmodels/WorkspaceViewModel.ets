@@ -1,4 +1,6 @@
 import { NoteViewModel } from './NoteViewModel';
+import { BasesViewModel } from './BasesViewModel';
+import { CanvasViewModel } from './CanvasViewModel';
 import { NoteMetadata } from '../services/ApiTypes';
 import { TabManager } from '../utils/TabManager';
 import { FileService } from '../utils/FileService';
@@ -15,7 +17,7 @@ export interface TabState {
   viewModel: NoteViewModel;
   isModified: boolean;
   isActive: boolean;
-  viewMode: 'live' | 'source' | 'preview' | 'split';
+  viewMode: 'live' | 'source' | 'preview' | 'split' | 'canvas' | 'table';
 }
 
 export interface SplitPane {
@@ -42,6 +44,14 @@ export class WorkspaceViewModel {
 
   isSearchOpen: boolean = false;
   searchQuery: string = '';
+
+  // Bases 数据库视图
+  basesViewModel: BasesViewModel = new BasesViewModel();
+  isBasesViewOpen: boolean = false;
+
+  // Canvas 画布视图
+  canvasViewModel: CanvasViewModel | null = null;
+  isCanvasOpen: boolean = false;
 
   private tabManager: TabManager = TabManager.getInstance();
 
@@ -222,6 +232,28 @@ export class WorkspaceViewModel {
       const entry = this.history[this.historyIndex];
       this.openNote(entry.noteId, '', entry.paneId);
     }
+  }
+
+  async openBasesView(): Promise<void> {
+    this.isBasesViewOpen = true;
+    this.isCanvasOpen = false;
+    await this.basesViewModel.loadData();
+  }
+
+  closeBasesView(): void {
+    this.isBasesViewOpen = false;
+  }
+
+  async openCanvas(canvasPath: string): Promise<void> {
+    this.canvasViewModel = new CanvasViewModel(canvasPath);
+    await this.canvasViewModel.loadCanvas();
+    this.isCanvasOpen = true;
+    this.isBasesViewOpen = false;
+  }
+
+  closeCanvas(): void {
+    this.isCanvasOpen = false;
+    this.canvasViewModel = null;
   }
 
   private deactivateOtherTabs(pane: SplitPane, activeTabId: string): void {

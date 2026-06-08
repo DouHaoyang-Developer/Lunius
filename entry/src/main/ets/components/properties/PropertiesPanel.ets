@@ -2,7 +2,8 @@
 // Obsidian Frontmatter YAML 属性编辑面板
 
 import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
-import { NoteMetadata } from '../../services/ApiTypes';
+import { NoteMetadata, FrontmatterValue, PropertyType as ApiPropertyType } from '../../services/ApiTypes';
+import { PropertyEditDialog } from './PropertyEditDialog';
 
 type PropertyType = 'text' | 'number' | 'checkbox' | 'tags' | 'date' | 'select';
 
@@ -19,6 +20,10 @@ export struct PropertiesPanel {
   @State isExpanded: boolean = true;
   @State editingKey: string = '';
   @State editingValue: string = '';
+  @State dialogKey: string = '';
+  @State dialogValue: FrontmatterValue = '';
+  @State dialogType: ApiPropertyType = ApiPropertyType.TEXT;
+  @State showEditDialog: boolean = false;
   onUpdate?: (key: string, value: string | number | boolean | string[]) => void;
   onAddProperty?: (key: string, value: string | number | boolean | string[]) => void;
 
@@ -147,6 +152,34 @@ export struct PropertiesPanel {
     .width('100%')
     .backgroundColor(this.colors.sidebarBg)
     .borderRadius(4)
+
+    // 属性编辑弹出框
+    if (this.showEditDialog) {
+      Stack() {
+        Column().width('100%').height('100%')
+      }
+      .position({ x: 0, y: 0 }).zIndex(100)
+      .onClick(() => { this.showEditDialog = false; })
+
+      Column() {
+        PropertyEditDialog({
+          propertyKey: this.dialogKey,
+          propertyValue: this.dialogValue,
+          propertyType: this.dialogType,
+          onConfirm: (key: string, value: FrontmatterValue, _type: ApiPropertyType) => {
+            this.onUpdate?.(key, value);
+            this.showEditDialog = false;
+          },
+          onDelete: (key: string) => {
+            // 删除属性：传空字符串触发特殊处理
+            this.onUpdate?.(key, '');
+            this.showEditDialog = false;
+          },
+          onCancel: () => { this.showEditDialog = false; }
+        })
+      }
+      .position({ x: '10%', y: '15%' }).width('80%').zIndex(101)
+    }
   }
 
   @Builder
@@ -225,7 +258,21 @@ export struct PropertiesPanel {
     .padding({ left: 12, right: 12 })
     .backgroundColor(Color.Transparent)
     .onClick(() => {
-      // 点击编辑（简化版）
+      this.dialogKey = prop.key;
+      this.dialogValue = prop.value;
+      const propType = prop.type;
+      if (propType === 'checkbox') {
+        this.dialogType = ApiPropertyType.CHECKBOX;
+      } else if (propType === 'number') {
+        this.dialogType = ApiPropertyType.NUMBER;
+      } else if (propType === 'tags') {
+        this.dialogType = ApiPropertyType.TAGS;
+      } else if (propType === 'date') {
+        this.dialogType = ApiPropertyType.DATE;
+      } else {
+        this.dialogType = ApiPropertyType.TEXT;
+      }
+      this.showEditDialog = true;
     })
   }
 

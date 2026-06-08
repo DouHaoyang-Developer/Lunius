@@ -61,24 +61,27 @@ export class CollaborationService {
   // ─── KVStore 安全操作封装 ──────────────────
 
   private async kvPut(key: string, value: string): Promise<void> {
+    if (!this.kvStore) return;
     try {
-      await this.kvPut(key, value);
+      await this.kvStore.put(key, value);
     } catch (err) {
       hilog.error(0x0000, TAG, 'kvPut failed, key=%{public}s: %{public}s', key, JSON.stringify(err));
     }
   }
 
   private async kvDelete(key: string): Promise<void> {
+    if (!this.kvStore) return;
     try {
-      await this.kvDelete(key);
+      await this.kvStore.delete(key);
     } catch (err) {
       hilog.error(0x0000, TAG, 'kvDelete failed, key=%{public}s: %{public}s', key, JSON.stringify(err));
     }
   }
 
   private async kvGet(key: string): Promise<string> {
+    if (!this.kvStore) return '';
     try {
-      const rawValue = await this.kvGet(key);
+      const rawValue = await this.kvStore.get(key);
       return typeof rawValue === 'string' ? rawValue : '';
     } catch (err) {
       hilog.error(0x0000, TAG, 'kvGet failed, key=%{public}s: %{public}s', key, JSON.stringify(err));

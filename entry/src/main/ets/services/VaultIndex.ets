@@ -2,7 +2,7 @@
 // Vault 索引服务 — 全局标签索引、Vault 统计、按标签查询
 
 import { FileNode, NodeType } from '../models/FileNode';
-import { VaultStats } from './ApiTypes';
+import { VaultStats, FrontmatterValue, PropertyType, PropertyUsage } from './ApiTypes';
 import { fileService, IFileService } from './IFileService';
 
 const TAG = 'VaultIndex';
@@ -15,6 +15,7 @@ export interface TagCount {
 export class VaultIndex {
   private tagIndex: Map<string, string[]> = new Map(); // tag → noteIds
   private fileTags: Map<string, string[]> = new Map(); // noteId → tags
+  private propertyIndex: Map<string, Map<string, string[]>> = new Map(); // propertyKey → (valStr → noteIds)
   private stats: VaultStats | null = null;
   private lastUpdate: number = 0;
   private isBuilding: boolean = false;
@@ -31,6 +32,7 @@ export class VaultIndex {
     try {
       this.tagIndex.clear();
       this.fileTags.clear();
+      this.propertyIndex.clear();
 
       const tree = await fileService.getFileTree();
       const fileIds = this.collectFileIds(tree);
@@ -54,6 +56,22 @@ export class VaultIndex {
               this.tagIndex.set(tag, []);
             }
             this.tagIndex.get(tag)!.push(id);
+          }
+
+          // 构建属性索引
+          const frontmatter = metadata.frontmatter;
+          if (frontmatter && frontmatter.size > 0) {
+            frontmatter.forEach((value: FrontmatterValue, key: string) => {
+              if (!this.propertyIndex.has(key)) {
+                this.propertyIndex.set(key, new Map<string, string[]>());
+              }
+              const valMap = this.propertyIndex.get(key)!;
+              const valStr = Array.isArray(value) ? value.join(',') : String(value);
+              if (!valMap.has(valStr)) {
+                valMap.set(valStr, []);
+              }
+              valMap.get(valStr)!.push(id);
+            });
           }
 
           totalWords += metadata.wordCount || 0;
@@ -124,6 +142,77 @@ export class VaultIndex {
     return this.stats?.totalNotes || 0;
   }
 
+  // ─── 属性查询 ────────────────────────────────
+
+  async getAllProperties(): Promise<PropertyUsage[]> {
+    await this.ensureBuilt();
+    const result: PropertyUsage[] = [];
+    this.propertyIndex.forEach((valMap: Map<string, string[]>, key: string) => {
+      const values: FrontmatterValue[] = [];
+      let count = 0;
+      valMap.forEach((noteIds: string[], valStr: string) => {
+        values.push(this.guessValueType(valStr));
+        count += noteIds.length;
+      });
+      result.push({
+        key: key,
+        type: this.guessPropertyType(values),
+        count: count,
+        values: values.slice(0, 20)
+      });
+    });
+    return result.sort((a, b) => b.count - a.count);
+  }
+
+  async getPropertyValues(propertyKey: string): Promise<FrontmatterValue[]> {
+    await this.ensureBuilt();
+    const valMap = this.propertyIndex.get(propertyKey);
+    if (!valMap) return [];
+    const values: FrontmatterValue[] = [];
+    valMap.forEach((_noteIds: string[], valStr: string) => {
+      values.push(this.guessValueType(valStr));
+    });
+    return values;
+  }
+
+  async getFilesByProperty(key: string, value: FrontmatterValue): Promise<string[]> {
+    await this.ensureBuilt();
+    const valMap = this.propertyIndex.get(key);
+    if (!valMap) return [];
+    const valStr = Array.isArray(value) ? value.join(',') : String(value);
+    return valMap.get(valStr) || [];
+  }
+
+  async getFilesHavingProperty(key: string): Promise<string[]> {
+    await this.ensureBuilt();
+    const valMap = this.propertyIndex.get(key);
+    if (!valMap) return [];
+    const allIds: string[] = [];
+    valMap.forEach((noteIds: string[]) => {
+      allIds.push(...noteIds);
+    });
+    return allIds;
+  }
+
+  private guessValueType(str: string): FrontmatterValue {
+    if (str === 'true') return true;
+    if (str === 'false') return false;
+    const num = Number(str);
+    if (!isNaN(num) && str.length > 0) return num;
+    if (str.includes(',')) return str.split(',').filter((s: string) => s.length > 0);
+    return str;
+  }
+
+  private guessPropertyType(values: FrontmatterValue[]): PropertyType {
+    const types = values.map((v: FrontmatterValue) => {
+      if (typeof v === 'boolean') return PropertyType.CHECKBOX;
+      if (typeof v === 'number') return PropertyType.NUMBER;
+      if (Array.isArray(v)) return PropertyType.TAGS;
+      return PropertyType.TEXT;
+    });
+    return types[0] ?? PropertyType.TEXT;
+  }
+
   // ─── 工具 ──────────────────────────────────────
 
   private collectFileIds(tree: FileNode[]): string[] {
@@ -138,6 +227,9 @@ export class VaultIndex {
   invalidate(): void {
     this.lastUpdate = 0;
     this.stats = null;
+    this.propertyIndex.clear();
+    this.tagIndex.clear();
+    this.fileTags.clear();
   }
 }
 
