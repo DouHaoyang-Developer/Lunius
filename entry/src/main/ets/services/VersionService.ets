@@ -1,4 +1,4 @@
-// services/VersionService.ts
+// services/VersionService.ets
 // 版本控制实现 — 本地快照 + 行级 Diff 对比
 // 在每次 NoteViewModel.saveNote() 成功后自动创建版本
 
