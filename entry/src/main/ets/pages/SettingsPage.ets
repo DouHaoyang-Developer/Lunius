@@ -168,6 +168,27 @@ struct SettingsPage {
           this.ToggleItem('使用 Wiki 链接', true, () => {});
           this.ToggleItem('自动格式化', false, () => {});
 
+          // 同步与版本
+          this.SectionTitle('同步与版本');
+          this.SettingItem('版本历史', '查看笔记版本快照', () => {
+            try {
+              this.getUIContext().getRouter().pushUrl({
+                url: 'components/VersionHistoryPanel'
+              });
+            } catch (e) {
+              console.error('navigate to VersionHistoryPanel failed:', JSON.stringify(e));
+            }
+          });
+          this.SettingItem('云同步', '华为云空间', () => {
+            try {
+              this.getUIContext().getRouter().pushUrl({
+                url: 'components/CloudSyncSettings'
+              });
+            } catch (e) {
+              console.error('navigate to CloudSyncSettings failed:', JSON.stringify(e));
+            }
+          });
+
           // Vault 统计
           this.SectionTitle('Vault 统计');
           this.SettingItem('总笔记数', `${this.vaultStats?.totalNotes ?? '...'}`, () => {});

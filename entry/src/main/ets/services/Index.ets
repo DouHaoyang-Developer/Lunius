@@ -8,6 +8,8 @@ import { vaultIndex } from './VaultIndex';
 import { pluginManager } from './PluginManager';
 import { createPluginAPI } from './PluginAPI';
 import { bookmarkPlugin } from '../plugins/BookmarkPlugin';
+import { VersionService } from './VersionService';
+import { CloudSyncService } from './CloudSyncService';
 
 export { fileService } from './IFileService';
 export { graphService } from './IGraphService';
@@ -19,10 +21,19 @@ export type { LuniusPlugin, PluginAPI, RibbonButtonConfig } from '../models/Plug
 export { RealFileService } from './RealFileService';
 export { RealGraphService } from './RealGraphService';
 export { CollaborationService } from './CollaborationService';
+export { VersionService } from './VersionService';
+export { CloudSyncService } from './CloudSyncService';
 export type { IFileService, SearchOptions, FileChangeEvent } from './IFileService';
 export type { IGraphService } from './IGraphService';
 export type { ISyncService } from './ISyncService';
-export type { NoteMetadata, SearchResultItem, GraphData, GraphNodeData, GraphEdgeData, SyncStatus, VaultStats } from './ApiTypes';
+export type { IVersionService } from './IVersionService';
+export type { ICloudSyncService } from './ICloudSyncService';
+export type {
+  NoteMetadata, SearchResultItem, GraphData, GraphNodeData, GraphEdgeData,
+  SyncStatus, VaultStats,
+  VersionEntry, VersionDetail, VersionCompareResult, VersionStats,
+  CloudNoteMapping, CloudSyncStatus, CloudSyncResult, CloudHistoryVersion
+} from './ApiTypes';
 export type {
   CollaboratorDevice,
   CollaborationSession,
@@ -38,6 +49,13 @@ export async function initAllServices(): Promise<void> {
   await graphService.getGraphData();
   await vaultIndex.ensureBuilt(true);
   await syncService.getStatus();
+
+  // 初始化版本控制服务
+  await VersionService.getInstance().init();
+
+  // 初始化云同步服务
+  await CloudSyncService.getInstance().init();
+
   console.info('All Lunius services initialized.');
 }
 

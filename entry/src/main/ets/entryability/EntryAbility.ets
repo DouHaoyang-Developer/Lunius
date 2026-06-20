@@ -5,6 +5,7 @@ import { FileService } from '../utils/FileService';
 import { TabManager } from '../utils/TabManager';
 import { initAllServices } from '../services/Index';
 import { CollaborationService } from '../services/CollaborationService';
+import { CloudSyncService } from '../services/CloudSyncService';
 
 const TAG = 'ObsidianEntryAbility';
 
@@ -23,9 +24,11 @@ export default class EntryAbility extends UIAbility {
       hilog.info(0x0000, TAG, 'TabManager initialized');
     });
 
-    // 预热后端服务索引（图谱、标签、同步状态）
+    // 预热后端服务索引（图谱、标签、同步状态、版本控制、云同步）
     initAllServices().then(() => {
       hilog.info(0x0000, TAG, 'Backend services warmed up');
+      // 启动周期云同步（每 5 分钟）
+      this.startCloudSync();
     });
 
     // 初始化主题模式（默认 Dark）
@@ -113,6 +116,24 @@ export default class EntryAbility extends UIAbility {
 
   onDestroy(): void {
     hilog.info(0x0000, TAG, '%{public}s', 'Ability onDestroy');
+  }
+
+  // 启动周期云同步
+  private startCloudSync(): void {
+    const cloudSync = CloudSyncService.getInstance();
+    if (cloudSync.isAuthorized()) {
+      setInterval(() => {
+        cloudSync.syncAll().then((result) => {
+          hilog.info(0x0000, TAG, 'CloudSync: uploaded=%{public}d, downloaded=%{public}d, conflicts=%{public}d',
+            result.uploaded, result.downloaded, result.conflicts);
+        });
+      }, 5 * 60 * 1000); // 每 5 分钟
+      // 首次立即同步
+      cloudSync.syncAll().then((result) => {
+        hilog.info(0x0000, TAG, 'CloudSync initial: uploaded=%{public}d, downloaded=%{public}d, conflicts=%{public}d',
+          result.uploaded, result.downloaded, result.conflicts);
+      });
+    }
   }
 
   onWindowStageCreate(windowStage: window.WindowStage): void {

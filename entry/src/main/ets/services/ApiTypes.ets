@@ -119,3 +119,68 @@ export interface PropertyUsage {
   count: number;
   values: FrontmatterValue[];
 }
+
+// ─── 版本控制类型 ──────────────────
+
+export interface VersionEntry {
+  versionId: string;
+  noteId: string;
+  timestamp: number;
+  contentSize: number;
+  versionNumber: number;
+  message?: string;
+  isCheckpoint: boolean;
+}
+
+export interface VersionDetail extends VersionEntry {
+  content: string;
+  diffFromPrevious?: string;
+}
+
+export interface VersionCompareResult {
+  oldVersion: VersionDetail;
+  newVersion: VersionDetail;
+  additions: number;
+  deletions: number;
+  unifiedDiff: string;
+}
+
+export interface VersionStats {
+  totalVersions: number;
+  totalSize: number;
+  notesTracked: number;
+}
+
+// ─── 云同步类型 ──────────────────
+
+export interface CloudNoteMapping {
+  localPath: string;
+  cloudFileId: string;
+  cloudVersionId: string;
+  localHash: string;
+  lastSyncedAt: number;
+}
+
+export interface CloudSyncStatus {
+  isSyncing: boolean;
+  lastSyncTime: number;
+  pendingUploads: number;
+  pendingDownloads: number;
+  cloudFileCount: number;
+  quotaUsed: number;
+  quotaTotal: number;
+}
+
+export interface CloudSyncResult {
+  uploaded: number;
+  downloaded: number;
+  conflicts: number;
+}
+
+export interface CloudHistoryVersion {
+  id: string;
+  editedTime: string;
+  size: number;
+  originalFilename: string;
+  keepPermanent: boolean;
+}
