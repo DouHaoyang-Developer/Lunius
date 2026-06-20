@@ -1,8 +1,8 @@
 # Lunius — Obsidian 风格知识管理应用 (HarmonyOS)
 
-基于 HarmonyOS ArkTS 构建的本地化 Markdown 知识管理应用，采用 Obsidian 风格的界面设计，支持实时阅览（Live Preview）、Wiki 链接知识图谱、**无限画布白板**、**Bases 数据库视图**、**LQL 查询语言**、**插件框架**、**碰一碰分享**、**超级终端协同编辑**、**跨端迁移**等核心能力。
+基于 HarmonyOS ArkTS 构建的本地化 Markdown 知识管理应用，采用 Obsidian 风格的界面设计，支持实时阅览（Live Preview）、Wiki 链接知识图谱、**无限画布白板**、**Bases 数据库视图**、**LQL 查询语言**、**插件框架**、**碰一碰分享**、**超级终端协同编辑**、**跨端迁移**、**★ 版本控制**、**★ 华为云空间云端同步**等核心能力。
 
-**~85 个源文件 · ~17,000 行代码 · MVVM + Service 三层架构 · SDK 6.1.1(24)**
+**~90 个源文件 · ~18,000 行代码 · MVVM + Service 三层架构 · SDK 6.1.1(24)**
 
 ---
 
@@ -55,7 +55,9 @@ Lunius/
 │   │   ├── QuickSwitcher.ets    # ★ 快速切换器（Ctrl+O 模糊搜索）
 │   │   ├── Ribbon.ets           # 左侧功能栏（文件 / 搜索 / 图谱 / 日记 / 书签 / ★ Bases / ★ Canvas）
 │   │   ├── RightSidebar.ets     # 右侧面板容器
-│   │   └── TabBar.ets           # 标签页切换（含置顶标记 + 上下文菜单）
+│   │   ├── TabBar.ets           # 标签页切换（含置顶标记 + 上下文菜单）
+│   │   ├── VersionHistoryPanel.ets  # ★ 版本历史面板（快照列表 + Diff 对比 + 恢复）
+│   │   └── CloudSyncSettings.ets    # ★ 云同步设置面板（授权 + 同步 + 配额）
 │   ├── models/                  # 数据模型（6 个）
 │   │   ├── FileNode.ets         # 文件节点 / 大纲 / 标签 / 反向链接
 │   │   ├── CollaborationTypes.ets # ★ 协同相关类型定义
@@ -63,8 +65,8 @@ Lunius/
 │   │   ├── DrawingTypes.ets     # ★ DrawingPath / BrushType / 颜色预设
 │   │   ├── BasesTypes.ets       # ★ ColumnDef / FilterCondition / TableViewConfig
 │   │   └── PluginTypes.ets      # ★ LuniusPlugin 基类 / PluginAPI / Capability
-│   ├── services/                # ★ 服务层（接口 + 真实实现 · 14 个）
-│   │   ├── ApiTypes.ets         # 全部类型定义（含 PropertyType/PropertySchema/PropertyUsage）
+│   ├── services/                # ★ 服务层（接口 + 真实实现 · 18 个）
+│   │   ├── ApiTypes.ets         # 全部类型定义（含 PropertyType/PropertySchema/PropertyUsage/版本/云同步）
 │   │   ├── IFileService.ets     # 文件系统接口 + MockFileService
 │   │   ├── IGraphService.ets    # 知识图谱接口 + MockGraphService
 │   │   ├── ISyncService.ets     # 同步服务接口 + JSON 持久化实现
@@ -76,6 +78,10 @@ Lunius/
 │   │   ├── CanvasFileService.ets# ★ Canvas .canvas JSON 读写
 │   │   ├── PluginManager.ets    # ★ 插件注册/启用/禁用/状态持久化
 │   │   ├── PluginAPI.ets        # ★ PluginAPI 实现（命令/文件/UI 代理）
+│   │   ├── IVersionService.ets  # ★ 版本控制接口定义
+│   │   ├── VersionService.ets   # ★ 版本控制实现（快照 + LCS Diff + 检查点）
+│   │   ├── ICloudSyncService.ets# ★ 云同步接口定义
+│   │   ├── CloudSyncService.ets # ★ 华为云空间同步（Drive Kit REST API）
 │   │   └── Index.ets            # 统一服务导出 + 预热入口 + initAllPlugins
 │   ├── plugins/                 # ★ 内置插件
 │   │   └── BookmarkPlugin.ets   # 书签插件（Ribbon 按钮 + 能力声明）
@@ -280,6 +286,39 @@ SORT due ASC
 | **搜索操作符** | `property:status` / `property:status:draft` / `property:priority:>3` |
 | **PropertySchema** | 属性定义（类型约束/默认值/选项列表），JSON 持久化 |
 
+### ★ 版本控制
+
+| 能力 | 说明 |
+|------|------|
+| **自动版本快照** | 每次 `saveNote()` 成功后自动创建版本，内容去重（相同内容跳过） |
+| **版本列表** | 按时间倒序展示所有版本，含版本号、时间戳、文件大小 |
+| **版本详情** | 查看任意版本的完整内容 |
+| **Diff 对比** | 行级 LCS 算法对比两个版本，显示增删行数 + unified diff |
+| **版本恢复** | 恢复到任意历史版本（以旧内容创建新版本） |
+| **检查点标记** | 手动标记重要版本为检查点，清理时自动保留 |
+| **自动清理** | 每个笔记最多保留 50 个版本，超出自动清理（检查点保留） |
+| **版本统计** | 总版本数 / 总存储大小 / 已追踪笔记数 |
+
+**存储结构**：`.lunius/versions/{noteId}/v001_timestamp.md` + `.lunius/version_index.json`
+
+### ★ 华为云空间云端同步
+
+| 能力 | 说明 |
+|------|------|
+| **华为帐号授权** | 基于 `@kit.AccountKit` OAuth 2.0 授权，scope: `drive.appdata` |
+| **文件上传** | `POST /drive/v1/files` 创建元数据 → `PATCH uploadType=media` 上传内容 |
+| **文件下载** | `GET /files/{fileId}?form=media` 下载笔记内容 |
+| **增量同步** | 上传本地变更→下载云端变更，SHA256 哈希去重，避免重复传输 |
+| **云端版本历史** | Drive Kit HistoryVersions API：列表/查看/下载/恢复云端历史版本 |
+| **冲突解决** | 本地和云端同时变更时，合并冲突标记（`<<<<<<<< 本地` / `>>>>>>>> 云端`） |
+| **周期同步** | 每 5 分钟自动同步，`EntryAbility` 启动时初始化 |
+| **配额管理** | 查看已用/总空间，同步状态面板 |
+| **同步状态** | 云端文件数 / 待上传数 / 待下载数 / 上次同步时间 |
+
+**存储结构**：应用私有文件夹 `appDataFolder`，不占用用户个人云盘空间
+
+**映射关系**：`.lunius/cloud_mapping.json`（本地路径 → 云端 fileId 映射）
+
 ---
 
 ## 后端能力全景表
@@ -335,6 +374,8 @@ SORT due ASC
 | 碰一碰分享 | `harmonyShare.on('knockShare')` | v3 |
 | 跨设备协同编辑 | `DistributedKVStore` + OT 操作 + 远程光标 [已修复] | v3 |
 | 跨端迁移 | Continuation API | v3 |
+| **版本控制** | 本地快照 + LCS Diff + 检查点 + 自动清理 | ★ v5 |
+| **华为云空间同步** | Drive Kit REST API + OAuth + 增量同步 + 冲突解决 | ★ v5 |
 
 ---
 
@@ -433,6 +474,8 @@ LIMIT <数量>
 7. 在笔记中写入 ```lql TABLE ... ``` 代码块 → 阅读模式查看动态查询结果
 8. SettingsPage → 插件管理 → 启用/禁用内置插件
 9. 创建 `.canvas` 画布 → 添加节点 + 自由手绘 + 连线
+10. SettingsPage → 同步与版本 → 版本历史 → 查看/对比/恢复笔记版本
+11. SettingsPage → 同步与版本 → 云同步 → 授权华为帐号 → 自动同步到云空间
 
 ---
 
@@ -451,7 +494,9 @@ LIMIT <数量>
 | **App Linking** | `@kit.AbilityKit` — 深度链接（★ 接收跳转） |
 | **跨端迁移** | Continuation API（★ 任务流转） |
 | **打印** | `@kit.BasicServicesKit`（PDF 导出） |
+| **网络** | `@kit.NetworkKit`（★ 云端同步 HTTP 请求） |
+| **帐号** | `@kit.AccountKit`（★ 华为帐号 OAuth 授权） |
 | **状态管理** | `@Observed` / `@ObjectLink` / `@StorageLink` |
-| **持久化** | JSON 文件（`tabs_state.json` / `plugin_state.json` / `property_schemas.json` / `.canvas`） |
+| **持久化** | JSON 文件（`tabs_state.json` / `plugin_state.json` / `property_schemas.json` / `version_index.json` / `cloud_mapping.json` / `.canvas`） |
 | **Markdown 解析** | 自研（YAML + Wiki Link + Callout + LQL 代码块） |
 | **查询引擎** | LQL — 词法分析 + 递归下降解析 + VaultIndex 加速执行 |
