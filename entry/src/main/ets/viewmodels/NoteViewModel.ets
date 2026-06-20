@@ -1,10 +1,11 @@
 // viewmodels/NoteViewModel.ets
 // 笔记详情 ViewModel - 连接 UI 与 Service 层
-// 支持防抖自动保存、错误回调、文件变更监听、分布式协同编辑
+// 支持防抖自动保存、错误回调、文件变更监听、分布式协同编辑、版本控制
 
 import { fileService, IFileService, FileChangeEvent } from '../services/IFileService';
 import { NoteMetadata } from '../services/ApiTypes';
 import { CollaborationService } from '../services/CollaborationService';
+import { VersionService } from '../services/VersionService';
 import {
   CollabOperation,
   CollabOperationType,
@@ -96,6 +97,9 @@ export class NoteViewModel {
       if (this.isCollaborating && this.collabService) {
         this.collabService.saveContentSnapshot(this.content);
       }
+      // 创建版本快照（异步，不阻塞保存流程）
+      VersionService.getInstance().createVersion(this.noteId, this.content)
+        .catch((e: Error) => console.error('VersionService createVersion failed:', e.message));
       this.notifySave(true);
     } catch (e) {
       this.saveError = '保存失败';
