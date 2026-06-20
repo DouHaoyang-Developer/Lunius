@@ -1,4 +1,4 @@
-// services/IVersionService.ts
+// services/IVersionService.ets
 // 版本控制接口定义 — 本地版本快照管理
 
 import { VersionEntry, VersionDetail, VersionCompareResult, VersionStats } from './ApiTypes';

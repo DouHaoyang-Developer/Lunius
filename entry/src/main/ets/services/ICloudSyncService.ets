@@ -1,4 +1,4 @@
-// services/ICloudSyncService.ts
+// services/ICloudSyncService.ets
 // 云同步接口定义 — 基于 Drive Kit REST API
 
 import { CloudNoteMapping, CloudSyncStatus, CloudSyncResult, CloudHistoryVersion } from './ApiTypes';

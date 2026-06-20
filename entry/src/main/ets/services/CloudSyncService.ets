@@ -1,4 +1,4 @@
-// services/CloudSyncService.ts
+// services/CloudSyncService.ets
 // 云同步实现 — 基于 Drive Kit REST API 的华为云空间文件同步
 // 支持上传/下载/版本历史/增量同步/冲突解决
 
@@ -201,7 +201,7 @@ export class CloudSyncService implements ICloudSyncService {
     }
     const content = await this.request(
       'GET',
-      `/files/${mapping.cloudFileId}?form=media',
+      `/files/${mapping.cloudFileId}?form=media`,
       undefined,
       undefined,
       'text/plain'
