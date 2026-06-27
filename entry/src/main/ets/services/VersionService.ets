@@ -35,7 +35,7 @@ export class VersionService implements IVersionService {
   async init(): Promise<void> {
     const indexPath = this.getIndexPath();
     const content = await this.fileService.readFile(indexPath);
-    if (content) {
+    if (content && content.length > 0) {
       try {
         this.versionIndex = JSON.parse(content) as VersionIndexData;
       } catch (e) {
@@ -70,6 +70,10 @@ export class VersionService implements IVersionService {
       versionNumber,
       isCheckpoint: false
     };
+
+    // 确保版本目录存在
+    const versionDir = `${this.getBasePath()}/${VersionService.VERSIONS_DIR}/${noteId}`;
+    await this.fileService.createDirectory(`${VersionService.VERSIONS_DIR}/${noteId}`);
 
     // 写入版本文件
     const versionPath = this.getVersionPath(noteId, versionId);
@@ -139,7 +143,10 @@ export class VersionService implements IVersionService {
 
     for (const entry of toDelete) {
       const path = this.getVersionPath(noteId, entry.versionId);
-      await this.fileService.deleteFile(path);
+      const deleted = await this.fileService.deleteFile(path);
+      if (!deleted) {
+        console.warn(`VersionService: failed to delete ${path}`);
+      }
     }
 
     // 更新索引

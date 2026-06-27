@@ -216,6 +216,22 @@ export class FileService {
   }
 
   /**
+   * 删除文件
+   * @param filePath 文件路径
+   * @returns 是否删除成功
+   */
+  public async deleteFile(filePath: string): Promise<boolean> {
+    try {
+      await fs.unlink(filePath);
+      console.info(`File deleted: ${filePath}`);
+      return true;
+    } catch (err) {
+      console.error(`Failed to delete file: ${(err as BusinessError).message}`);
+      return false;
+    }
+  }
+
+  /**
    * 获取所有 .md 文件列表
    * @returns 文件路径数组
    */

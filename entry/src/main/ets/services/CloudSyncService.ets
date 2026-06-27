@@ -63,7 +63,7 @@ export class CloudSyncService implements ICloudSyncService {
   async init(): Promise<void> {
     const mappingPath = this.getMappingPath();
     const content = await this.fileService.readFile(mappingPath);
-    if (content) {
+    if (content && content.length > 0) {
       try {
         const data = JSON.parse(content) as Record<string, CloudNoteMapping>;
         this.mappingStore = new Map(Object.entries(data));
@@ -275,9 +275,24 @@ export class CloudSyncService implements ICloudSyncService {
 
         if (!existingMapping) {
           // 新文件：下载并创建本地文件
-          const content = await this.downloadNote(noteId);
+          const content = await this.request(
+            'GET',
+            `/files/${cloudFile.id}?form=media`,
+            undefined,
+            undefined,
+            'text/plain'
+          ) as string;
           const localPath = `${this.fileService.getBaseDirectory()}/${cloudFile.name}`;
           await this.fileService.writeFile(localPath, content);
+          // 创建映射
+          const hash = await this.computeHash(content);
+          this.mappingStore.set(noteId, {
+            localPath: noteId,
+            cloudFileId: cloudFile.id,
+            cloudVersionId: cloudFile.id,
+            localHash: hash,
+            lastSyncedAt: Date.now()
+          });
           downloaded++;
         } else if (existingMapping.cloudVersionId !== cloudFile.id) {
           // 云端有更新：检查本地是否也有变更
@@ -305,6 +320,7 @@ export class CloudSyncService implements ICloudSyncService {
 
     this.lastSyncTime = Date.now();
     this.isSyncing = false;
+    await this.persistMappings();
     return { uploaded, downloaded, conflicts };
   }
 
