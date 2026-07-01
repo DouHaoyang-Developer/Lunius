@@ -17,6 +17,7 @@ export struct GraphView {
   @State selectedNodeId: string = '';
   @State showLocalGraph: boolean = false;
   @State localGraphData: GraphData | null = null;
+  private canvasCtx: CanvasRenderingContext2D | null = null;
 
   private settings: RenderingContextSettings = new RenderingContextSettings(true);
   private context: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.settings);
@@ -63,10 +64,43 @@ export struct GraphView {
     this.zoomScale = 1.0;
     this.offsetX = 0;
     this.offsetY = 0;
+    this.redrawEdges();
   }
 
   private onPinchUpdate = (ge: GestureEvent): void => {
     this.zoomScale = Math.max(0.3, Math.min(3.0, ge.scale));
+    this.redrawEdges();
+  }
+
+  private redrawEdges(): void {
+    const ctx = this.canvasCtx;
+    if (!ctx) return;
+    ctx.clearRect(-500, -500, 2000, 2000);
+    ctx.strokeStyle = this.colors().divider;
+    ctx.lineWidth = 1;
+    const data = this.displayData();
+    const nodes = data.nodes;
+    const nodeMap: Map<string, GraphNodeData> = new Map();
+    for (let i = 0; i < nodes.length; i++) {
+      nodeMap.set(nodes[i].id, nodes[i]);
+    }
+    for (let j = 0; j < data.edges.length; j++) {
+      const edge = data.edges[j];
+      const source = nodeMap.get(edge.source);
+      const target = nodeMap.get(edge.target);
+      if (source && target) {
+        ctx.beginPath();
+        ctx.moveTo(
+          (source.x + this.offsetX) * this.zoomScale + source.radius * this.zoomScale,
+          (source.y + this.offsetY) * this.zoomScale + source.radius * this.zoomScale
+        );
+        ctx.lineTo(
+          (target.x + this.offsetX) * this.zoomScale + target.radius * this.zoomScale,
+          (target.y + this.offsetY) * this.zoomScale + target.radius * this.zoomScale
+        );
+        ctx.stroke();
+      }
+    }
   }
 
   build() {
@@ -92,13 +126,13 @@ export struct GraphView {
             Text('⊕').fontSize(16).fontColor(this.colors().iconSecondary)
           }
           .width(28).height(28).backgroundColor(this.colors().bgHover)
-          .onClick(() => { this.zoomScale = Math.min(this.zoomScale + 0.2, 3.0); })
+          .onClick(() => { this.zoomScale = Math.min(this.zoomScale + 0.2, 3.0); this.redrawEdges(); })
 
           Button({ type: ButtonType.Circle }) {
             Text('⊖').fontSize(16).fontColor(this.colors().iconSecondary)
           }
           .width(28).height(28).backgroundColor(this.colors().bgHover)
-          .onClick(() => { this.zoomScale = Math.max(this.zoomScale - 0.2, 0.3); })
+          .onClick(() => { this.zoomScale = Math.max(this.zoomScale - 0.2, 0.3); this.redrawEdges(); })
 
           Button({ type: ButtonType.Circle }) {
             Text('⟲').fontSize(14).fontColor(this.colors().iconSecondary)
@@ -108,6 +142,7 @@ export struct GraphView {
             this.zoomScale = 1.0;
             this.offsetX = 0;
             this.offsetY = 0;
+            this.redrawEdges();
           })
 
           Button({ type: ButtonType.Circle }) {
@@ -161,27 +196,8 @@ export struct GraphView {
           Canvas(this.context)
             .width('100%').height('100%')
             .onReady(() => {
-              const ctx = this.context;
-              ctx.strokeStyle = this.colors().divider;
-              ctx.lineWidth = 1;
-              const nodes = this.displayData().nodes;
-              const nodeMap = new Map(nodes.map(n => [n.id, n]));
-              this.displayData().edges.forEach(edge => {
-                const source = nodeMap.get(edge.source);
-                const target = nodeMap.get(edge.target);
-                if (source && target) {
-                  ctx.beginPath();
-                  ctx.moveTo(
-                    (source.x + this.offsetX) * this.zoomScale + source.radius * this.zoomScale,
-                    (source.y + this.offsetY) * this.zoomScale + source.radius * this.zoomScale
-                  );
-                  ctx.lineTo(
-                    (target.x + this.offsetX) * this.zoomScale + target.radius * this.zoomScale,
-                    (target.y + this.offsetY) * this.zoomScale + target.radius * this.zoomScale
-                  );
-                  ctx.stroke();
-                }
-              });
+              this.canvasCtx = this.context;
+              this.redrawEdges();
             })
 
           // 节点层
@@ -236,6 +252,7 @@ export struct GraphView {
               this.offsetY += (event.offsetY - this.lastY) / this.zoomScale;
               this.lastX = event.offsetX;
               this.lastY = event.offsetY;
+              this.redrawEdges();
             })
             .onActionEnd(() => { this.isDragging = false; })
         )

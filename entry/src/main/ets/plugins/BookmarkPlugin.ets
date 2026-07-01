@@ -21,7 +21,7 @@ export class BookmarkPlugin extends LuniusPlugin {
     Capability.UI_SIDEBAR
   ];
 
-  private bookmarkManager: BookmarkManager = new BookmarkManager();
+  private bookmarkManager: BookmarkManager = BookmarkManager.getInstance();
 
   onLoad(api: PluginAPI): void {
     super.onLoad(api);

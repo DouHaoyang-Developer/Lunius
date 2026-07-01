@@ -394,7 +394,7 @@ export class RealFileService implements IFileService {
     try {
       const exists = await this.fileService.fileExists(filePath);
       if (exists) {
-        await this.fileService.writeFile(filePath, '');
+        await this.fileService.deleteFile(filePath);
       }
       this.noteIdToPath.delete(noteId);
       this.indexDirty = true;

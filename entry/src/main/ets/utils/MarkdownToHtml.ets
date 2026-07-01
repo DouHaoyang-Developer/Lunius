@@ -38,7 +38,7 @@ export async function markdownToHtml(md: string): Promise<string> {
         escaped += escapeHtml(lines[j]);
         if (j < lines.length - 1) { escaped += '\n'; }
       }
-      codeBlocks.push(`<p><span style="fontFamily:monospace;background-color:#F0F0F0;padding:4">${escaped}</span></p>`);
+      codeBlocks.push(`<p><span style="fontFamily:monospace;background-color:#F0F0F0;padding:4px">${escaped}</span></p>`);
     }
     const placeholder = `\n@@CODEBLOCK_${codeBlocks.length - 1}@@\n`;
     return placeholder;
@@ -58,8 +58,9 @@ export async function markdownToHtml(md: string): Promise<string> {
 
   // 3. 行内代码保护
   const inlineCodes: string[] = [];
-  processed = processed.replace(/`([^`]+)`/g, (): string => {
+  processed = processed.replace(/`([^`]+)`/g, (_m: string, code: string): string => {
     const idx = inlineCodes.length;
+    inlineCodes.push(escapeHtml(code));
     return `@@INLINECODE_${idx}@@`;
   });
 

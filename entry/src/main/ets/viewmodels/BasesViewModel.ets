@@ -54,7 +54,7 @@ export class BasesViewModel {
       }
 
       // 索引属性匹配的文件
-      const candidateIds = this.getFilterCandidates();
+      const candidateIds = await this.getFilterCandidates();
       const allRows: TableRowData[] = [];
 
       for (const id of candidateIds) {
@@ -82,18 +82,30 @@ export class BasesViewModel {
   }
 
   // 从索引中快速获取过滤候选文件（缩小全量扫描范围）
-  private getFilterCandidates(): string[] {
+  private async getFilterCandidates(): Promise<string[]> {
     const propFilters = this.getPropertyConditions(this.config.filter);
     if (propFilters.length === 0) {
-      // 无属性筛选条件 → 由调用方通过 fileService 获取全量
-      const ids: string[] = [];
-      return ids;
+      const tree = await fileService.getFileTree();
+      return this.collectFileIds(tree);
     }
-    // 有属性筛选：取第一个条件对应的文件 ID 集
     const firstProp = propFilters[0];
-    const candidateIds = vaultIndex.getFilesHavingProperty(firstProp.property);
-    // 同步方法的 workaround：直接返回空让调用方传全量
-    return [];
+    return await vaultIndex.getFilesHavingProperty(firstProp.property);
+  }
+
+  private collectFileIds(nodes: object[]): string[] {
+    const ids: string[] = [];
+    for (const node of nodes as Record<string, Object>[]) {
+      const nodeType = node['type'] as string || '';
+      const nodeId = node['id'] as string || '';
+      const children = node['children'] as object[] | undefined;
+      if (nodeType === 'file' && nodeId) {
+        ids.push(nodeId);
+      }
+      if (children) {
+        ids.push(...this.collectFileIds(children));
+      }
+    }
+    return ids;
   }
 
   private getPropertyConditions(filter: FilterGroup): FilterCondition[] {
@@ -136,6 +148,7 @@ export class BasesViewModel {
 
   private evaluateCondition(metadata: NoteMetadata, cond: FilterCondition): boolean {
     const fm = metadata.frontmatter;
+    const builtIns: string[] = ['title', 'path', 'tags', 'wordCount', 'updatedAt'];
     // 内置属性
     let propValue: string;
     if (cond.property === 'title') {
@@ -155,9 +168,9 @@ export class BasesViewModel {
 
     switch (cond.operator) {
       case 'exists':
-        return fm.has(cond.property);
+        return builtIns.includes(cond.property) ? true : fm.has(cond.property);
       case 'not_exists':
-        return !fm.has(cond.property);
+        return builtIns.includes(cond.property) ? false : !fm.has(cond.property);
       case 'equals':
         return propValue === cond.value;
       case 'not_equals':

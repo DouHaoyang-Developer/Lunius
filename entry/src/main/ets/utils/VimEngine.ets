@@ -163,15 +163,18 @@ export class VimEngine {
     const currentLine = content.substring(lineStart, lineEnd + 1);
 
     if (cmd === 'dd') {
-      this.yankBuffer = currentLine + '\n';
+      const isLastLine = currentLineIdx === lines.length - 1;
+      this.yankBuffer = isLastLine ? currentLine : currentLine + '\n';
+      const removeLen = isLastLine && lineStart > 0 ? 2 : (lineEnd + 2 - lineStart);
       const newContent = content.substring(0, lineStart) +
-        content.substring(lineEnd + 2);
+        content.substring(lineStart + removeLen);
       const newCursor = Math.min(lineStart, newContent.length);
       return { handled: true, content: newContent, cursor: newCursor,
         yankBuffer: this.yankBuffer };
     }
     if (cmd === 'yy') {
-      this.yankBuffer = currentLine + '\n';
+      const isLastLine = currentLineIdx === lines.length - 1;
+      this.yankBuffer = isLastLine ? currentLine : currentLine + '\n';
       return { handled: true, yankBuffer: this.yankBuffer };
     }
     if (cmd === 'dw') {

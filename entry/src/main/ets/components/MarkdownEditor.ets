@@ -335,7 +335,7 @@ export struct MarkdownEditor {
     this.vm.content = newContent;
     this.vm.hasUnsavedChanges = true;
     this.rebuildEditor();
-    this.performFindSearch(this.findMatches.length > 0 ? '' : '', false);
+    this.performFindSearch('', false);
   }
 
   private replaceAll(replacement: string): void {

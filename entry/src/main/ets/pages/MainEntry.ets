@@ -155,12 +155,13 @@ struct ObsidianApp {
 
   private async initCollaborationService(): Promise<void> {
     try {
+      const deviceId = `device-${Date.now().toString(36)}`;
       const deviceName = `设备-${Date.now().toString(36).slice(-4)}`;
       const deviceType = this.responsive.isPhone ? 'phone' :
         this.responsive.isTablet ? 'tablet' : '2in1';
 
       this.collabService = new CollaborationService(
-        deviceName, deviceName, deviceType
+        deviceId, deviceName, deviceType
       );
       await this.collabService.init();
     } catch (e) {

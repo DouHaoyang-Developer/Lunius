@@ -70,57 +70,76 @@ export class TemplateExecutor {
     }
     for (let i = 0; i < replacements.length; i++) {
       const r = replacements[i];
-      result = result.replace(r.original, r.html);
+      result = result.split(r.original).join(r.html);
     }
     return result;
   }
 
   private applyIfBlocks(template: string, context: TemplateContext): string {
-    const ifRegex = /\{\{#if\s+([^}]+)\}\}([\s\S]*?)\{\{\/if\}\}/g;
-    return template.replace(ifRegex, (_m: string, condition: string, body: string): string => {
-      let ifBody = body;
-      let elseBody = '';
-      const elseIdx = body.indexOf('{{else}}');
-      if (elseIdx >= 0) {
-        ifBody = body.substring(0, elseIdx);
-        elseBody = body.substring(elseIdx + 8);
-      }
+    let result = template;
+    let previous = '';
+    while (previous !== result) {
+      previous = result;
+      const ifRegex = /\{\{#if\s+([^}]+)\}\}([\s\S]*?)\{\{\/if\}\}/g;
+      result = result.replace(ifRegex, (_m: string, condition: string, body: string): string => {
+        if (body.includes('{{#if') || body.includes('{{#each')) {
+          return _m;
+        }
+        return this.evaluateIfBody(body, condition.trim(), context);
+      });
+    }
+    return result;
+  }
 
-      const result = this.evaluateCondition(condition.trim(), context);
-      if (result) {
-        return this.replaceVariables(ifBody, context);
-      }
-      if (elseBody !== '') {
-        return this.replaceVariables(elseBody, context);
-      }
-      return '';
-    });
+  private evaluateIfBody(body: string, condition: string, context: TemplateContext): string {
+    let ifBody = body;
+    let elseBody = '';
+    const elseIdx = body.indexOf('{{else}}');
+    if (elseIdx >= 0) {
+      ifBody = body.substring(0, elseIdx);
+      elseBody = body.substring(elseIdx + 8);
+    }
+    if (this.evaluateCondition(condition, context)) {
+      return this.replaceVariables(ifBody, context);
+    }
+    if (elseBody !== '') {
+      return this.replaceVariables(elseBody, context);
+    }
+    return '';
   }
 
   private applyEachBlocks(template: string, context: TemplateContext): string {
-    const eachRegex = /\{\{#each\s+([^}]+)\}\}([\s\S]*?)\{\{\/each\}\}/g;
-    return template.replace(eachRegex, (_m: string, arrayExpr: string, body: string): string => {
-      const arr = this.resolveArray(arrayExpr.trim(), context);
-      if (arr.length === 0) return '';
-
-      let result = '';
-      for (let i = 0; i < arr.length; i++) {
-        const item = arr[i];
-        const itemMap: VariablesMap = new VariablesMap();
-        const ctxKeys = context.variables.keys();
-        for (let k = 0; k < ctxKeys.length; k++) {
-          const ck = ctxKeys[k];
-          const cv = context.variables.get(ck);
-          if (cv !== undefined) {
-            itemMap.set(ck, cv);
-          }
+    let result = template;
+    let previous = '';
+    while (previous !== result) {
+      previous = result;
+      const eachRegex = /\{\{#each\s+([^}]+)\}\}([\s\S]*?)\{\{\/each\}\}/g;
+      result = result.replace(eachRegex, (_m: string, arrayExpr: string, body: string): string => {
+        if (body.includes('{{#each') || body.includes('{{#if')) {
+          return _m;
         }
-        itemMap.set('this', item);
-        const itemCtx: TemplateContext = { variables: itemMap };
-        result += this.replaceVariables(body, itemCtx);
-      }
-      return result;
-    });
+        const arr = this.resolveArray(arrayExpr.trim(), context);
+        if (arr.length === 0) return '';
+        let res = '';
+        for (let i = 0; i < arr.length; i++) {
+          const item = arr[i];
+          const itemMap: VariablesMap = new VariablesMap();
+          const ctxKeys = context.variables.keys();
+          for (let k = 0; k < ctxKeys.length; k++) {
+            const ck = ctxKeys[k];
+            const cv = context.variables.get(ck);
+            if (cv !== undefined) {
+              itemMap.set(ck, cv);
+            }
+          }
+          itemMap.set('this', item);
+          const itemCtx: TemplateContext = { variables: itemMap };
+          res += this.replaceVariables(body, itemCtx);
+        }
+        return res;
+      });
+    }
+    return result;
   }
 
   private applyDateCalc(template: string): string {
@@ -169,7 +188,7 @@ export class TemplateExecutor {
 
   private resolveArray(arrayExpr: string, context: TemplateContext): string[] {
     const parts = arrayExpr.split('.');
-    const rootVar = parts[parts.length - 1] || parts[0];
+    const rootVar = parts[0] || arrayExpr;
     const val = context.variables.get(rootVar);
     if (val === undefined) return [];
     if (Array.isArray(val)) return val;

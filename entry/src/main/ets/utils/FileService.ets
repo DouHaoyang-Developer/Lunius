@@ -1,7 +1,7 @@
 import { fileIo as fs, ReadOptions, ListFileOptions } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
 import { buffer } from '@kit.ArkTS';
-import { BusinessError } from '@kit.BasicServicesKit';
+import { BusinessError } from '@kit.BasicServicesKit'
 
 /**
  * 文件服务工具类（异步 I/O）
@@ -235,6 +235,17 @@ export class FileService {
    * 获取所有 .md 文件列表
    * @returns 文件路径数组
    */
+  public async deleteFile(filePath: string): Promise<boolean> {
+    try {
+      await fs.unlink(filePath);
+      console.info(`File deleted: ${filePath}`);
+      return true;
+    } catch (err) {
+      console.error(`Failed to delete file: ${(err as BusinessError).message}`);
+      return false;
+    }
+  }
+
   public async getMarkdownFiles(): Promise<string[]> {
     try {
       const filesDir = this.getFilesDir();

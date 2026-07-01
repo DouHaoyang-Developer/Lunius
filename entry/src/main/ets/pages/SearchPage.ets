@@ -292,8 +292,7 @@ struct SearchContent {
               .backgroundColor(this.colors().bgPrimary)
               .border({ width: { bottom: 1 }, color: this.colors().divider })
               .onClick(() => {
-                // 进入搜索结果详情页（Navigation 栈推进）
-                this.searchPathStack.pushPathByName('searchDetail', new Object());
+                this.searchPathStack.pushPathByName('searchDetail', new Object({ fileId: res.file.id, fileName: res.file.name }));
               })
             }
           }, (res: SearchResult, index: number) => res.file.id)
@@ -317,9 +316,13 @@ struct SearchDetailPage {
   @State fileId: string = '';
 
   aboutToAppear(): void {
-    const params: Object = this.searchPathStack.getParamByName('searchDetail');
+    const params: Object = this.searchPathStack.getParamByName('searchDetail') as Object;
     if (params) {
-      this.fileId = '';
+      const obj = params as Record<string, Object>;
+      const id = obj['fileId'];
+      if (id) {
+        this.fileId = id as string;
+      }
     }
   }
 

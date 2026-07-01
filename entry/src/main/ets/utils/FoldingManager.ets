@@ -14,21 +14,26 @@ export class FoldingManager {
   detectRegions(lines: string[]): void {
     this.regions = [];
     const headingStack: number[] = [];
+    let inCodeBlock = false;
 
     for (let i = 0; i < lines.length; i++) {
+      // 追踪代码块状态
+      if (/^```/.test(lines[i].trim())) {
+        inCodeBlock = !inCodeBlock;
+        continue;
+      }
+      if (inCodeBlock) continue;
+
       const hMatch = lines[i].match(/^(#{1,6})\s/);
       if (hMatch) {
         const level = hMatch[1].length;
-        // 关闭更高级别或同级标题的折叠区域
-        while (headingStack.length > 0 &&
-          this.regions[headingStack[headingStack.length - 1]].startLine >= 0) {
-          const prevIdx = headingStack.pop()!;
-          // find the matching level
+        while (headingStack.length > 0) {
+          const prevIdx = headingStack[headingStack.length - 1];
           const prevLevel = lines[this.regions[prevIdx].startLine].match(/^(#{1,6})\s/)![1].length;
           if (prevLevel >= level) {
             this.regions[prevIdx].endLine = i - 1;
+            headingStack.pop();
           } else {
-            headingStack.push(prevIdx);
             break;
           }
         }

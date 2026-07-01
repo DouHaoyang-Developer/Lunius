@@ -126,7 +126,6 @@ export class PluginManager {
   }
 
   async restore(): Promise<void> {
-    this.store.loadAll();
     const allStates: Map<string, PluginState> = this.store.loadAll();
     allStates.forEach((state: PluginState, pluginId: string) => {
       if (state.enabled) {

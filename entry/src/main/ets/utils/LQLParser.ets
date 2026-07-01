@@ -37,6 +37,9 @@ export class LQLParser {
   }
 
   private peek(): Token {
+    if (this.tokens.length === 0) {
+      return { type: TokenType.EOF, value: '', position: 0 };
+    }
     return this.pos < this.tokens.length ? this.tokens[this.pos] : this.tokens[this.tokens.length - 1];
   }
 
@@ -224,6 +227,10 @@ export class LQLParser {
     }
 
     if (useExists) {
+      if (negate) {
+        const cond: FilterCondition = { property: property, operator: 'not_exists', value: '' };
+        return cond;
+      }
       const cond: FilterCondition = { property: property, operator: 'exists', value: '' };
       return cond;
     }
