@@ -1,395 +1,506 @@
-// pages/SearchPage.ets
-// Lunius 全局搜索页 - 使用 Navigation + NavPathStack 管理多层结果
-
-import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
-import { FileNode, NodeType } from '../models/FileNode';
+import { LuniusColors, ThemeMode, getColors, Spacing } from '../utils/Theme';
 import { fileService, SearchOptions } from '../services/IFileService';
+import { FileNode, NodeType } from '../models/FileNode';
 
-interface SearchResult {
+interface SearchResultItem {
   file: FileNode;
-  matches: string[];
+  snippet: string;
   score: number;
 }
 
 @Component
 struct SearchContent {
-  @Consume('searchPathStack') searchPathStack: NavPathStack;
+  @Consume('searchNavStack') searchNavStack: NavPathStack;
   @StorageLink('themeMode') themeMode: ThemeMode = ThemeMode.DARK;
   @State query: string = '';
-  @State results: SearchResult[] = [];
-  @State searchHistory: string[] = ['ArkTS', '响应式', '性能优化', 'HarmonyOS'];
-  @State searchTitleOnly: boolean = false;
-  @State searchIncludeContent: boolean = true;
-  @State searchCaseSensitive: boolean = false;
-  @State searchUseRegex: boolean = false;
+  @State results: SearchResultItem[] = [];
+  @State searchHistory: string[] = ['ArkTS', 'HarmonyOS', '性能优化', '响应式设计'];
+  @State caseSensitive: boolean = false;
+  @State useRegex: boolean = false;
 
-  private colors(): LuniusColors {
+  private getColors(): LuniusColors {
     return getColors(this.themeMode);
   }
 
-  private async performSearch(keyword: string): Promise<void> {
+  private async doSearch(keyword: string): Promise<void> {
     if (!keyword.trim()) {
       this.results = [];
       return;
     }
     try {
-      const searchOptions: SearchOptions = {
-        includeContent: this.searchIncludeContent,
-        caseSensitive: this.searchCaseSensitive,
-        regex: this.searchUseRegex,
+      const opts: SearchOptions = {
+        includeContent: true,
+        caseSensitive: this.caseSensitive,
+        regex: this.useRegex,
         scope: 'vault'
       };
-      const searchResults = await fileService.searchNotes(keyword, searchOptions);
+      const searchResults = await fileService.searchNotes(keyword, opts);
       const fileTree = await fileService.getFileTree();
       const allFiles: FileNode[] = [];
-      const collect = (nodes: FileNode[]) => {
-        for (const n of nodes) {
-          if (n.type === NodeType.FILE) allFiles.push(n);
-          if (n.children) collect(n.children);
+      const collect = (nodes: FileNode[]): void => {
+        for (let i = 0; i < nodes.length; i++) {
+          const n = nodes[i];
+          if (n.type === NodeType.FILE) {
+            allFiles.push(n);
+          }
+          if (n.children) {
+            collect(n.children);
+          }
         }
       };
-      if (fileTree.length > 0) collect(fileTree);
+      if (fileTree.length > 0) {
+        collect(fileTree);
+      }
 
-      const matchMap = new Map(searchResults.map(r => [r.noteId, r]));
-      this.results = [];
+      const matchMap = new Map<string, SearchResultItem>();
+      for (let i = 0; i < searchResults.length; i++) {
+        const r = searchResults[i];
+        const snippet = r.matches.length > 0 ? r.matches[0].text : '';
+        const item: SearchResultItem = {
+          file: { id: r.noteId, name: r.title, type: NodeType.FILE, path: r.path },
+          snippet: snippet,
+          score: r.score
+        };
+        matchMap.set(r.noteId, item);
+      }
+
+      const merged: SearchResultItem[] = [];
       for (let i = 0; i < allFiles.length; i++) {
         const f = allFiles[i];
-        const id = f.id;
-        let isMatch = matchMap.has(id);
-        if (!isMatch) {
-          const targetName = this.searchCaseSensitive ? f.name : f.name.toLowerCase();
-          const targetKeyword = this.searchCaseSensitive ? keyword : keyword.toLowerCase();
-          isMatch = targetName.includes(targetKeyword);
-        }
-        // 别名匹配
-        if (!isMatch) {
-          try {
-            const meta = await fileService.getMetadata(id);
-            const aliases: string[] = meta.aliases || [];
-            for (let j = 0; j < aliases.length; j++) {
-              const targetAlias = this.searchCaseSensitive ? aliases[j] : aliases[j].toLowerCase();
-              const targetKeyword = this.searchCaseSensitive ? keyword : keyword.toLowerCase();
-              if (targetAlias.includes(targetKeyword)) {
-                isMatch = true;
-                break;
+        const found = matchMap.get(f.id);
+        if (found) {
+          merged.push(found);
+        } else {
+          let nameMatch = false;
+          const targetName = this.caseSensitive ? f.name : f.name.toLowerCase();
+          const targetKeyword = this.caseSensitive ? keyword : keyword.toLowerCase();
+          if (targetName.indexOf(targetKeyword) >= 0) {
+            nameMatch = true;
+          }
+          if (!nameMatch) {
+            try {
+              const meta = await fileService.getMetadata(f.id);
+              const aliases: string[] = meta.aliases || [];
+              for (let j = 0; j < aliases.length; j++) {
+                const targetAlias = this.caseSensitive ? aliases[j] : aliases[j].toLowerCase();
+                if (targetAlias.indexOf(targetKeyword) >= 0) {
+                  nameMatch = true;
+                  break;
+                }
               }
+            } catch (e) {
+              // ignore
             }
-          } catch (e) { /* skip */ }
-        }
-        if (isMatch) {
-          const sr: SearchResult = {
-            file: f,
-            matches: [f.name],
-            score: 50
-          };
-          this.results.push(sr);
+          }
+          if (nameMatch) {
+            const item: SearchResultItem = {
+              file: f,
+              snippet: f.path,
+              score: 50
+            };
+            merged.push(item);
+          }
         }
       }
-      this.results.sort((a: SearchResult, b: SearchResult): number => b.score - a.score);
+      merged.sort((a: SearchResultItem, b: SearchResultItem): number => b.score - a.score);
+      this.results = merged;
     } catch (e) {
       console.error('Search error: ' + JSON.stringify(e));
     }
   }
 
-  build() {
-    Column() {
-      // 搜索栏
+  private addToHistory(keyword: string): void {
+    const exists = this.searchHistory.findIndex((item: string): boolean => item === keyword);
+    if (exists >= 0) {
+      this.searchHistory.splice(exists, 1);
+    }
+    this.searchHistory.unshift(keyword);
+    if (this.searchHistory.length > 10) {
+      this.searchHistory = this.searchHistory.slice(0, 10);
+    }
+  }
+
+  private onSearchSubmit(keyword: string): void {
+    this.query = keyword;
+    this.addToHistory(keyword);
+    this.doSearch(keyword);
+  }
+
+  private onHistoryTap(item: string): void {
+    this.onSearchSubmit(item);
+  }
+
+  @Builder
+  buildSearchBar() {
+    Row() {
       Row({ space: 8 }) {
-        TextInput({ placeholder: '搜索笔记、标签、内容...', text: $$this.query })
-          .placeholderColor(this.colors().textMuted)
-          .fontColor(this.colors().textPrimary)
+        TextInput({ placeholder: '搜索笔记名称、别名、内容...', text: $$this.query })
+          .placeholderColor(this.getColors().textMuted)
+          .fontColor(this.getColors().textPrimary)
           .fontSize(14)
           .height(40)
-          .backgroundColor(this.colors().bgTertiary)
-          .borderRadius(8)
+          .backgroundColor(Color.Transparent)
           .layoutWeight(1)
-          .padding({ left: 12, right: 12 })
           .onChange((value: string) => {
             this.query = value;
-            this.performSearch(value);
+            this.doSearch(value);
           })
-
-        Button({ type: ButtonType.Circle }) {
-          Text('✕')
-            .fontSize(14)
-            .fontColor(this.colors().textMuted)
-        }
-        .width(32)
-        .height(32)
-        .backgroundColor(Color.Transparent)
-        .visibility(this.query.length > 0 ? Visibility.Visible : Visibility.Hidden)
-        .onClick(() => {
-          this.query = '';
-          this.results = [];
-        })
+          .onSubmit((_enterKey: EnterKeyType) => {
+            this.addToHistory(this.query);
+          })
       }
-      .width('100%')
-      .height(56)
-      .padding({ left: 16, right: 16 })
-      .backgroundColor(this.colors().bgSecondary)
-      .border({ width: { bottom: 1 }, color: this.colors().divider })
+      .layoutWeight(1)
 
-      if (this.query.length === 0) {
-        // 历史记录与建议
-        Column({ space: 16 }) {
-          Text('最近搜索')
-            .fontSize(12)
-            .fontColor(this.colors().textMuted)
+      Button({ type: ButtonType.Circle }) {
+        Text('\u2715')
+          .fontSize(14)
+          .fontColor(this.getColors().textMuted)
+      }
+      .width(32)
+      .height(32)
+      .backgroundColor(Color.Transparent)
+      .visibility(this.query.length > 0 ? Visibility.Visible : Visibility.Hidden)
+      .onClick(() => {
+        this.query = '';
+        this.results = [];
+      })
+    }
+    .width('100%')
+    .height(44)
+    .padding({ left: 12, right: 8 })
+    .backgroundColor(this.getColors().bgTertiary)
+    .borderRadius(10)
+  }
+
+  @Builder
+  buildSearchOptions() {
+    Row({ space: 8 }) {
+      Row() {
+        Toggle({ type: ToggleType.Checkbox, isOn: this.caseSensitive })
+          .selectedColor(this.getColors().accent)
+          .width(18)
+          .height(18)
+          .onChange((val: boolean) => {
+            this.caseSensitive = val;
+            if (this.query.length > 0) {
+              this.doSearch(this.query);
+            }
+          })
+        Text('Aa')
+          .fontSize(12)
+          .fontColor(this.caseSensitive ? this.getColors().accent : this.getColors().textMuted)
+          .margin({ left: 4 })
+      }
+      .padding({ left: 8, right: 12, top: 4, bottom: 4 })
+      .backgroundColor(this.caseSensitive ? this.getColors().tagBg : Color.Transparent)
+      .borderRadius(12)
+      .onClick(() => {
+        this.caseSensitive = !this.caseSensitive;
+        if (this.query.length > 0) {
+          this.doSearch(this.query);
+        }
+      })
+
+      Row() {
+        Toggle({ type: ToggleType.Checkbox, isOn: this.useRegex })
+          .selectedColor(this.getColors().accent)
+          .width(18)
+          .height(18)
+          .onChange((val: boolean) => {
+            this.useRegex = val;
+            if (this.query.length > 0) {
+              this.doSearch(this.query);
+            }
+          })
+        Text('.*')
+          .fontSize(12)
+          .fontColor(this.useRegex ? this.getColors().accent : this.getColors().textMuted)
+          .margin({ left: 4 })
+      }
+      .padding({ left: 8, right: 12, top: 4, bottom: 4 })
+      .backgroundColor(this.useRegex ? this.getColors().tagBg : Color.Transparent)
+      .borderRadius(12)
+      .onClick(() => {
+        this.useRegex = !this.useRegex;
+        if (this.query.length > 0) {
+          this.doSearch(this.query);
+        }
+      })
+    }
+    .width('100%')
+  }
+
+  @Builder
+  buildHistorySection() {
+    Column({ space: Spacing.MD }) {
+      if (this.searchHistory.length > 0) {
+        Column({ space: 0 }) {
+          Text('\u6700\u8FD1\u641C\u7D22')
+            .fontSize(11)
+            .fontColor(this.getColors().textMuted)
             .width('100%')
-            .padding({ left: 16, right: 16, top: 16 })
+            .padding({ left: 16, top: 20, bottom: 8 })
+            .fontWeight(FontWeight.Medium)
 
           Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
-            ForEach(this.searchHistory, (item: string, index: number) => {
+            ForEach(this.searchHistory, (item: string, idx: number) => {
               Text(item)
                 .fontSize(13)
-                .fontColor(this.colors().textSecondary)
-                .backgroundColor(this.colors().bgTertiary)
+                .fontColor(this.getColors().textSecondary)
+                .backgroundColor(this.getColors().bgTertiary)
                 .padding({ left: 12, right: 12, top: 6, bottom: 6 })
                 .borderRadius(16)
                 .margin(4)
                 .onClick(() => {
-                  this.query = item;
-                  this.performSearch(item);
+                  this.onHistoryTap(item);
                 })
-            }, (item: string) => item)
+            }, (item: string, _idx: number): string => item)
           }
           .width('100%')
           .padding({ left: 12, right: 12 })
+        }
+      }
 
-          Text('搜索选项')
-            .fontSize(12)
-            .fontColor(this.colors().textMuted)
-            .width('100%')
-            .padding({ left: 16, right: 16, top: 24 })
+      Column({ space: 8 }) {
+        Text('\u641C\u7D22\u63D0\u793A')
+          .fontSize(11)
+          .fontColor(this.getColors().textMuted)
+          .width('100%')
+          .padding({ left: 16, top: 20, bottom: 4 })
+          .fontWeight(FontWeight.Medium)
 
-          Column({ space: 0 }) {
-            Row() {
-              Text('仅搜索标题')
-                .fontSize(14)
-                .fontColor(this.colors().textPrimary)
-                .layoutWeight(1)
-              Toggle({ type: ToggleType.Checkbox, isOn: $$this.searchTitleOnly })
-                .selectedColor(this.colors().accent)
-            }
-            .width('100%')
-            .height(44)
-            .padding({ left: 16, right: 16 })
-            .backgroundColor(this.colors().bgPrimary)
-            .border({ width: { bottom: 1 }, color: this.colors().divider })
-            .onClick(() => {
-              this.searchTitleOnly = !this.searchTitleOnly;
-              // 仅标题与包含内容互斥
-              if (this.searchTitleOnly) {
-                this.searchIncludeContent = false;
-              }
-            })
+        Text('\u2022 \u8F93\u5165\u5173\u952E\u8BCD\u641C\u7D22\u7B14\u8BB0\u540D\u79F0\u3001\u522B\u540D\u6216\u5185\u5BB9')
+          .fontSize(12)
+          .fontColor(this.getColors().textMuted)
+          .width('100%')
+          .padding({ left: 16, right: 16 })
+        Text('\u2022 \u5F00\u542F\u6B63\u5219\u8868\u8FBE\u5F0F\u8FDB\u884C\u9AD8\u7EA7\u5339\u914D')
+          .fontSize(12)
+          .fontColor(this.getColors().textMuted)
+          .width('100%')
+          .padding({ left: 16, right: 16 })
+        Text('\u2022 \u533A\u5206\u5927\u5C0F\u5199\u7CBE\u786E\u5B9A\u4F4D')
+          .fontSize(12)
+          .fontColor(this.getColors().textMuted)
+          .width('100%')
+          .padding({ left: 16, right: 16 })
+      }
+    }
+    .width('100%')
+  }
 
-            Row() {
-              Text('包含内容')
-                .fontSize(14)
-                .fontColor(this.colors().textPrimary)
-                .layoutWeight(1)
-              Toggle({ type: ToggleType.Checkbox, isOn: $$this.searchIncludeContent })
-                .selectedColor(this.colors().accent)
-            }
-            .width('100%')
-            .height(44)
-            .padding({ left: 16, right: 16 })
-            .backgroundColor(this.colors().bgPrimary)
-            .border({ width: { bottom: 1 }, color: this.colors().divider })
-            .onClick(() => {
-              this.searchIncludeContent = !this.searchIncludeContent;
-              if (this.searchIncludeContent) {
-                this.searchTitleOnly = false;
-              }
-            })
+  @Builder
+  buildResultItem(item: SearchResultItem) {
+    Column({ space: 4 }) {
+      Row({ space: 8 }) {
+        Text(item.file.name)
+          .fontSize(14)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(this.getColors().textPrimary)
+          .layoutWeight(1)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
 
-            Row() {
-              Text('区分大小写')
-                .fontSize(14)
-                .fontColor(this.colors().textPrimary)
-                .layoutWeight(1)
-              Toggle({ type: ToggleType.Checkbox, isOn: $$this.searchCaseSensitive })
-                .selectedColor(this.colors().accent)
-            }
-            .width('100%')
-            .height(44)
-            .padding({ left: 16, right: 16 })
-            .backgroundColor(this.colors().bgPrimary)
-            .border({ width: { bottom: 1 }, color: this.colors().divider })
-            .onClick(() => {
-              this.searchCaseSensitive = !this.searchCaseSensitive;
-            })
+        Text(item.file.wordCount ? String(item.file.wordCount) + ' \u5B57' : '')
+          .fontSize(11)
+          .fontColor(this.getColors().textMuted)
+      }
+      .width('100%')
 
-            Row() {
-              Text('正则表达式')
-                .fontSize(14)
-                .fontColor(this.colors().textPrimary)
-                .layoutWeight(1)
-              Toggle({ type: ToggleType.Checkbox, isOn: $$this.searchUseRegex })
-                .selectedColor(this.colors().accent)
-            }
-            .width('100%')
-            .height(44)
-            .padding({ left: 16, right: 16 })
-            .backgroundColor(this.colors().bgPrimary)
-            .border({ width: { bottom: 1 }, color: this.colors().divider })
-            .onClick(() => {
-              this.searchUseRegex = !this.searchUseRegex;
-            })
+      if (item.snippet.length > 0 && item.snippet !== item.file.path) {
+        Text(item.snippet)
+          .fontSize(12)
+          .fontColor(this.getColors().textSecondary)
+          .maxLines(2)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .margin({ left: 0 })
+      }
+
+      if (item.file.tags && item.file.tags.length > 0) {
+        Row({ space: 4 }) {
+          ForEach(item.file.tags, (tag: string) => {
+            Text('#' + tag)
+              .fontSize(10)
+              .fontColor(this.getColors().tagText)
+              .backgroundColor(this.getColors().tagBg)
+              .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+              .borderRadius(10)
+          }, (tag: string): string => tag)
+        }
+        .width('100%')
+        .margin({ top: 2 })
+      }
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+    .backgroundColor(this.getColors().bgPrimary)
+    .border({ width: { bottom: 1 }, color: this.getColors().divider })
+    .onClick(() => {
+      this.searchNavStack.pushPathByName('searchDetail',
+        new Object({ fileId: item.file.id, fileName: item.file.name }));
+    })
+  }
+
+  build() {
+    Column() {
+      Row() {
+        this.buildSearchBar()
+      }
+      .width('100%')
+      .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+      .backgroundColor(this.getColors().bgSecondary)
+
+      Row() {
+        this.buildSearchOptions()
+      }
+      .width('100%')
+      .padding({ left: 12, right: 12, bottom: 8 })
+      .backgroundColor(this.getColors().bgSecondary)
+      .border({ width: { bottom: 1 }, color: this.getColors().divider })
+
+      if (this.query.length === 0) {
+        Scroll() {
+          this.buildHistorySection()
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .scrollBar(BarState.Off)
+      } else {
+        if (this.results.length === 0) {
+          Column({ space: 8 }) {
+            Text('\uD83D\uDD0D')
+              .fontSize(32)
+              .margin({ top: 48 })
+            Text('\u672A\u627E\u5230\u5339\u914D\u7ED3\u679C')
+              .fontSize(14)
+              .fontColor(this.getColors().textSecondary)
+            Text('\u8BF7\u5C1D\u8BD5\u5176\u4ED6\u5173\u952E\u8BCD\u6216\u9009\u9879')
+              .fontSize(12)
+              .fontColor(this.getColors().textMuted)
+              .margin({ top: 4 })
           }
           .width('100%')
-        }
-        .width('100%')
-        .layoutWeight(1)
-      } else {
-        // 搜索结果列表
-        List({ space: 0 }) {
-          ForEach(this.results, (res: SearchResult, index: number) => {
-            ListItem() {
-              Column({ space: 4 }) {
-                Row({ space: 8 }) {
-                  Text('📄')
-                    .fontSize(14)
-                  Text(res.file.name)
-                    .fontSize(14)
-                    .fontWeight(FontWeight.Medium)
-                    .fontColor(this.colors().textPrimary)
-                    .layoutWeight(1)
-                    .textOverflow({ overflow: TextOverflow.Ellipsis })
-                    .maxLines(1)
-                  Text(`${res.file.wordCount} 字`)
-                    .fontSize(11)
-                    .fontColor(this.colors().textMuted)
-                }
-                .width('100%')
-
-                Text(res.matches[0])
-                  .fontSize(12)
-                  .fontColor(this.colors().textSecondary)
-                  .maxLines(2)
-                  .textOverflow({ overflow: TextOverflow.Ellipsis })
-                  .margin({ left: 22 })
-
-                // 标签
-                if (res.file.tags && res.file.tags.length > 0) {
-                  Row({ space: 4 }) {
-                    ForEach(res.file.tags, (tag: string) => {
-                      Text(`#${tag}`)
-                        .fontSize(11)
-                        .fontColor(this.colors().tagText)
-                        .backgroundColor(this.colors().tagBg)
-                        .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-                        .borderRadius(10)
-                    }, (tag: string) => tag)
-                  }
-                  .width('100%')
-                  .margin({ left: 22, top: 4 })
-                }
+          .layoutWeight(1)
+          .justifyContent(FlexAlign.Start)
+        } else {
+          List({ space: 0 }) {
+            ForEach(this.results, (item: SearchResultItem, idx: number) => {
+              ListItem() {
+                this.buildResultItem(item)
               }
-              .width('100%')
-              .padding(12)
-              .backgroundColor(this.colors().bgPrimary)
-              .border({ width: { bottom: 1 }, color: this.colors().divider })
-              .onClick(() => {
-                this.searchPathStack.pushPathByName('searchDetail', new Object({ fileId: res.file.id, fileName: res.file.name }));
-              })
-            }
-          }, (res: SearchResult, index: number) => res.file.id)
+            }, (item: SearchResultItem): string => item.file.id)
+          }
+          .width('100%')
+          .layoutWeight(1)
+          .scrollBar(BarState.Auto)
+          .padding({ top: 4 })
         }
-        .width('100%')
-        .layoutWeight(1)
-        .scrollBar(BarState.Auto)
-        .padding({ top: 8 })
       }
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.colors().bgPrimary)
+    .backgroundColor(this.getColors().bgPrimary)
   }
 }
 
 @Component
 struct SearchDetailPage {
-  @Consume('searchPathStack') searchPathStack: NavPathStack;
+  @Consume('searchNavStack') searchNavStack: NavPathStack;
   @StorageLink('themeMode') themeMode: ThemeMode = ThemeMode.DARK;
   @State fileId: string = '';
+  @State fileName: string = '';
 
   aboutToAppear(): void {
-    const params: Object = this.searchPathStack.getParamByName('searchDetail') as Object;
+    const params: Object = this.searchNavStack.getParamByName('searchDetail') as Object;
     if (params) {
       const obj = params as Record<string, Object>;
       const id = obj['fileId'];
+      const name = obj['fileName'];
       if (id) {
         this.fileId = id as string;
       }
+      if (name) {
+        this.fileName = name as string;
+      }
     }
+  }
+
+  private getColors(): LuniusColors {
+    return getColors(this.themeMode);
   }
 
   build() {
     Column() {
       Row() {
         Button({ type: ButtonType.Circle }) {
-          Text('←')
+          Text('\u2190')
             .fontSize(18)
-            .fontColor(getColors(this.themeMode).textPrimary)
+            .fontColor(this.getColors().textPrimary)
         }
         .width(36)
         .height(36)
         .backgroundColor(Color.Transparent)
         .onClick(() => {
-          this.searchPathStack.pop();
+          this.searchNavStack.pop();
         })
 
-        Text('搜索结果详情')
-          .fontSize(17)
+        Text(this.fileName.length > 0 ? this.fileName : '\u641C\u7D22\u7ED3\u679C\u8BE6\u60C5')
+          .fontSize(16)
           .fontWeight(FontWeight.Medium)
-          .fontColor(getColors(this.themeMode).textPrimary)
+          .fontColor(this.getColors().textPrimary)
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
 
         Row().width(36)
       }
       .width('100%')
       .height(52)
       .padding({ left: 12, right: 12 })
-      .backgroundColor(getColors(this.themeMode).bgSecondary)
-      .border({ width: { bottom: 1 }, color: getColors(this.themeMode).divider })
+      .backgroundColor(this.getColors().bgSecondary)
+      .border({ width: { bottom: 1 }, color: this.getColors().divider })
 
-      Text(`文件 ID: ${this.fileId}`)
-        .fontSize(14)
-        .fontColor(getColors(this.themeMode).textSecondary)
-        .margin(24)
+      Column({ space: 12 }) {
+        Text('\u6587\u4EF6 ID: ' + this.fileId)
+          .fontSize(13)
+          .fontColor(this.getColors().textSecondary)
+          .width('100%')
+          .padding({ left: 24, right: 24, top: 24 })
 
-      Text('此处可渲染该文件的 Markdown 预览或高亮匹配文本')
-        .fontSize(13)
-        .fontColor(getColors(this.themeMode).textMuted)
-        .margin({ left: 24, right: 24 })
+        Text('\u6B64\u5904\u53EF\u6E32\u67D3\u8BE5\u6587\u4EF6\u7684 Markdown \u9884\u89C8\u6216\u9AD8\u4EAE\u5339\u914D\u6587\u672C')
+          .fontSize(12)
+          .fontColor(this.getColors().textMuted)
+          .width('100%')
+          .padding({ left: 24, right: 24 })
+      }
+      .width('100%')
+      .layoutWeight(1)
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(getColors(this.themeMode).bgPrimary)
+    .backgroundColor(this.getColors().bgPrimary)
   }
 }
 
 @Entry
 @Component
 struct SearchPage {
-  @Provide('searchPathStack') searchPathStack: NavPathStack = new NavPathStack();
+  @Provide('searchNavStack') searchNavStack: NavPathStack = new NavPathStack();
 
   @Builder
-  SearchPageMap(name: string) {
+  searchPageMap(name: string) {
     if (name === 'searchDetail') {
       SearchDetailPage()
     }
   }
 
   build() {
-    Navigation(this.searchPathStack) {
+    Navigation(this.searchNavStack) {
       SearchContent()
     }
     .hideTitleBar(true)
-    .navDestination(this.SearchPageMap)
+    .navDestination(this.searchPageMap)
     .mode(NavigationMode.Stack)
     .width('100%')
     .height('100%')

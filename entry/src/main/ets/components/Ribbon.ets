@@ -1,13 +1,8 @@
-// components/Ribbon.ets
-// Lunius 左侧 Ribbon 工具栏 - 支持页面跳转与视图切换
+import { LuniusColors, ThemeMode, getColors, Icons, Spacing, Radius } from '../utils/Theme';
 
-import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
-
-interface RibbonAction {
+interface RibbonItem {
+  action: string;
   icon: string;
-  label: string;
-  action: 'toggleSidebar' | 'openSearch' | 'openGraph' | 'openSettings' | 'openDailyNote' | 'toggleTheme';
-  isActive?: boolean;
 }
 
 @Component
@@ -21,131 +16,85 @@ export struct Ribbon {
     return getColors(this.themeMode);
   }
 
-  private tools: RibbonAction[] = [
-    { icon: '📁', label: 'file-explorer', action: 'toggleSidebar', isActive: true },
-    { icon: '🔍', label: 'search', action: 'openSearch' },
-    { icon: '📊', label: 'graph', action: 'openGraph' },
-    { icon: '📅', label: 'daily-note', action: 'openDailyNote' },
-    { icon: '⚙️', label: 'settings', action: 'openSettings' }
+  private items: RibbonItem[] = [
+    { action: 'switchToFileExplorer', icon: Icons.FILE_EXPLORER },
+    { action: 'switchToSearch', icon: Icons.SEARCH },
+    { action: 'switchToGraph', icon: Icons.GRAPH },
+    { action: 'openDailyNote', icon: Icons.DAILY_NOTE },
+    { action: 'openSettings', icon: Icons.SETTINGS }
   ];
 
-  private handleAction(tool: RibbonAction): void {
-    switch (tool.action) {
-      case 'openSettings':
-        try {
-          this.getUIContext().getRouter().pushUrl({
-            url: 'pages/SettingsPage'
-          });
-        } catch (e) {
-          console.error('navigate error:', JSON.stringify(e));
-        }
-        break;
-      case 'openSearch':
-        // 通知主页面切换到搜索 Tab
-        if (this.onToolAction) {
-          this.onToolAction('switchToSearch');
-        }
-        break;
-      case 'openGraph':
-        if (this.onToolAction) {
-          this.onToolAction('switchToGraph');
-        }
-        break;
-      case 'openDailyNote':
-        if (this.onToolAction) {
-          this.onToolAction('openDailyNote');
-        }
-        break;
-      default:
-        if (this.onToolAction) {
-          this.onToolAction(tool.label);
-        }
+  private emit(action: string): void {
+    if (this.onToolAction) {
+      this.onToolAction(action);
     }
   }
 
   build() {
     Column() {
-      // 顶部 Logo 区域
       Column() {
-        Text('◈')
-          .fontSize(24)
+        Text('\u25C8')
+          .fontSize(22)
           .fontColor(this.colors().accent)
           .fontWeight(FontWeight.Bold)
       }
       .width('100%')
-      .height(56)
+      .height(52)
       .justifyContent(FlexAlign.Center)
-      .backgroundColor(this.colors().ribbonBg)
 
-      // 工具按钮列表
-      List({ space: 4 }) {
-        ForEach(this.tools, (tool: RibbonAction, index: number) => {
+      List({ space: 2 }) {
+        ForEach(this.items, (item: RibbonItem, _index: number) => {
           ListItem() {
             Column() {
-              Text(tool.icon)
+              Text(item.icon)
                 .fontSize(20)
-                .fontColor(tool.label === this.activeTool || tool.isActive 
-                  ? this.colors().accent 
+                .fontColor(item.action === this.activeTool || item.action === this.activeTool
+                  ? this.colors().accent
                   : this.colors().iconSecondary)
-              if (!this.isCollapsed) {
-                Text(tool.label === 'file-explorer' ? '文件' : 
-                     tool.label === 'search' ? '搜索' :
-                     tool.label === 'graph' ? '图谱' :
-                     tool.label === 'daily-note' ? '日记' : '设置')
-                  .fontSize(10)
-                  .fontColor(this.colors().textMuted)
-                  .margin({ top: 2 })
-                  .maxLines(1)
-                  .textOverflow({ overflow: TextOverflow.Ellipsis })
-              }
             }
             .width('100%')
-            .height(this.isCollapsed ? 44 : 60)
+            .height(this.isCollapsed ? 44 : 52)
             .justifyContent(FlexAlign.Center)
-            .backgroundColor(tool.label === this.activeTool 
-              ? this.colors().bgActive 
+            .backgroundColor(item.action === this.activeTool
+              ? this.colors().bgActive
               : Color.Transparent)
-            .borderRadius(6)
+            .borderRadius(Radius.SM)
             .onClick(() => {
-              this.handleAction(tool);
+              if (item.action === 'openSettings') {
+                try {
+                  this.getUIContext().getRouter().pushUrl({ url: 'pages/SettingsPage' });
+                } catch (e) {
+                  console.error('SettingsPage navigate failed');
+                }
+              } else {
+                this.emit(item.action);
+              }
             })
           }
-        }, (tool: RibbonAction) => tool.label)
+        }, (item: RibbonItem) => item.action)
       }
       .width('100%')
       .layoutWeight(1)
-      .padding({ top: 8, bottom: 8 })
+      .padding({ top: Spacing.SM, bottom: Spacing.SM })
       .scrollBar(BarState.Off)
 
-      // 底部操作区
-      Column({ space: 8 }) {
+      Column() {
         Button({ type: ButtonType.Circle }) {
-          Text('🌓')
+          Text(this.themeMode === ThemeMode.DARK ? Icons.THEME : '\u2600\uFE0F')
             .fontSize(18)
         }
         .width(36)
         .height(36)
         .backgroundColor(this.colors().bgHover)
         .onClick(() => {
-          this.themeMode = this.themeMode === ThemeMode.DARK 
-            ? ThemeMode.LIGHT 
-            : ThemeMode.DARK;
+          this.themeMode = this.themeMode === ThemeMode.DARK
+            ? ThemeMode.LIGHT : ThemeMode.DARK;
         })
-
-        Button({ type: ButtonType.Circle }) {
-          Text('?')
-            .fontSize(16)
-            .fontColor(this.colors().textSecondary)
-        }
-        .width(36)
-        .height(36)
-        .backgroundColor(this.colors().bgHover)
       }
       .width('100%')
-      .padding(8)
-      .backgroundColor(this.colors().ribbonBg)
+      .padding(Spacing.SM)
     }
-    .width(this.isCollapsed ? 56 : 72)
+    .width(this.isCollapsed ? 44 : 56)
     .height('100%')
     .backgroundColor(this.colors().ribbonBg)
     .border({ width: { right: 1 }, color: this.colors().divider })

@@ -37,6 +37,10 @@ export interface LuniusColors {
   codeText: string;
   quoteBorder: string;
   quoteBg: string;
+  errorColor: string;
+  successColor: string;
+  warningColor: string;
+  infoColor: string;
 }
 
 export const LightColors: LuniusColors = {
@@ -67,7 +71,11 @@ export const LightColors: LuniusColors = {
   codeBg: '#F5F5F5',
   codeText: '#D73A49',
   quoteBorder: '#7B68EE',
-  quoteBg: '#F8F5FF'
+  quoteBg: '#F8F5FF',
+  errorColor: '#E53935',
+  successColor: '#4CAF50',
+  warningColor: '#F5A623',
+  infoColor: '#2196F3'
 };
 
 export const DarkColors: LuniusColors = {
@@ -98,7 +106,11 @@ export const DarkColors: LuniusColors = {
   codeBg: '#2D2D2D',
   codeText: '#FF7B72',
   quoteBorder: '#7B68EE',
-  quoteBg: '#2A2538'
+  quoteBg: '#2A2538',
+  errorColor: '#FF5252',
+  successColor: '#69F0AE',
+  warningColor: '#FFD740',
+  infoColor: '#40C4FF'
 };
 
 export function getColors(mode: ThemeMode): LuniusColors {
@@ -132,6 +144,55 @@ export class SidebarWidth {
   static readonly PC_LEFT: number = 280;
   static readonly PC_RIGHT: number = 260;
   static readonly RIBBON: number = 44;
+}
+
+// 间距规范
+export class Spacing {
+  static readonly XS: number = 4;
+  static readonly SM: number = 8;
+  static readonly MD: number = 12;
+  static readonly LG: number = 16;
+  static readonly XL: number = 24;
+  static readonly XXL: number = 32;
+}
+
+// 圆角规范
+export class Radius {
+  static readonly SM: number = 4;
+  static readonly MD: number = 8;
+  static readonly LG: number = 12;
+  static readonly FULL: number = 999;
+}
+
+// 图标映射（Unicode, 无外部依赖）
+export class Icons {
+  static readonly FILE_EXPLORER: string = '\uD83D\uDCC1';
+  static readonly SEARCH: string = '\uD83D\uDD0D';
+  static readonly GRAPH: string = '\uD83D\uDD78\uFE0F';
+  static readonly DAILY_NOTE: string = '\uD83D\uDCC5';
+  static readonly SETTINGS: string = '\u2699\uFE0F';
+  static readonly THEME: string = '\uD83C\uDF13';
+  static readonly NEW_NOTE: string = '\uD83D\uDCDD';
+  static readonly SAVE: string = '\uD83D\uDCBE';
+  static readonly PROPERTIES: string = '\uD83D\uDCCB';
+  static readonly ATTACHMENT: string = '\uD83D\uDCCE';
+  static readonly IMAGE: string = '\uD83D\uDDBC';
+  static readonly BACK: string = '\u2190';
+  static readonly FORWARD: string = '\u2192';
+  static readonly CLOSE: string = '\u2715';
+  static readonly MORE: string = '\u22EF';
+  static readonly PLUS: string = '+';
+  static readonly DASH: string = '\u2014';
+  static readonly COLLABORATE: string = '\u229E';
+  static readonly COMMAND: string = '\u2318';
+  static readonly MENU: string = '\u2630';
+  static readonly PIN: string = '\uD83D\uDCCC';
+  static readonly CHECK: string = '\u2713';
+  static readonly BULLET: string = '\u2022';
+  static readonly UNDO: string = '\u27F2';
+  static readonly REDO: string = '\u27F3';
+  static readonly ZOOM_IN: string = '\u2295';
+  static readonly ZOOM_OUT: string = '\u2296';
 }
 
 // 字体规范

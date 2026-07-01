@@ -1,116 +1,144 @@
-// pages/SettingsPage.ets
-// Lunius 设置页 - 通过 router.pushUrl 进入的独立页面
-
-import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors, Spacing } from '../utils/Theme';
 import { vaultIndex } from '../services/VaultIndex';
-import { VaultStats } from '../services/ApiTypes';
 import { pluginManager } from '../services/PluginManager';
 import { LuniusPlugin } from '../models/PluginTypes';
+import { VaultStats } from '../services/ApiTypes';
+
+interface StatRow {
+  label: string;
+  value: string;
+}
 
 @Entry
 @Component
 struct SettingsPage {
   @StorageLink('themeMode') themeMode: ThemeMode = ThemeMode.DARK;
-  @State fontSize: number = 14;
-  @State lineHeight: number = 1.6;
-  @State wordWrap: boolean = true;
+  @StorageLink('editorFontSize') editorFontSize: number = 14;
   @State autoSave: boolean = true;
-  @State showLineNumber: boolean = false;
+  @State wordWrap: boolean = true;
+  @State showLineNumbers: boolean = false;
   @State vaultStats: VaultStats | null = null;
   @State plugins: LuniusPlugin[] = [];
 
   aboutToAppear(): void {
-    this.loadStats();
+    this.loadVaultStats();
     this.loadPlugins();
   }
 
-  async loadStats(): Promise<void> {
+  private async loadVaultStats(): Promise<void> {
     try {
       this.vaultStats = await vaultIndex.getVaultStats();
     } catch (e) {
-      console.error('Failed to load vault stats: ' + JSON.stringify(e));
+      console.error('loadVaultStats error: ' + JSON.stringify(e));
     }
   }
 
-  async loadPlugins(): Promise<void> {
+  private loadPlugins(): void {
     this.plugins = pluginManager.getAllPlugins();
   }
 
-  private colors(): LuniusColors {
+  private getColors(): LuniusColors {
     return getColors(this.themeMode);
   }
 
+  private cycleFontSize(): void {
+    if (this.editorFontSize >= 18) {
+      this.editorFontSize = 12;
+    } else if (this.editorFontSize >= 16) {
+      this.editorFontSize = 18;
+    } else if (this.editorFontSize >= 14) {
+      this.editorFontSize = 16;
+    } else {
+      this.editorFontSize = 14;
+    }
+  }
+
+  private fontSizeLabel(): string {
+    return String(this.editorFontSize) + ' px';
+  }
+
   @Builder
-  SectionTitle(title: string) {
+  sectionHeader(title: string) {
     Text(title)
-      .fontSize(12)
+      .fontSize(11)
       .fontWeight(FontWeight.Medium)
-      .fontColor(this.colors().textMuted)
-      .margin({ top: 24, bottom: 8, left: 16, right: 16 })
+      .fontColor(this.getColors().textMuted)
+      .width('100%')
+      .padding({ left: 16, right: 16, top: 28, bottom: 6 })
       .letterSpacing(1)
   }
 
   @Builder
-  SettingItem(label: string, value: string, onClick?: () => void) {
+  toggleRow(label: string, isOn: boolean, onChange: (val: boolean) => void) {
     Row() {
       Text(label)
         .fontSize(14)
-        .fontColor(this.colors().textPrimary)
+        .fontColor(this.getColors().textPrimary)
         .layoutWeight(1)
 
-      Row({ space: 4 }) {
-        Text(value)
-          .fontSize(14)
-          .fontColor(this.colors().textMuted)
-        Text('›')
-          .fontSize(14)
-          .fontColor(this.colors().textMuted)
-      }
-    }
-    .width('100%')
-    .height(48)
-    .padding({ left: 16, right: 16 })
-    .backgroundColor(this.colors().bgPrimary)
-    .border({ width: { bottom: 1 }, color: this.colors().divider })
-    .onClick(() => {
-      if (onClick) onClick();
-    })
-  }
-
-  @Builder
-  ToggleItem(label: string, isOn: boolean, onChange: (val: boolean) => void) {
-    Row() {
-      Column({ space: 2 }) {
-        Text(label)
-          .fontSize(14)
-          .fontColor(this.colors().textPrimary)
-        Text('重启后生效')
-          .fontSize(11)
-          .fontColor(this.colors().textMuted)
-          .visibility(Visibility.None) // 预留提示位
-      }
-      .alignItems(HorizontalAlign.Start)
-      .layoutWeight(1)
-
       Toggle({ type: ToggleType.Switch, isOn: isOn })
-        .selectedColor(this.colors().accent)
+        .selectedColor(this.getColors().accent)
         .onChange(onChange)
     }
     .width('100%')
     .height(48)
     .padding({ left: 16, right: 16 })
-    .backgroundColor(this.colors().bgPrimary)
-    .border({ width: { bottom: 1 }, color: this.colors().divider })
+    .backgroundColor(this.getColors().bgPrimary)
+    .border({ width: { bottom: 1 }, color: this.getColors().divider })
+  }
+
+  @Builder
+  readOnlyRow(label: string, value: string) {
+    Row() {
+      Text(label)
+        .fontSize(14)
+        .fontColor(this.getColors().textPrimary)
+        .layoutWeight(1)
+
+      Text(value)
+        .fontSize(14)
+        .fontColor(this.getColors().textMuted)
+        .margin({ right: 4 })
+    }
+    .width('100%')
+    .height(44)
+    .padding({ left: 16, right: 16 })
+    .backgroundColor(this.getColors().bgPrimary)
+    .border({ width: { bottom: 1 }, color: this.getColors().divider })
+  }
+
+  @Builder
+  actionRow(label: string, value: string, onClick: () => void) {
+    Row() {
+      Text(label)
+        .fontSize(14)
+        .fontColor(this.getColors().textPrimary)
+        .layoutWeight(1)
+
+      Row({ space: 4 }) {
+        Text(value)
+          .fontSize(14)
+          .fontColor(this.getColors().textMuted)
+        Text('\u203A')
+          .fontSize(16)
+          .fontColor(this.getColors().textMuted)
+      }
+    }
+    .width('100%')
+    .height(44)
+    .padding({ left: 16, right: 16 })
+    .backgroundColor(this.getColors().bgPrimary)
+    .border({ width: { bottom: 1 }, color: this.getColors().divider })
+    .onClick(onClick)
   }
 
   build() {
     Column() {
-      // 顶部导航栏
       Row() {
         Button({ type: ButtonType.Circle }) {
-          Text('←')
+          Text('\u2190')
             .fontSize(18)
-            .fontColor(this.colors().textPrimary)
+            .fontColor(this.getColors().textPrimary)
         }
         .width(36)
         .height(36)
@@ -119,140 +147,175 @@ struct SettingsPage {
           try {
             this.getUIContext().getRouter().back();
           } catch (e) {
-            console.error('back error:', JSON.stringify(e));
+            console.error('back error: ' + JSON.stringify(e));
           }
         })
 
-        Text('设置')
+        Text('\u8BBE\u7F6E')
           .fontSize(17)
           .fontWeight(FontWeight.Medium)
-          .fontColor(this.colors().textPrimary)
+          .fontColor(this.getColors().textPrimary)
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
 
-        Row().width(36) // 占位保持标题居中
+        Row().width(36)
       }
       .width('100%')
       .height(52)
       .padding({ left: 12, right: 12 })
-      .backgroundColor(this.colors().bgSecondary)
-      .border({ width: { bottom: 1 }, color: this.colors().divider })
+      .backgroundColor(this.getColors().bgSecondary)
+      .border({ width: { bottom: 1 }, color: this.getColors().divider })
 
       Scroll() {
         Column() {
-          // 外观
-          this.SectionTitle('外观');
-          this.ToggleItem('深色模式', this.themeMode === ThemeMode.DARK, (isOn: boolean) => {
-            this.themeMode = isOn ? ThemeMode.DARK : ThemeMode.LIGHT;
-          });
-          this.SettingItem('主题色', '紫罗兰', () => {});
-          this.SettingItem('字体', '系统默认', () => {});
-          this.SettingItem('字体大小', `${this.fontSize}px`, () => {
-            this.fontSize = this.fontSize >= 20 ? 12 : this.fontSize + 2;
-          });
+          this.sectionHeader('\u5916\u89C2')
 
-          // 编辑器
-          this.SectionTitle('编辑器');
-          this.ToggleItem('自动保存', this.autoSave, (v) => this.autoSave = v);
-          this.ToggleItem('自动换行', this.wordWrap, (v) => this.wordWrap = v);
-          this.ToggleItem('显示行号', this.showLineNumber, (v) => this.showLineNumber = v);
-          this.SettingItem('行高', `${this.lineHeight}`, () => {
-            this.lineHeight = this.lineHeight >= 2.0 ? 1.2 : this.lineHeight + 0.2;
-          });
-          this.SettingItem('缩进', '4 空格', () => {});
+          this.toggleRow('\u6DF1\u8272\u6A21\u5F0F',
+            this.themeMode === ThemeMode.DARK,
+            (isOn: boolean): void => {
+              this.themeMode = isOn ? ThemeMode.DARK : ThemeMode.LIGHT;
+            })
 
-          // 文件与链接
-          this.SectionTitle('文件与链接');
-          this.SettingItem('默认新笔记位置', '/未分类', () => {});
-          this.SettingItem('附件文件夹', 'attachments/', () => {});
-          this.ToggleItem('使用 Wiki 链接', true, () => {});
-          this.ToggleItem('自动格式化', false, () => {});
+          this.actionRow('\u5B57\u4F53\u5927\u5C0F',
+            this.fontSizeLabel(),
+            (): void => {
+              this.cycleFontSize();
+            })
 
-          // 同步与版本
-          this.SectionTitle('同步与版本');
-          this.SettingItem('版本历史', '查看笔记版本快照', () => {
-            try {
-              this.getUIContext().getRouter().pushUrl({
-                url: 'components/VersionHistoryPanel'
-              });
-            } catch (e) {
-              console.error('navigate to VersionHistoryPanel failed:', JSON.stringify(e));
-            }
-          });
-          this.SettingItem('云同步', '华为云空间', () => {
-            try {
-              this.getUIContext().getRouter().pushUrl({
-                url: 'components/CloudSyncSettings'
-              });
-            } catch (e) {
-              console.error('navigate to CloudSyncSettings failed:', JSON.stringify(e));
-            }
-          });
+          this.actionRow('\u4E3B\u9898\u8272', '\u7D2B\u7F57\u5170', (): void => {})
 
-          // Vault 统计
-          this.SectionTitle('Vault 统计');
-          this.SettingItem('总笔记数', `${this.vaultStats?.totalNotes ?? '...'}`, () => {});
-          this.SettingItem('总词数', `${this.vaultStats?.totalWords ?? '...'}`, () => {});
-          this.SettingItem('总链接数', `${this.vaultStats?.totalLinks ?? '...'}`, () => {});
-          this.SettingItem('总标签数', `${this.vaultStats?.totalTags ?? '...'}`, () => {});
+          this.sectionHeader('\u7F16\u8F91\u5668')
 
-          // 插件管理
-          this.SectionTitle('插件管理');
+          this.toggleRow('\u81EA\u52A8\u4FDD\u5B58',
+            this.autoSave,
+            (val: boolean): void => {
+              this.autoSave = val;
+            })
+
+          this.toggleRow('\u81EA\u52A8\u6362\u884C',
+            this.wordWrap,
+            (val: boolean): void => {
+              this.wordWrap = val;
+            })
+
+          this.toggleRow('\u663E\u793A\u884C\u53F7',
+            this.showLineNumbers,
+            (val: boolean): void => {
+              this.showLineNumbers = val;
+            })
+
+          this.actionRow('\u7F29\u8FDB', '4 \u7A7A\u683C', (): void => {})
+
+          this.sectionHeader('\u6587\u4EF6\u4E0E\u94FE\u63A5')
+
+          this.actionRow('\u9ED8\u8BA4\u65B0\u7B14\u8BB0\u4F4D\u7F6E', '/\u672A\u5206\u7C7B', (): void => {})
+          this.actionRow('\u9644\u4EF6\u6587\u4EF6\u5939', 'attachments/', (): void => {})
+          this.toggleRow('\u4F7F\u7528 Wiki \u94FE\u63A5', true, (_val: boolean): void => {})
+
+          this.sectionHeader('\u540C\u6B65\u4E0E\u7248\u672C')
+
+          this.actionRow('\u7248\u672C\u5386\u53F2',
+            '\u67E5\u770B\u7B14\u8BB0\u7248\u672C\u5FEB\u7167',
+            (): void => {
+              try {
+                this.getUIContext().getRouter().pushUrl({
+                  url: 'components/VersionHistoryPanel'
+                });
+              } catch (e) {
+                console.error('navigate error: ' + JSON.stringify(e));
+              }
+            })
+
+          this.actionRow('\u4E91\u540C\u6B65',
+            '\u534E\u4E3A\u4E91\u7A7A\u95F4',
+            (): void => {
+              try {
+                this.getUIContext().getRouter().pushUrl({
+                  url: 'components/CloudSyncSettings'
+                });
+              } catch (e) {
+                console.error('navigate error: ' + JSON.stringify(e));
+              }
+            })
+
+          this.sectionHeader('Vault \u7EDF\u8BA1')
+
+          this.readOnlyRow('\u603B\u7B14\u8BB0\u6570',
+            this.vaultStats ? String(this.vaultStats.totalNotes) : '...')
+          this.readOnlyRow('\u603B\u8BCD\u6570',
+            this.vaultStats ? String(this.vaultStats.totalWords) : '...')
+          this.readOnlyRow('\u603B\u94FE\u63A5\u6570',
+            this.vaultStats ? String(this.vaultStats.totalLinks) : '...')
+          this.readOnlyRow('\u603B\u6807\u7B7E\u6570',
+            this.vaultStats ? String(this.vaultStats.totalTags) : '...')
+
+          this.sectionHeader('\u63D2\u4EF6\u7BA1\u7406')
 
           if (this.plugins.length === 0) {
-            Text('暂无插件')
-              .fontSize(13).fontColor(this.colors().textMuted)
-              .width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 })
+            Text('\u6682\u65E0\u63D2\u4EF6')
+              .fontSize(13)
+              .fontColor(this.getColors().textMuted)
+              .width('100%')
+              .padding({ left: 16, right: 16, top: 8, bottom: 8 })
           } else {
-            ForEach(this.plugins, (plugin: LuniusPlugin) => {
+            ForEach(this.plugins, (plugin: LuniusPlugin, idx: number) => {
               Column() {
                 Row() {
                   Column({ space: 2 }) {
                     Text(plugin.manifest.name)
-                      .fontSize(14).fontColor(this.colors().textPrimary)
+                      .fontSize(14)
+                      .fontColor(this.getColors().textPrimary)
                     Text(plugin.manifest.description)
-                      .fontSize(11).fontColor(this.colors().textMuted)
-                      .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
-                    Text(`v${plugin.manifest.version} · ${plugin.manifest.author}`)
-                      .fontSize(10).fontColor(this.colors().textMuted)
+                      .fontSize(11)
+                      .fontColor(this.getColors().textMuted)
+                      .maxLines(1)
+                      .textOverflow({ overflow: TextOverflow.Ellipsis })
+                    Text('v' + plugin.manifest.version + ' \u00B7 ' + plugin.manifest.author)
+                      .fontSize(10)
+                      .fontColor(this.getColors().textMuted)
                   }
-                  .alignItems(HorizontalAlign.Start).layoutWeight(1)
+                  .alignItems(HorizontalAlign.Start)
+                  .layoutWeight(1)
 
                   Toggle({ type: ToggleType.Switch, isOn: plugin.isEnabled })
-                    .selectedColor(this.colors().accent)
-                    .onChange(async (isOn: boolean) => {
+                    .selectedColor(this.getColors().accent)
+                    .onChange((isOn: boolean): void => {
                       if (isOn) {
-                        await pluginManager.enable(plugin.manifest.id);
+                        pluginManager.enable(plugin.manifest.id);
                       } else {
-                        await pluginManager.disable(plugin.manifest.id);
+                        pluginManager.disable(plugin.manifest.id);
                       }
-                      this.loadPlugins();
+                      setTimeout((): void => {
+                        this.loadPlugins();
+                      }, 300);
                     })
                 }
-                .width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 })
+                .width('100%')
+                .padding({ left: 16, right: 16, top: 10, bottom: 10 })
               }
-              .width('100%').backgroundColor(this.colors().bgPrimary)
-              .border({ width: { bottom: 1 }, color: this.colors().divider })
-            }, (plugin: LuniusPlugin) => plugin.manifest.id)
+              .width('100%')
+              .backgroundColor(this.getColors().bgPrimary)
+              .border({ width: { bottom: 1 }, color: this.getColors().divider })
+            }, (plugin: LuniusPlugin): string => plugin.manifest.id)
           }
 
-          // 关于
-          this.SectionTitle('关于');
-          this.SettingItem('版本', 'v1.0.0 (HarmonyOS 5.0)', () => {});
-          this.SettingItem('开源协议', 'MIT License', () => {});
-          this.SettingItem('检查更新', '已是最新', () => {});
+          this.sectionHeader('\u5173\u4E8E')
 
-          Row().height(40) // 底部留白
+          this.readOnlyRow('\u7248\u672C', 'v1.0.0 (HarmonyOS 5.0)')
+          this.readOnlyRow('\u5F00\u6E90\u534F\u8BAE', 'MIT License')
+          this.actionRow('\u68C0\u67E5\u66F4\u65B0', '\u5DF2\u662F\u6700\u65B0', (): void => {})
+
+          Row().height(40)
         }
         .width('100%')
       }
       .width('100%')
       .layoutWeight(1)
-      .backgroundColor(this.colors().bgPrimary)
+      .backgroundColor(this.getColors().bgPrimary)
       .scrollBar(BarState.Auto)
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.colors().bgPrimary)
+    .backgroundColor(this.getColors().bgPrimary)
   }
 }

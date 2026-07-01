@@ -1,18 +1,17 @@
-// pages/MainEntry.ets
-
 import { display } from '@kit.ArkUI';
-import { LuniusColors, ThemeMode, getColors, SidebarWidth } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors, SidebarWidth, Spacing } from '../utils/Theme';
 import { ResponsiveState } from '../utils/ResponsiveLayout';
 import { WorkspaceViewModel, TabState } from '../viewmodels/WorkspaceViewModel';
 import { NoteViewModel } from '../viewmodels/NoteViewModel';
 import { Ribbon } from '../components/Ribbon';
 import { FileTree } from '../components/FileTree';
-import { TabBar } from '../components/TabBar';
+import { TabBar, TabItem } from '../components/TabBar';
 import { MarkdownEditor } from '../components/MarkdownEditor';
 import { RightSidebar } from '../components/RightSidebar';
 import { GraphView } from '../components/GraphView';
 import { CollaborationPanel } from '../components/CollaborationPanel';
 import { CommandPalette } from '../components/commandpalette/CommandPalette';
+import { QuickSwitcher } from '../components/QuickSwitcher';
 import { FileNode, NodeType } from '../models/FileNode';
 import { fileIo } from '@kit.CoreFileKit';
 import { fileService } from '../services/IFileService';
@@ -22,80 +21,29 @@ import { TabManager } from '../utils/TabManager';
 import { ExportHelper } from '../utils/ExportHelper';
 import { CollaborationService } from '../services/CollaborationService';
 import { CollaborationSession, RemoteCursorState } from '../models/CollaborationTypes';
-import { harmonyShare, systemShare } from '@kit.ShareKit';
-import { uniformTypeDescriptor as utd } from '@kit.ArkData';
-
-interface TabBarItem {
-  id: string;
-  title: string;
-  isModified?: boolean;
-  isActive?: boolean;
-  isPinned?: boolean;
-}
-
-interface ToolMenuItem {
-  icon: string;
-  label: string;
-  action: () => void;
-}
 
 @Entry
 @Component
-struct LuniusApp {
+struct ObsidianApp {
   @StorageLink('themeMode') themeMode: ThemeMode = ThemeMode.DARK;
   @State responsive: ResponsiveState = new ResponsiveState();
   @State workspace: WorkspaceViewModel = new WorkspaceViewModel();
-
-  // UI 状态
-  @State showCommandPalette: boolean = false;
-  @State showMobileSidebar: boolean = false;
-  @State showMobileRightPanel: boolean = false;
-  @State currentView: string = 'editor'; // editor | graph
-  @State activeFileId: string = '';
-  @State expandedNodes: Set<string> = new Set(['root']);
   @State fileTreeData: FileNode[] = [];
+  @State expandedNodes: Set<string> = new Set(['root']);
   @State isLoading: boolean = true;
+  @State activeFileId: string = '';
+  @State currentView: string = 'editor';
 
-  // 协同状态
+  @State showCommandPalette: boolean = false;
+  @State showQuickSwitcher: boolean = false;
+  @State showMobileSidebar: boolean = false;
   @State showCollaborationPanel: boolean = false;
   @State collaborationSession: CollaborationSession | null = null;
-  @State remoteCursors: RemoteCursorState[] = [];
+
   private collabService: CollaborationService | null = null;
-
-  private localFileService: FileService = FileService.getInstance();
-
-  // 碰一碰回调 —— 必须在组件级别保存引用以便注销
-  private knockCallback: (target: harmonyShare.SharableTarget) => void = (target) => {
-    const tab = this.activeTab();
-    if (!tab) return;
-
-    const shareData = new systemShare.SharedData({
-      utd: utd.UniformDataType.HYPERLINK,
-      content: `https://lunius.drcn.agconnect.link/edit?noteId=${tab.noteId}`,
-      title: `Lunius 笔记: ${tab.title}`,
-      description: `字数: ${tab.viewModel.getWordCount()} | 标签: ${tab.viewModel.metadata?.tags?.join(', ') ?? ''}`
-    });
-    target.share(shareData);
-  };
 
   private colors(): LuniusColors {
     return getColors(this.themeMode);
-  }
-
-  private showToast(message: string, duration?: number): void {
-    try {
-      this.getUIContext().getPromptAction().showToast({ message: message, duration: duration ?? 2000 });
-    } catch (e) {
-      console.error('showToast error:', JSON.stringify(e));
-    }
-  }
-
-  private navigateTo(url: string): void {
-    try {
-      this.getUIContext().getRouter().pushUrl({ url: url });
-    } catch (e) {
-      console.error('navigateTo error:', JSON.stringify(e));
-    }
   }
 
   async aboutToAppear(): Promise<void> {
@@ -103,26 +51,13 @@ struct LuniusApp {
     try {
       display.on('change', () => this.updateScreenSize());
     } catch (e) {
-      console.error('Display listener error:', e);
+      console.error('Display listener error:', JSON.stringify(e));
     }
 
-    // 注册碰一碰监听
-    try {
-      harmonyShare.on('knockShare', this.knockCallback);
-    } catch (e) {
-      console.error('knockShare register error:', e);
-    }
-
-    // 初始化协同服务
-    await this.initCollaborationService();
-
-    // 加载文件树
+    await this.initCollaboration();
     await this.loadFileTree();
-
-    // 恢复上次标签会话
     await this.workspace.restoreSession();
 
-    // 若没有已保存的标签，打开第一个文件或显示空白状态
     const pane = this.workspace.panes[0];
     if (pane && pane.tabs.length === 0 && this.fileTreeData.length > 0) {
       const root = this.fileTreeData[0];
@@ -132,40 +67,26 @@ struct LuniusApp {
         this.workspace.openNote(firstFile.id, firstFile.name);
       }
     } else if (pane && pane.tabs.length > 0) {
-      const activeTab = pane.tabs.find(t => t.isActive);
+      const activeTab = pane.tabs.find((t: TabState) => t.isActive);
       if (activeTab) {
         this.activeFileId = activeTab.noteId;
       }
     }
 
-    // 处理待处理的分享意图
     this.handlePendingShareAction();
-
     this.isLoading = false;
   }
 
-  aboutToDisappear(): void {
-    // 注销碰一碰监听
+  private async initCollaboration(): Promise<void> {
     try {
-      harmonyShare.off('knockShare', this.knockCallback);
-    } catch (e) {
-      console.error('knockShare unregister error:', e);
-    }
-  }
-
-  private async initCollaborationService(): Promise<void> {
-    try {
-      const deviceId = `device-${Date.now().toString(36)}`;
-      const deviceName = `设备-${Date.now().toString(36).slice(-4)}`;
-      const deviceType = this.responsive.isPhone ? 'phone' :
-        this.responsive.isTablet ? 'tablet' : '2in1';
-
-      this.collabService = new CollaborationService(
-        deviceId, deviceName, deviceType
-      );
+      const deviceId = 'device-' + Date.now().toString(36);
+      const deviceName = '\u8BBE\u5907-' + Date.now().toString(36).slice(-4);
+      const deviceType = this.responsive.isPhone ? 'phone'
+        : this.responsive.isTablet ? 'tablet' : '2in1';
+      this.collabService = new CollaborationService(deviceId, deviceName, deviceType);
       await this.collabService.init();
     } catch (e) {
-      console.error('CollaborationService init error:', e);
+      console.error('CollaborationService init error:', JSON.stringify(e));
     }
   }
 
@@ -176,15 +97,13 @@ struct LuniusApp {
         this.expandedNodes.add(this.fileTreeData[0].id);
       }
     } catch (e) {
-      console.error('Failed to load file tree: ' + JSON.stringify(e));
+      console.error('Failed to load file tree:', JSON.stringify(e));
     }
   }
 
-  // 处理来自碰一碰/分享/跨端迁移的待处理操作
   private async handlePendingShareAction(): Promise<void> {
     const action = AppStorage.get<string>('pendingShareAction');
     if (!action) return;
-
     const noteId = AppStorage.get<string>('pendingShareNoteId');
     const collabSessionId = AppStorage.get<string>('pendingCollaborationSessionId');
     const shareFileUri = AppStorage.get<string>('pendingShareFileUri');
@@ -193,51 +112,44 @@ struct LuniusApp {
       await this.importSharedFile(shareFileUri);
     } else if (action === 'openSharedNote' && noteId) {
       this.activeFileId = noteId;
-      this.workspace.openNote(noteId, '收到的笔记');
+      this.workspace.openNote(noteId, '\u6536\u5230\u7684\u7B14\u8BB0');
       this.currentView = 'editor';
     } else if (action === 'joinCollaboration' && collabSessionId) {
       this.joinCollaboration(collabSessionId);
     }
 
-    // 清除待处理标志
     AppStorage.setOrCreate('pendingShareAction', '');
     AppStorage.setOrCreate('pendingShareNoteId', '');
     AppStorage.setOrCreate('pendingCollaborationSessionId', '');
     AppStorage.setOrCreate('pendingShareFileUri', '');
   }
 
-  // 从分享 URI 导入文件并打开
   private async importSharedFile(uri: string): Promise<void> {
     try {
       const stat = fileIo.statSync(uri);
       if (stat.size > 2 * 1024 * 1024) {
-        this.showToast('文件过大，无法导入');
+        this.showToast('\u6587\u4EF6\u8FC7\u5927\uFF0C\u65E0\u6CD5\u5BFC\u5165');
         return;
       }
-
       const content = fileIo.readTextSync(uri);
       if (content.length === 0) {
-        this.showToast('文件内容为空');
+        this.showToast('\u6587\u4EF6\u5185\u5BB9\u4E3A\u7A7A');
         return;
       }
-
-      // 从内容提取标题
-      let title = '收到的笔记';
+      let title = '\u6536\u5230\u7684\u7B14\u8BB0';
       const h1Match = content.match(/^#\s+(.+)$/m);
       if (h1Match && h1Match[1]) {
         title = h1Match[1].trim();
       }
-
       const result = await fileService.createNote('/', title, content);
       await this.loadFileTree();
       this.activeFileId = result.id;
       this.workspace.openNote(result.id, result.title);
       this.currentView = 'editor';
-
-      this.showToast('笔记已导入');
+      this.showToast('\u7B14\u8BB0\u5DF2\u5BFC\u5165');
     } catch (e) {
       console.error('importSharedFile error:', JSON.stringify(e));
-      this.showToast('导入失败');
+      this.showToast('\u5BFC\u5165\u5931\u8D25');
     }
   }
 
@@ -247,12 +159,29 @@ struct LuniusApp {
       const w = info.width / info.densityPixels;
       const h = info.height / info.densityPixels;
       this.responsive.updateSize(w, h);
-
       this.workspace.leftSidebarVisible = !this.responsive.isPhone;
-      this.workspace.rightSidebarVisible = this.responsive.isPC || (this.responsive.isTablet && this.responsive.isLandscape);
+      this.workspace.rightSidebarVisible =
+        this.responsive.isPC || (this.responsive.isTablet && this.responsive.isLandscape);
       this.workspace.ribbonCollapsed = this.responsive.isPhone;
     } catch (e) {
-      console.error('Screen size error:', e);
+      console.error('Screen size error:', JSON.stringify(e));
+    }
+  }
+
+  private handleRibbonAction(action: string): void {
+    switch (action) {
+      case 'switchToFileExplorer':
+        this.workspace.leftSidebarVisible = !this.workspace.leftSidebarVisible;
+        break;
+      case 'switchToSearch':
+        this.getUIContext().getRouter().pushUrl({ url: 'pages/SearchPage' });
+        break;
+      case 'switchToGraph':
+        this.currentView = 'graph';
+        break;
+      case 'openDailyNote':
+        this.openDailyNote();
+        break;
     }
   }
 
@@ -260,11 +189,9 @@ struct LuniusApp {
     if (node.type === NodeType.FILE) {
       this.activeFileId = node.id;
       const tab = this.workspace.openNote(node.id, node.name);
-      // 注入协同服务到 ViewModel
       if (this.collabService) {
         tab.viewModel.setCollaborationService(this.collabService);
       }
-      // 持续追踪当前编辑的笔记
       AppStorage.setOrCreate('currentNoteId', node.id);
       this.currentView = 'editor';
       if (this.responsive.isPhone) {
@@ -273,80 +200,63 @@ struct LuniusApp {
     }
   }
 
-  // ─── 协同操作方法 ────────────────────────────
+  private activeTab(): TabState | undefined {
+    const pane = this.workspace.panes.find(
+      (p) => p.id === this.workspace.activePaneId
+    );
+    if (!pane) return undefined;
+    return pane.tabs.find((t) => t.id === pane.activeTabId);
+  }
 
-  private async startCollaboration(): Promise<void> {
-    const tab = this.activeTab();
-    if (!tab || !this.collabService) return;
+  private tabBarItems(): TabItem[] {
+    const pane = this.workspace.panes.find(
+      (p) => p.id === this.workspace.activePaneId
+    );
+    if (!pane) return [];
+    const items: TabItem[] = [];
+    for (let i = 0; i < pane.tabs.length; i++) {
+      const t = pane.tabs[i];
+      items.push({
+        id: t.id,
+        title: t.title,
+        isModified: t.isModified,
+        isActive: t.isActive,
+        isPinned: false
+      });
+    }
+    return items;
+  }
 
+  private tabBarActiveId(): string {
+    const pane = this.workspace.panes.find(
+      (p) => p.id === this.workspace.activePaneId
+    );
+    return pane ? pane.activeTabId : '';
+  }
+
+  private async createNewNote(): Promise<void> {
     try {
-      // 延迟初始化协同服务（需要 context）
-      if (!this.collabService.isInSession()) {
-        // Context 通过 AppStorage 传递
-      }
-
-      const sessionId = await tab.viewModel.startCollaboration();
-      this.collaborationSession = this.collabService.getCurrentSession();
-
-      this.showToast('协同会话已创建，其他设备可通过会话 ID 加入');
+      const result = await fileService.createNote('/', '\u672A\u547D\u540D',
+        '# \u672A\u547D\u540D\n\n\u5F00\u59CB\u5199\u4F5C...\n');
+      await this.loadFileTree();
+      this.activeFileId = result.id;
+      this.workspace.openNote(result.id, result.title);
+      this.currentView = 'editor';
     } catch (e) {
-      this.showToast('创建协同会话失败');
-      console.error('startCollaboration error:', JSON.stringify(e));
+      console.error('Failed to create note:', JSON.stringify(e));
     }
   }
 
-  private async joinCollaboration(sessionId: string): Promise<void> {
-    const tab = this.activeTab();
-    if (!tab || !this.collabService) return;
-
+  private async createFromTemplate(): Promise<void> {
     try {
-      await tab.viewModel.joinCollaboration(sessionId);
-      this.collaborationSession = this.collabService.getCurrentSession();
-
-      this.showToast('已加入协同会话');
+      const tpl = '# \u6A21\u677F\u7B14\u8BB0\n\n## \u6982\u8FF0\n\n## \u8BE6\u7EC6\u5185\u5BB9\n\n## \u603B\u7ED3\n\n';
+      const result = await fileService.createNote('/', '\u6A21\u677F\u7B14\u8BB0', tpl);
+      await this.loadFileTree();
+      this.activeFileId = result.id;
+      this.workspace.openNote(result.id, result.title);
+      this.currentView = 'editor';
     } catch (e) {
-      this.showToast('加入协同会话失败');
-      console.error('joinCollaboration error:', JSON.stringify(e));
-    }
-  }
-
-  private async leaveCollaboration(): Promise<void> {
-    const tab = this.activeTab();
-    if (!tab || !this.collabService) return;
-
-    try {
-      await tab.viewModel.leaveCollaboration();
-      this.collaborationSession = null;
-      this.remoteCursors = [];
-
-      this.showToast('已退出协同会话');
-    } catch (e) {
-      console.error('leaveCollaboration error:', JSON.stringify(e));
-    }
-  }
-
-  private toggleCollaborationPanel(): void {
-    this.showCollaborationPanel = !this.showCollaborationPanel;
-  }
-
-  // ─── 导出 ────────────────────────────────────
-
-  private async handleExportCommand(commandId: string): Promise<void> {
-    const tab = this.activeTab();
-    if (!tab) return;
-    try {
-      if (commandId === 'exportHtml') {
-        const path = await ExportHelper.exportAsHtml(tab.noteId, tab.viewModel.content, tab.viewModel.title);
-        this.showToast('HTML 已保存: ' + path);
-      } else if (commandId === 'exportMd') {
-        const path = await ExportHelper.exportMarkdown(tab.noteId, tab.viewModel.content, tab.viewModel.title);
-        this.showToast('MD 已保存: ' + path);
-      } else if (commandId === 'exportPdf') {
-        const path = await ExportHelper.exportAsPdf(tab.noteId, tab.viewModel.content, tab.viewModel.title);
-        this.showToast('PDF: ' + path);
-      }
-    } catch (e) {
-      this.showToast('导出失败');
+      console.error('Failed to create from template:', JSON.stringify(e));
     }
   }
 
@@ -358,199 +268,203 @@ struct LuniusApp {
       this.workspace.openNote(result.noteId, result.title);
       this.currentView = 'editor';
     } catch (e) {
-      console.error('Daily note error: ' + JSON.stringify(e));
+      console.error('Daily note error:', JSON.stringify(e));
     }
   }
 
-  private async createNoteWithTemplate(template?: string): Promise<void> {
+  private async startCollaboration(): Promise<void> {
+    const tab = this.activeTab();
+    if (!tab || !this.collabService) return;
     try {
-      const tpl = template || '# 未命名\n\n开始写作...\n';
-      const result = await fileService.createNote('/', '未命名', tpl);
-      await this.loadFileTree();
-      this.activeFileId = result.id;
-      this.workspace.openNote(result.id, result.title);
-      this.currentView = 'editor';
+      await tab.viewModel.startCollaboration();
+      this.collaborationSession = this.collabService.getCurrentSession();
+      this.showToast('\u534F\u540C\u4F1A\u8BDD\u5DF2\u521B\u5EFA');
     } catch (e) {
-      console.error('Failed to create note: ' + JSON.stringify(e));
+      this.showToast('\u521B\u5EFA\u534F\u540C\u4F1A\u8BDD\u5931\u8D25');
+      console.error('startCollaboration error:', JSON.stringify(e));
     }
   }
 
-  private async handleCreateNewNote(): Promise<void> {
-    this.createNoteWithTemplate();
-  }
-
-  private async handleCreateFromTemplate(): Promise<void> {
-    const tpl = '# 模板笔记\n\n## 概述\n\n## 详细内容\n\n## 总结\n\n';
-    this.createNoteWithTemplate(tpl);
-  }
-
-  private handleRibbonAction(action: string): void {
-    switch (action) {
-      case 'switchToSearch':
-        this.navigateTo('pages/SearchPage');
-        break;
-      case 'switchToGraph':
-        this.currentView = 'graph';
-        break;
-      case 'openSettings':
-        this.navigateTo('pages/SettingsPage');
-        break;
-      case 'openDailyNote':
-        this.openDailyNote();
-        break;
+  private async joinCollaboration(sessionId: string): Promise<void> {
+    const tab = this.activeTab();
+    if (!tab || !this.collabService) return;
+    try {
+      await tab.viewModel.joinCollaboration(sessionId);
+      this.collaborationSession = this.collabService.getCurrentSession();
+      this.showToast('\u5DF2\u52A0\u5165\u534F\u540C\u4F1A\u8BDD');
+    } catch (e) {
+      this.showToast('\u52A0\u5165\u534F\u540C\u4F1A\u8BDD\u5931\u8D25');
+      console.error('joinCollaboration error:', JSON.stringify(e));
     }
   }
 
-  // 获取当前激活的 Tab
-  private activeTab(): TabState | undefined {
-    const pane = this.workspace.panes.find(p => p.id === this.workspace.activePaneId);
-    if (!pane) return undefined;
-    return pane.tabs.find(t => t.id === pane.activeTabId);
+  private async leaveCollaboration(): Promise<void> {
+    const tab = this.activeTab();
+    if (!tab || !this.collabService) return;
+    try {
+      await tab.viewModel.leaveCollaboration();
+      this.collaborationSession = null;
+      this.showToast('\u5DF2\u9000\u51FA\u534F\u540C\u4F1A\u8BDD');
+    } catch (e) {
+      console.error('leaveCollaboration error:', JSON.stringify(e));
+    }
   }
 
-  // 从 WorkspaceViewModel 构建 TabBar 所需的 TabItem 数组
-  private tabBarItems(): TabBarItem[] {
-    const pane = this.workspace.panes.find(p => p.id === this.workspace.activePaneId);
-    if (!pane) return [];
-    const items: TabBarItem[] = [];
-    for (let i = 0; i < pane.tabs.length; i++) {
-      const t = pane.tabs[i];
-      const item: TabBarItem = {
-        id: t.id,
-        title: t.title,
-        isModified: t.isModified,
-        isActive: t.isActive,
-        isPinned: false
-      };
-      items.push(item);
+  private showToast(message: string): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({
+        message: message,
+        duration: 2000
+      });
+    } catch (e) {
+      console.error('Toast error:', JSON.stringify(e));
+    }
+  }
+
+  private breadcrumbItems(): import('../components/breadcrumb/Breadcrumb').BreadcrumbItem[] {
+    const tab = this.activeTab();
+    if (!tab || !tab.viewModel.metadata) return [];
+    const parts = tab.viewModel.metadata.path.split('/')
+      .filter((p: string) => p.length > 0);
+    const items: import('../components/breadcrumb/Breadcrumb').BreadcrumbItem[] = [];
+    for (let idx = 0; idx < parts.length; idx++) {
+      items.push({
+        name: parts[idx].replace('.md', ''),
+        path: '/' + parts.slice(0, idx + 1).join('/'),
+        isFile: idx === parts.length - 1
+      });
     }
     return items;
   }
 
-  private tabBarActiveId(): string {
-    const pane = this.workspace.panes.find(p => p.id === this.workspace.activePaneId);
-    return pane?.activeTabId ?? '';
-  }
-
-  @Builder
-  WorkspaceContent() {
+  build() {
     Stack() {
       Row({ space: 0 }) {
-        // Ribbon
         if (this.responsive.showRibbon) {
           Ribbon({
             isCollapsed: this.workspace.ribbonCollapsed,
-            activeTool: 'file-explorer',
+            activeTool: this.currentView === 'graph'
+              ? 'switchToGraph' : 'switchToFileExplorer',
             onToolAction: (action: string) => this.handleRibbonAction(action)
           })
           .height('100%')
         }
 
-        // 左侧文件树
         if (this.workspace.leftSidebarVisible && !this.responsive.isPhone) {
           FileTree({
             data: this.fileTreeData,
-            activeFileId: this.activeFileId,
-            expandedNodes: this.expandedNodes,
+            activeFileId: $activeFileId,
+            expandedNodes: $expandedNodes,
             isPC: this.responsive.isPC,
             onFileSelect: (node: FileNode) => this.handleFileSelect(node),
-            onCreateNew: () => this.handleCreateNewNote(), onCreateFromTemplate: () => this.handleCreateFromTemplate()
+            onCreateNew: () => this.createNewNote(),
+            onCreateFromTemplate: () => this.createFromTemplate()
           })
-          .width(this.responsive.isPC ? SidebarWidth.PC_LEFT : SidebarWidth.TABLET_LEFT)
+          .width(this.responsive.isPC
+            ? SidebarWidth.PC_LEFT : SidebarWidth.TABLET_LEFT)
           .height('100%')
           .border({ width: { right: 1 }, color: this.colors().divider })
         }
 
-        // 主编辑区
         Column({ space: 0 }) {
-          // 顶部栏
           if (this.responsive.isPhone) {
             Row() {
               Button({ type: ButtonType.Circle }) {
-                Text('☰').fontSize(18).fontColor(this.colors().iconPrimary)
+                Text('\u2630')
+                  .fontSize(18)
+                  .fontColor(this.colors().iconPrimary)
               }
-              .width(36).height(36).backgroundColor(Color.Transparent)
-              .onClick(() => this.showMobileSidebar = true)
+              .width(36).height(36)
+              .backgroundColor(Color.Transparent)
+              .onClick(() => { this.showMobileSidebar = true; })
 
-              Text(this.activeTab()?.title ?? 'Lunius')
-                .fontSize(14).fontWeight(FontWeight.Medium)
+              Text(this.activeTab() ? this.activeTab()!.title : 'Lunius')
+                .fontSize(14)
+                .fontWeight(FontWeight.Medium)
                 .fontColor(this.colors().textPrimary)
-                .layoutWeight(1).textAlign(TextAlign.Center)
-                .textOverflow({ overflow: TextOverflow.Ellipsis }).maxLines(1)
+                .layoutWeight(1)
+                .textAlign(TextAlign.Center)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
+                .maxLines(1)
 
               Button({ type: ButtonType.Circle }) {
-                Text('⌘').fontSize(18).fontColor(this.colors().iconPrimary)
+                Text('\u2318')
+                  .fontSize(18)
+                  .fontColor(this.colors().iconPrimary)
               }
-              .width(36).height(36).backgroundColor(Color.Transparent)
-              .onClick(() => this.showCommandPalette = true)
+              .width(36).height(36)
+              .backgroundColor(Color.Transparent)
+              .onClick(() => { this.showCommandPalette = true; })
             }
-            .width('100%').height(48).padding({ left: 8, right: 8 })
+            .width('100%').height(48)
+            .padding({ left: Spacing.SM, right: Spacing.SM })
             .backgroundColor(this.colors().bgSecondary)
             .border({ width: { bottom: 1 }, color: this.colors().divider })
           } else {
-            // PC/平板：TabBar + 协同按钮 + 命令面板
             Row() {
               TabBar({
                 tabs: this.tabBarItems(),
                 activeTabId: this.tabBarActiveId(),
-                onTabChange: (tabId: string) => {
-                  this.workspace.activateTab(tabId);
-                },
-                onTabClose: (tabId: string) => {
-                  this.workspace.closeTab(tabId);
-                },
+                onTabChange: (tabId: string) => this.workspace.activateTab(tabId),
+                onTabClose: (tabId: string) => this.workspace.closeTab(tabId),
                 onTabPin: (tabId: string) => {
-                  const tabMgr = TabManager.getInstance();
-                  tabMgr.togglePin(tabId);
+                  TabManager.getInstance().togglePin(tabId);
                 }
               })
               .layoutWeight(1)
 
-              // 协同按钮
               Button({ type: ButtonType.Circle }) {
-                Text('⊞').fontSize(14).fontColor(
-                  this.activeTab()?.viewModel?.isCollaborating ? '#2ECC71' : this.colors().iconSecondary
-                )
+                Text('\u229E')
+                  .fontSize(14)
+                  .fontColor(
+                    this.activeTab() && this.activeTab()!.viewModel.isCollaborating
+                      ? '#2ECC71' : this.colors().iconSecondary
+                  )
               }
-              .width(28).height(28).backgroundColor(this.colors().bgHover)
+              .width(28).height(28)
+              .backgroundColor(this.colors().bgHover)
               .margin({ right: 4 })
-              .onClick(() => this.toggleCollaborationPanel())
+              .onClick(() => {
+                this.showCollaborationPanel = !this.showCollaborationPanel;
+              })
 
               Button({ type: ButtonType.Circle }) {
-                Text('⌘').fontSize(14).fontColor(this.colors().iconSecondary)
+                Text('\u2318')
+                  .fontSize(14)
+                  .fontColor(this.colors().iconSecondary)
               }
-              .width(28).height(28).backgroundColor(this.colors().bgHover)
-              .margin({ right: 8 })
-              .onClick(() => this.showCommandPalette = true)
+              .width(28).height(28)
+              .backgroundColor(this.colors().bgHover)
+              .margin({ right: Spacing.SM })
+              .onClick(() => { this.showCommandPalette = true; })
             }
             .width('100%')
           }
 
-          // 内容区：编辑器或图谱
           if (this.currentView === 'editor' && this.activeTab()) {
             MarkdownEditor({
               vm: this.activeTab()!.viewModel,
               isSplitView: this.workspace.isSplitView,
-              onNavigateBack: () => { this.workspace.navigateBack(); },
-              onNavigateForward: () => { this.workspace.navigateForward(); }
+              onNavigateBack: () => this.workspace.navigateBack(),
+              onNavigateForward: () => this.workspace.navigateForward()
             })
             .width('100%').layoutWeight(1)
           } else if (this.currentView === 'graph') {
             GraphView()
               .width('100%').layoutWeight(1)
           } else {
-            // 无打开文件时的空状态
-            Column({ space: 12 }) {
-              Text('📝').fontSize(48)
-              Text('欢迎使用 Lunius').fontSize(22).fontWeight(FontWeight.Bold)
+            Column({ space: Spacing.MD }) {
+              Text('\uD83D\uDCDD').fontSize(48)
+              Text('\u6B22\u8FCE\u4F7F\u7528 Lunius')
+                .fontSize(22).fontWeight(FontWeight.Bold)
                 .fontColor(this.colors().textPrimary)
-              Text('点击左侧 "+" 创建新笔记，或选择文件开始编辑')
+              Text('\u70B9\u51FB\u5DE6\u4FA7 "+" \u521B\u5EFA\u65B0\u7B14\u8BB0\uFF0C\u6216\u9009\u62E9\u6587\u4EF6\u5F00\u59CB\u7F16\u8F91')
                 .fontSize(14).fontColor(this.colors().textSecondary)
-              Button('创建新笔记')
+              Button('\u521B\u5EFA\u65B0\u7B14\u8BB0')
                 .backgroundColor(this.colors().accent)
                 .borderRadius(8)
-                .margin({ top: 8 })
-                .onClick(() => this.handleCreateNewNote())
+                .margin({ top: Spacing.SM })
+                .onClick(() => this.createNewNote())
             }
             .width('100%').layoutWeight(1)
             .justifyContent(FlexAlign.Center)
@@ -560,52 +474,55 @@ struct LuniusApp {
         .width('100%').height('100%').layoutWeight(1)
         .backgroundColor(this.colors().editorBg)
 
-        // 右侧边栏
-        if (this.workspace.rightSidebarVisible && !this.responsive.isPhone && this.activeTab()) {
+        if (this.workspace.rightSidebarVisible && !this.responsive.isPhone
+            && this.activeTab()) {
           RightSidebar({
             responsive: this.responsive,
             vm: this.activeTab()!.viewModel,
             isVisible: true,
-            panelWidth: this.responsive.isPC ? SidebarWidth.PC_RIGHT : SidebarWidth.TABLET_RIGHT,
+            panelWidth: this.responsive.isPC
+              ? SidebarWidth.PC_RIGHT : SidebarWidth.TABLET_RIGHT,
             onClose: () => { this.workspace.rightSidebarVisible = false; }
           })
           .height('100%')
         }
       }
-      .width('100%').height('100%').backgroundColor(this.colors().bgPrimary)
+      .width('100%').height('100%')
+      .backgroundColor(this.colors().bgPrimary)
 
-      // 加载中遮罩
       if (this.isLoading) {
         Column() {
-          Text('⏳').fontSize(32)
-          Text('加载中...').fontSize(14).fontColor(this.colors().textSecondary).margin({ top: 8 })
+          Text('\u23F3').fontSize(32)
+          Text('\u52A0\u8F7D\u4E2D...')
+            .fontSize(14)
+            .fontColor(this.colors().textSecondary)
+            .margin({ top: Spacing.SM })
         }
         .width('100%').height('100%')
         .backgroundColor(this.colors().bgPrimary)
         .justifyContent(FlexAlign.Center)
       }
 
-      // 协同面板（浮动）
       if (this.showCollaborationPanel) {
         Stack({ alignContent: Alignment.TopEnd }) {
           Column().width('100%').height('100%')
             .backgroundColor('rgba(0,0,0,0.3)')
-            .onClick(() => this.showCollaborationPanel = false)
+            .onClick(() => { this.showCollaborationPanel = false; })
             .zIndex(99)
 
           CollaborationPanel({
             session: this.collaborationSession,
-            remoteCursors: this.remoteCursors,
+            remoteCursors: [],
             isVisible: true,
             onStartSession: () => this.startCollaboration(),
             onJoinSession: (sessionId: string) => this.joinCollaboration(sessionId),
             onLeaveSession: () => this.leaveCollaboration(),
             onInviteDevice: (deviceId: string) => {
-              this.showToast(`邀请设备: ${deviceId}`);
+              this.showToast('\u9080\u8BF7\u8BBE\u5907: ' + deviceId);
             },
-            onClose: () => this.showCollaborationPanel = false
+            onClose: () => { this.showCollaborationPanel = false; }
           })
-          .margin({ top: 52, right: 12 })
+          .margin({ top: 52, right: Spacing.MD })
           .zIndex(100)
         }
         .width('100%').height('100%')
@@ -613,131 +530,143 @@ struct LuniusApp {
         .zIndex(100)
       }
 
-      // 命令面板
       if (this.showCommandPalette) {
         CommandPalette({
           isVisible: true,
-          onClose: () => this.showCommandPalette = false,
-          onCommand: (commandId: string) => this.handleExportCommand(commandId)
+          onClose: () => { this.showCommandPalette = false; },
+          onCommand: (commandId: string) => this.handleCommand(commandId)
         })
       }
 
-      // 手机侧边栏遮罩
+      if (this.showQuickSwitcher) {
+        QuickSwitcher({
+          noteNames: this.fileTreeData
+            .flatMap((n) => this.collectFileNames(n)),
+          visible: true,
+          onSelect: (noteId: string) => {
+            this.handleQuickOpen(noteId);
+            this.showQuickSwitcher = false;
+          },
+          onClose: () => { this.showQuickSwitcher = false; }
+        })
+      }
+
       if (this.showMobileSidebar) {
         Row() {
           Column() {
             Column() {
               Row() {
-                Text('文件列表').fontSize(16).fontWeight(FontWeight.Medium).fontColor(this.colors().textPrimary)
+                Text('\u6587\u4EF6\u5217\u8868')
+                  .fontSize(16)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(this.colors().textPrimary)
                 Button({ type: ButtonType.Circle }) {
-                  Text('✕').fontSize(14).fontColor(this.colors().textMuted)
+                  Text('\u2715')
+                    .fontSize(14)
+                    .fontColor(this.colors().textMuted)
                 }
-                .width(32).height(32).backgroundColor(Color.Transparent)
-                .onClick(() => this.showMobileSidebar = false)
+                .width(32).height(32)
+                .backgroundColor(Color.Transparent)
+                .onClick(() => { this.showMobileSidebar = false; })
               }
-              .width('100%').height(48).padding({ left: 16, right: 16 })
+              .width('100%').height(48)
+              .padding({ left: Spacing.LG, right: Spacing.LG })
               .justifyContent(FlexAlign.SpaceBetween)
               .backgroundColor(this.colors().sidebarBg)
               .border({ width: { bottom: 1 }, color: this.colors().divider })
 
               FileTree({
                 data: this.fileTreeData,
-                activeFileId: this.activeFileId,
-                expandedNodes: this.expandedNodes,
+                activeFileId: $activeFileId,
+                expandedNodes: $expandedNodes,
                 isPC: false,
                 onFileSelect: (node: FileNode) => this.handleFileSelect(node),
-                onCreateNew: () => this.handleCreateNewNote(), onCreateFromTemplate: () => this.handleCreateFromTemplate()
+                onCreateNew: () => this.createNewNote(),
+                onCreateFromTemplate: () => this.createFromTemplate()
               })
               .layoutWeight(1)
             }
-            .width('100%').height('100%').backgroundColor(this.colors().sidebarBg)
+            .width('100%').height('100%')
+            .backgroundColor(this.colors().sidebarBg)
           }
-          .width('80%').height('100%').alignItems(HorizontalAlign.Start)
+          .width('80%').height('100%')
+          .alignItems(HorizontalAlign.Start)
 
           Column()
-            .width('20%').height('100%').backgroundColor('rgba(0,0,0,0.4)')
-            .onClick(() => this.showMobileSidebar = false)
+            .width('20%').height('100%')
+            .backgroundColor('rgba(0,0,0,0.4)')
+            .onClick(() => { this.showMobileSidebar = false; })
         }
         .width('100%').height('100%').zIndex(100)
         .animation({ duration: 250, curve: Curve.EaseOut })
       }
     }
-    .width('100%').height('100%').backgroundColor(this.colors().bgPrimary)
-  }
-
-  build() {
-    Tabs({ barPosition: BarPosition.End, index: 0 }) {
-      TabContent() { this.WorkspaceContent() }
-      .tabBar(this.TabBarBuilder('笔记', '✏️', 0))
-
-      TabContent() {
-        Column() {
-          Text('全局搜索').fontSize(20).fontWeight(FontWeight.Bold)
-            .fontColor(this.colors().textPrimary).margin(24)
-          Button('打开独立搜索页')
-            .backgroundColor(this.colors().accent)
-            .onClick(() => {
-              this.navigateTo('pages/SearchPage');
-            })
-        }
-        .width('100%').height('100%').backgroundColor(this.colors().bgPrimary)
-      }
-      .tabBar(this.TabBarBuilder('搜索', '🔍', 1))
-
-      TabContent() {
-        Column({ space: 16 }) {
-          Text('工具').fontSize(20).fontWeight(FontWeight.Bold)
-            .fontColor(this.colors().textPrimary).margin({ top: 24, left: 24, right: 24 })
-
-          Column({ space: 0 }) {
-            ForEach([
-              { icon: '⚙️', label: '设置', action: () => this.navigateTo('pages/SettingsPage') },
-              { icon: '🌓', label: '切换主题', action: () => {
-                this.themeMode = this.themeMode === ThemeMode.DARK ? ThemeMode.LIGHT : ThemeMode.DARK;
-              }},
-              { icon: '⇄', label: '分屏模式', action: () => {
-                this.workspace.splitView('vertical');
-              }},
-              { icon: '⊞', label: '超级终端协同', action: () => {
-                this.toggleCollaborationPanel();
-              }},
-              { icon: '📝', label: '新建笔记', action: () => this.handleCreateNewNote() },
-              { icon: 'ℹ️', label: '关于', action: () => {} }
-            ], (item: ToolMenuItem, index: number) => {
-              Row({ space: 12 }) {
-                Text(item.icon).fontSize(20)
-                Text(item.label).fontSize(15).fontColor(this.colors().textPrimary).layoutWeight(1)
-                Text('›').fontSize(16).fontColor(this.colors().textMuted)
-              }
-              .width('100%').height(52).padding({ left: 24, right: 24 })
-              .backgroundColor(this.colors().bgPrimary)
-              .border({ width: { bottom: 1 }, color: this.colors().divider })
-              .onClick(item.action)
-            }, (item: ToolMenuItem) => item.label)
-          }
-          .width('100%').layoutWeight(1)
-        }
-        .width('100%').height('100%').backgroundColor(this.colors().bgPrimary)
-      }
-      .tabBar(this.TabBarBuilder('更多', '⋯', 2))
-    }
     .width('100%').height('100%')
     .backgroundColor(this.colors().bgPrimary)
-    .onChange((index: number) => {})
-    .scrollable(true)
-    .animationDuration(300)
-    .barHeight(56)
-    .barMode(BarMode.Fixed)
+    .onKeyEvent((event: KeyEvent): boolean => {
+      const KEY_O = 2047;
+      const KEY_P = 2056;
+      if (event.type === KeyType.Down && event.keyCode === KEY_O) {
+        this.showQuickSwitcher = true;
+        return true;
+      } else if (event.type === KeyType.Down && event.keyCode === KEY_P) {
+        this.showCommandPalette = true;
+        return true;
+      } else if (event.type === KeyType.Down && event.keyCode === 2070) {
+        if (this.showCommandPalette) { this.showCommandPalette = false; }
+        if (this.showQuickSwitcher) { this.showQuickSwitcher = false; }
+        if (this.showCollaborationPanel) { this.showCollaborationPanel = false; }
+        return true;
+      }
+      return false;
+    })
   }
 
-  @Builder
-  TabBarBuilder(title: string, icon: string, index: number) {
-    Column({ space: 2 }) {
-      Text(icon).fontSize(20)
-        .fontColor(this.colors().iconSecondary)
-      Text(title).fontSize(10)
-        .fontColor(this.colors().textMuted)
+  private collectFileNames(node: FileNode): string[] {
+    const names: string[] = [];
+    if (node.type === NodeType.FILE) {
+      names.push(node.id);
     }
-    .width('100%').height('100%').justifyContent(FlexAlign.Center)
+    if (node.children) {
+      for (const child of node.children) {
+        names.push(...this.collectFileNames(child));
+      }
+    }
+    return names;
+  }
+
+  private handleQuickOpen(noteId: string): void {
+    this.activeFileId = noteId;
+    const tab = this.workspace.openNote(noteId, noteId);
+    if (this.collabService) {
+      tab.viewModel.setCollaborationService(this.collabService);
+    }
+    this.currentView = 'editor';
+  }
+
+  private handleCommand(commandId: string): void {
+    const tab = this.activeTab();
+    if (!tab) return;
+    try {
+      if (commandId === 'exportHtml') {
+        ExportHelper.exportAsHtml(tab.noteId, tab.viewModel.content, tab.viewModel.title)
+          .then((path: string) => this.showToast('HTML \u5DF2\u4FDD\u5B58: ' + path));
+      } else if (commandId === 'exportMd') {
+        ExportHelper.exportMarkdown(tab.noteId, tab.viewModel.content, tab.viewModel.title)
+          .then((path: string) => this.showToast('MD \u5DF2\u4FDD\u5B58: ' + path));
+      } else if (commandId === 'exportPdf') {
+        ExportHelper.exportAsPdf(tab.noteId, tab.viewModel.content, tab.viewModel.title)
+          .then((path: string) => this.showToast('PDF: ' + path));
+      } else if (commandId === 'split') {
+        this.workspace.splitView('vertical');
+      } else if (commandId === 'theme') {
+        this.themeMode = this.themeMode === ThemeMode.DARK
+          ? ThemeMode.LIGHT : ThemeMode.DARK;
+      } else if (commandId === 'graph') {
+        this.currentView = 'graph';
+      }
+    } catch (e) {
+      this.showToast('\u5BFC\u51FA\u5931\u8D25');
+    }
   }
 }

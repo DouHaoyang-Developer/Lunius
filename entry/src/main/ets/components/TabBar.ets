@@ -1,7 +1,4 @@
-// components/TabBar.ets
-// 顶部标签栏 - 从 WorkspaceViewModel 获取真实标签数据
-
-import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors, Spacing, Icons } from '../utils/Theme';
 
 export interface TabItem {
   id: string;
@@ -27,18 +24,20 @@ export struct TabBar {
   build() {
     Row() {
       List({ space: 0 }) {
-        ForEach(this.tabs, (tab: TabItem, index: number) => {
+        ForEach(this.tabs, (tab: TabItem, _index: number) => {
           ListItem() {
             Row({ space: 6 }) {
               if (tab.isPinned) {
-                Text('📌').fontSize(10)
+                Text(Icons.PIN)
+                  .fontSize(9)
+                  .fontColor(this.colors().accent)
               }
 
-              Text('📄')
+              Text('\uD83D\uDCC4')
                 .fontSize(12)
                 .fontColor(tab.isActive ? this.colors().fileIcon : this.colors().iconSecondary)
 
-              Text(tab.title + (tab.isModified ? ' ●' : ''))
+              Text(tab.title + (tab.isModified ? ' \u25CF' : ''))
                 .fontSize(12)
                 .fontColor(tab.isActive ? this.colors().textPrimary : this.colors().textMuted)
                 .fontWeight(tab.isActive ? FontWeight.Medium : FontWeight.Regular)
@@ -46,7 +45,9 @@ export struct TabBar {
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
 
               Button({ type: ButtonType.Circle }) {
-                Text('📌').fontSize(8).fontColor(this.colors().textMuted)
+                Text('\uD83D\uDCCC')
+                  .fontSize(8)
+                  .fontColor(tab.isPinned ? this.colors().accent : this.colors().textMuted)
               }
               .width(14).height(14)
               .backgroundColor(Color.Transparent)
@@ -58,7 +59,7 @@ export struct TabBar {
               })
 
               Button({ type: ButtonType.Circle }) {
-                Text('✕')
+                Text(Icons.CLOSE)
                   .fontSize(10)
                   .fontColor(this.colors().textMuted)
               }
@@ -72,7 +73,7 @@ export struct TabBar {
               })
             }
             .height(36)
-            .padding({ left: 12, right: 8 })
+            .padding({ left: Spacing.MD, right: Spacing.SM })
             .backgroundColor(tab.isActive ? this.colors().tabActiveBg : this.colors().tabBg)
             .border({
               width: { top: tab.isActive ? 2 : 0, right: 1 },
@@ -90,24 +91,6 @@ export struct TabBar {
       .layoutWeight(1)
       .listDirection(Axis.Horizontal)
       .scrollBar(BarState.Off)
-
-      Row({ space: 8 }) {
-        Button({ type: ButtonType.Circle }) {
-          Text('⋯')
-            .fontSize(16)
-            .fontColor(this.colors().iconSecondary)
-        }
-        .width(28).height(28).backgroundColor(Color.Transparent)
-
-        Button({ type: ButtonType.Circle }) {
-          Text('⇄')
-            .fontSize(14)
-            .fontColor(this.colors().iconSecondary)
-        }
-        .width(28).height(28).backgroundColor(Color.Transparent)
-      }
-      .height('100%')
-      .padding({ right: 8 })
     }
     .width('100%')
     .height(40)

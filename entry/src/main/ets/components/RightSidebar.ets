@@ -84,8 +84,7 @@ export struct RightSidebar {
         Divider().color(this.colors().divider).strokeWidth(1)
 
         BacklinksView({
-          backlinks: this.getBacklinks(),
-          tags: this.getTags()
+          backlinks: this.getBacklinks()
         })
         .height('50%')
       }
