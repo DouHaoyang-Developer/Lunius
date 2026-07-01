@@ -1,7 +1,7 @@
 // components/canvas/PenKitCard.ets
 // Pen Kit 手写卡片 — HandwriteComponent 包装 + .pen 文件持久化
 
-import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../../utils/Theme';
 import { CanvasNode } from '../../models/CanvasTypes';
 
 @Component
@@ -17,7 +17,7 @@ export struct PenKitCard {
   @State private label: string = '手写笔记';
   @State private isLoaded: boolean = false;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

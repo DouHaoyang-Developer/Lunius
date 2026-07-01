@@ -1,7 +1,7 @@
 // components/statusbar/StatusBar.ets
-// Obsidian 底部状态栏 - 字数统计、同步状态、视图切换
+// Lunius 底部状态栏 - 字数统计、同步状态、视图切换
 
-import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../../utils/Theme';
 import { SyncStatus } from '../../services/ApiTypes';
 
 @Component
@@ -16,7 +16,7 @@ export struct StatusBar {
   @Prop currentView: string = 'live';
   onViewChange?: (view: string) => void;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

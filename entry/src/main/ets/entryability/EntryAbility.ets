@@ -7,7 +7,7 @@ import { initAllServices } from '../services/Index';
 import { CollaborationService } from '../services/CollaborationService';
 import { CloudSyncService } from '../services/CloudSyncService';
 
-const TAG = 'ObsidianEntryAbility';
+const TAG = 'LuniusEntryAbility';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {

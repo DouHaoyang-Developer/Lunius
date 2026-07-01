@@ -1,7 +1,7 @@
 // components/CollaborationPanel.ets
 // 超级终端协同面板 — 设备列表、会话管理、邀请协同
 
-import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
 import {
   CollaborationSession,
   CollaborationSessionState,
@@ -24,7 +24,7 @@ export struct CollaborationPanel {
 
   @State joinSessionId: string = '';
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

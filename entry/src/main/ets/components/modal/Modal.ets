@@ -1,7 +1,7 @@
 // components/modal/Modal.ets
 // 通用模态框组件 - 确认对话框、输入框、提示
 
-import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../../utils/Theme';
 
 export interface ModalConfig {
   title: string;
@@ -22,7 +22,7 @@ export struct Modal {
   onConfirm?: (value?: string) => void;
   onCancel?: () => void;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

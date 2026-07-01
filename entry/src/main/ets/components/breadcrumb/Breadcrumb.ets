@@ -1,7 +1,7 @@
 // components/breadcrumb/Breadcrumb.ets
-// Obsidian 面包屑导航 - 显示当前文件路径与快速跳转
+// Lunius 面包屑导航 - 显示当前文件路径与快速跳转
 
-import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../../utils/Theme';
 
 export interface BreadcrumbItem {
   name: string;
@@ -16,7 +16,7 @@ export struct Breadcrumb {
   @Prop currentFile: string = '';
   onNavigate?: (path: string) => void;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

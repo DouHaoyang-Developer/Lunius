@@ -1,7 +1,7 @@
 // components/FileTree.ets
 // 文件浏览器树形组件 - 支持 PC 多窗口
 
-import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
 import { FileNode, NodeType } from '../models/FileNode';
 
 @Component
@@ -17,7 +17,7 @@ struct FileTreeNode {
   onToggle?: (node: FileNode) => void;
   onOpenInNewWindow?: (node: FileNode) => void;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 
@@ -166,7 +166,7 @@ export struct FileTree {
   onCreateNew?: () => void;
   onCreateFromTemplate?: () => void;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

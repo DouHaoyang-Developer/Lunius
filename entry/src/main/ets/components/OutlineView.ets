@@ -1,7 +1,7 @@
 // components/OutlineView.ets
 // 文档大纲视图
 
-import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
 import { OutlineNode } from '../models/FileNode';
 
 @Component
@@ -11,7 +11,7 @@ export struct OutlineView {
   @State activeLine: number = -1;
   onJump?: (line: number) => void;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

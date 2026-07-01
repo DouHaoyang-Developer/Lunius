@@ -3,7 +3,7 @@
 
 import { CanvasEdge, CanvasNode } from '../../models/CanvasTypes';
 import { CanvasViewModel } from '../../viewmodels/CanvasViewModel';
-import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../../utils/Theme';
 
 @Component
 export struct CanvasEdgeLayer {
@@ -13,7 +13,7 @@ export struct CanvasEdgeLayer {
   private settings: RenderingContextSettings = new RenderingContextSettings(true);
   private ctx: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.settings);
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

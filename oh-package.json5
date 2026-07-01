@@ -1,9 +1,9 @@
 {
   "modelVersion": "6.0.2",
-  "name": "obsidian-arkts",
+  "name": "lunius-arkts",
   "version": "1.0.0",
-  "description": "Obsidian clone for HarmonyOS using ArkTS",
-  "vendor": "obsidian-harmony",
+  "description": "Lunius clone for HarmonyOS using ArkTS",
+  "vendor": "lunius-harmony",
   "license": "MIT",
   "dependencies": {}
 }

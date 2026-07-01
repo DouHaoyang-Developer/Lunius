@@ -1,7 +1,7 @@
 // components/BookmarkView.ets
 // 书签面板 — 显示和管理已收藏的笔记/标题/块
 
-import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
 import { Bookmark, BookmarkManager } from '../utils/BookmarkManager';
 
 @Component
@@ -17,7 +17,7 @@ export struct BookmarkView {
     this.loadBookmarks();
   }
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

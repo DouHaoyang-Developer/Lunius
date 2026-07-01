@@ -1,7 +1,7 @@
 // pages/MainEntry.ets
 
 import { display } from '@kit.ArkUI';
-import { ObsidianColors, ThemeMode, getColors, SidebarWidth } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors, SidebarWidth } from '../utils/Theme';
 import { ResponsiveState } from '../utils/ResponsiveLayout';
 import { WorkspaceViewModel, TabState } from '../viewmodels/WorkspaceViewModel';
 import { NoteViewModel } from '../viewmodels/NoteViewModel';
@@ -41,7 +41,7 @@ interface ToolMenuItem {
 
 @Entry
 @Component
-struct ObsidianApp {
+struct LuniusApp {
   @StorageLink('themeMode') themeMode: ThemeMode = ThemeMode.DARK;
   @State responsive: ResponsiveState = new ResponsiveState();
   @State workspace: WorkspaceViewModel = new WorkspaceViewModel();
@@ -78,7 +78,7 @@ struct ObsidianApp {
     target.share(shareData);
   };
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

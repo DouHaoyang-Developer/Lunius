@@ -1,7 +1,7 @@
 // components/properties/PropertiesPanel.ets
-// Obsidian Frontmatter YAML 属性编辑面板
+// Lunius Frontmatter YAML 属性编辑面板
 
-import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../../utils/Theme';
 import { NoteMetadata } from '../../services/ApiTypes';
 
 type PropertyType = 'text' | 'number' | 'checkbox' | 'tags' | 'date' | 'select';
@@ -22,7 +22,7 @@ export struct PropertiesPanel {
   onUpdate?: (key: string, value: string | number | boolean | string[]) => void;
   onAddProperty?: (key: string, value: string | number | boolean | string[]) => void;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

@@ -1,7 +1,7 @@
 // components/LinkPreviewCard.ets
 // 悬停链接预览卡片 — 光标在 [[wikilink]] 上时显示浮动预览
 
-import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
 
 export interface LinkPreviewData {
   title: string;
@@ -18,7 +18,7 @@ export struct LinkPreviewCard {
   onOpenInNewTab?: () => void;
   onClose?: () => void;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

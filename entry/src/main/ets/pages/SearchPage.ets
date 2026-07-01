@@ -1,7 +1,7 @@
 // pages/SearchPage.ets
-// Obsidian 全局搜索页 - 使用 Navigation + NavPathStack 管理多层结果
+// Lunius 全局搜索页 - 使用 Navigation + NavPathStack 管理多层结果
 
-import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
 import { FileNode, NodeType } from '../models/FileNode';
 import { fileService, SearchOptions } from '../services/IFileService';
 
@@ -23,7 +23,7 @@ struct SearchContent {
   @State searchCaseSensitive: boolean = false;
   @State searchUseRegex: boolean = false;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

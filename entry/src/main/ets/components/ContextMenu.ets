@@ -1,7 +1,7 @@
 // components/ContextMenu.ets
 // 可复用的右键/长按上下文菜单组件
 
-import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
 
 export interface ContextMenuAction {
   id: string;
@@ -21,7 +21,7 @@ export struct ContextMenu {
   onAction?: (actionId: string) => void;
   onClose?: () => void;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

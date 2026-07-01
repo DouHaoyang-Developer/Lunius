@@ -1,7 +1,7 @@
 // components/canvas/CanvasToolbar.ets
 // Canvas 底部工具栏 — 添加节点 / 缩放控制 / 重置 / 撤销重做
 
-import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../../utils/Theme';
 import { CanvasViewModel } from '../../viewmodels/CanvasViewModel';
 
 @Component
@@ -9,7 +9,7 @@ export struct CanvasToolbar {
   @StorageLink('themeMode') themeMode: ThemeMode = ThemeMode.DARK;
   @ObjectLink vm: CanvasViewModel;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

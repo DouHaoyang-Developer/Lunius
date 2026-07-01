@@ -1,7 +1,7 @@
 // components/BacklinksView.ets
 // 反向链接与标签面板
 
-import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
 import { Backlink } from '../models/FileNode';
 
 @Component
@@ -11,7 +11,7 @@ export struct BacklinksView {
   @Prop tags: string[] = [];
   @State activeTab: number = 0;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

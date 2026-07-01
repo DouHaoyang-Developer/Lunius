@@ -1,7 +1,7 @@
 // components/canvas/CanvasNode.ets
 // Canvas 节点渲染组件 — 支持 text/file/link/group 四种类型
 
-import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../../utils/Theme';
 import { CanvasNode, CANVAS_PRESET_COLORS } from '../../models/CanvasTypes';
 import { PenKitCard } from './PenKitCard';
 
@@ -20,7 +20,7 @@ export struct CanvasNodeComponent {
   @State private dragStartX: number = 0;
   @State private dragStartY: number = 0;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

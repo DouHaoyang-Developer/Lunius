@@ -1,7 +1,7 @@
 // components/GraphView.ets
 // 知识图谱视图 — 从 RealGraphService 加载真实数据
 
-import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
 import { graphService } from '../services/IGraphService';
 import { GraphData, GraphNodeData, GraphEdgeData } from '../services/ApiTypes';
 
@@ -24,7 +24,7 @@ export struct GraphView {
   private lastX: number = 0;
   private lastY: number = 0;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

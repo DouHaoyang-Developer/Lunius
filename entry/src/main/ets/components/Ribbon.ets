@@ -1,7 +1,7 @@
 // components/Ribbon.ets
-// Obsidian 左侧 Ribbon 工具栏 - 支持页面跳转与视图切换
+// Lunius 左侧 Ribbon 工具栏 - 支持页面跳转与视图切换
 
-import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
 
 interface RibbonAction {
   icon: string;
@@ -17,7 +17,7 @@ export struct Ribbon {
   @Prop activeTool: string = 'file-explorer';
   onToolAction?: (action: string) => void;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

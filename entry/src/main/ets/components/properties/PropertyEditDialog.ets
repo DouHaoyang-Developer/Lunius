@@ -2,7 +2,7 @@
 // 属性编辑弹出框 — 类型选择器 + 值编辑器 + 校验
 
 import { FrontmatterValue, PropertyType } from '../../services/ApiTypes';
-import { ObsidianColors, getColors, ThemeMode } from '../../utils/Theme';
+import { LuniusColors, getColors, ThemeMode } from '../../utils/Theme';
 
 @Component
 export struct PropertyEditDialog {
@@ -50,7 +50,7 @@ export struct PropertyEditDialog {
     return this.editValue;
   }
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

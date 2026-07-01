@@ -1,9 +1,9 @@
 // components/MarkdownEditor.ets
-// Markdown 编辑器 v5 — RichEditor 驱动的 Obsidian 风格实时阅览
+// Markdown 编辑器 v5 — RichEditor 驱动的 Lunius 风格实时阅览
 
 import { picker } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
-import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
 import { NoteViewModel } from '../viewmodels/NoteViewModel';
 import { Breadcrumb } from './breadcrumb/Breadcrumb';
 import { StatusBar } from './statusbar/StatusBar';
@@ -118,7 +118,7 @@ export struct MarkdownEditor {
     }
   }
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

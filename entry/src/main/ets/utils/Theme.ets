@@ -1,5 +1,5 @@
 // utils/Theme.ets
-// Obsidian 主题配色与多设备适配常量
+// Lunius 主题配色与多设备适配常量
 
 import { display } from '@kit.ArkUI';
 
@@ -8,7 +8,7 @@ export enum ThemeMode {
   DARK = 'dark'
 }
 
-export interface ObsidianColors {
+export interface LuniusColors {
   bgPrimary: string;
   bgSecondary: string;
   bgTertiary: string;
@@ -39,7 +39,7 @@ export interface ObsidianColors {
   quoteBg: string;
 }
 
-export const LightColors: ObsidianColors = {
+export const LightColors: LuniusColors = {
   bgPrimary: '#FFFFFF',
   bgSecondary: '#FAFAFA',
   bgTertiary: '#F5F5F5',
@@ -70,7 +70,7 @@ export const LightColors: ObsidianColors = {
   quoteBg: '#F8F5FF'
 };
 
-export const DarkColors: ObsidianColors = {
+export const DarkColors: LuniusColors = {
   bgPrimary: '#1E1E1E',
   bgSecondary: '#262626',
   bgTertiary: '#2D2D2D',
@@ -101,7 +101,7 @@ export const DarkColors: ObsidianColors = {
   quoteBg: '#2A2538'
 };
 
-export function getColors(mode: ThemeMode): ObsidianColors {
+export function getColors(mode: ThemeMode): LuniusColors {
   return mode === ThemeMode.DARK ? DarkColors : LightColors;
 }
 

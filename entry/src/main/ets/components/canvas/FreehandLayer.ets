@@ -4,7 +4,7 @@
 import { CanvasViewModel } from '../../viewmodels/CanvasViewModel';
 import { DrawingPath, TouchPoint, BrushType } from '../../models/DrawingTypes';
 import { BrushEngine, RenderPoint } from '../../utils/BrushEngine';
-import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../../utils/Theme';
 
 @Component
 export struct FreehandLayer {
@@ -17,7 +17,7 @@ export struct FreehandLayer {
   private isDrawing: boolean = false;
   private lastRenderTime: number = 0;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

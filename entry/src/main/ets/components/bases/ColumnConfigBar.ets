@@ -1,7 +1,7 @@
 // components/bases/ColumnConfigBar.ets
 // 列配置栏 — 勾选显隐 + 列宽调整
 
-import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../../utils/Theme';
 import { ColumnDef } from '../../models/BasesTypes';
 import { BasesViewModel } from '../../viewmodels/BasesViewModel';
 
@@ -11,7 +11,7 @@ export struct ColumnConfigBar {
   @ObjectLink vm: BasesViewModel;
   @State isExpanded: boolean = false;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

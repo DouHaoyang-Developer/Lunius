@@ -1,7 +1,7 @@
 // components/canvas/DrawingToolbar.ets
 // 绘制工具栏 — 笔刷/颜色/宽度选择 + 橡皮擦 + 清除
 
-import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../../utils/Theme';
 import { CanvasViewModel } from '../../viewmodels/CanvasViewModel';
 import { BrushType, getBrushPreset, PALETTE_COLORS } from '../../models/DrawingTypes';
 
@@ -10,7 +10,7 @@ export struct DrawingToolbar {
   @StorageLink('themeMode') themeMode: ThemeMode = ThemeMode.DARK;
   @ObjectLink vm: CanvasViewModel;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

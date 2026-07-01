@@ -1,7 +1,7 @@
 // components/canvas/CanvasView.ets
 // 画布渲染容器 — 手势路由 + 绘制模式切换 + 节点/连线/手绘层
 
-import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../../utils/Theme';
 import { CanvasNode } from '../../models/CanvasTypes';
 import { CanvasViewModel } from '../../viewmodels/CanvasViewModel';
 import { CanvasNodeComponent } from './CanvasNode';
@@ -24,7 +24,7 @@ export struct CanvasView {
   private palmRejection: PalmRejection = new PalmRejection();
   private shapeCancelled: boolean = false;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

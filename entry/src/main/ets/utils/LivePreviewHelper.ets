@@ -1,5 +1,5 @@
 // utils/LivePreviewHelper.ets
-// Obsidian 风格实时阅览引擎 —— 基于 RichEditor Spans 的光标感知语法隐藏
+// Lunius 风格实时阅览引擎 —— 基于 RichEditor Spans 的光标感知语法隐藏
 
 import { parseMarkdownSegments, MarkdownSegment } from './MarkdownSegmenter';
 

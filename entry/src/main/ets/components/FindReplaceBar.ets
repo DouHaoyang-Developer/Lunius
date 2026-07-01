@@ -1,7 +1,7 @@
 // components/FindReplaceBar.ets
 // 编辑器查找与替换栏
 
-import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
 
 export interface FindMatch {
   start: number;
@@ -24,7 +24,7 @@ export struct FindReplaceBar {
   onReplaceAll?: (replacement: string) => void;
   onClose?: () => void;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

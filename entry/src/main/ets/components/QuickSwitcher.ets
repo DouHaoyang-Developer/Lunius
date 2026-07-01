@@ -1,7 +1,7 @@
 // components/QuickSwitcher.ets
 // 快速切换器 — Ctrl+O 打开，模糊搜索所有笔记文件名
 
-import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
 
 interface SwitcherItem {
   id: string;
@@ -31,7 +31,7 @@ export struct QuickSwitcher {
   onSelect?: (noteId: string) => void;
   onClose?: () => void;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

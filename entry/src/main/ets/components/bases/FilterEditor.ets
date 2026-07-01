@@ -1,7 +1,7 @@
 // components/bases/FilterEditor.ets
 // 筛选条件编辑器 — 属��选择 + 运算符 + 值输入 + AND/OR 切换
 
-import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../../utils/Theme';
 import { FilterGroup, FilterCondition, ColumnDef } from '../../models/BasesTypes';
 import { BasesViewModel } from '../../viewmodels/BasesViewModel';
 
@@ -12,7 +12,7 @@ struct FilterConditionRow {
   @Prop columns: ColumnDef[];
   onRemove?: () => void;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 
@@ -65,7 +65,7 @@ export struct FilterEditor {
   @ObjectLink vm: BasesViewModel;
   @State isExpanded: boolean = false;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

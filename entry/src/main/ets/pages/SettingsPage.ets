@@ -1,7 +1,7 @@
 // pages/SettingsPage.ets
-// Obsidian 设置页 - 通过 router.pushUrl 进入的独立页面
+// Lunius 设置页 - 通过 router.pushUrl 进入的独立页面
 
-import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
 import { vaultIndex } from '../services/VaultIndex';
 import { VaultStats } from '../services/ApiTypes';
 import { pluginManager } from '../services/PluginManager';
@@ -36,7 +36,7 @@ struct SettingsPage {
     this.plugins = pluginManager.getAllPlugins();
   }
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

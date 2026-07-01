@@ -1,7 +1,7 @@
 // components/CloudSyncSettings.ets
 // 云同步设置面板 — 华为云空间授权、同步状态、配额管理
 
-import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
 import { CloudSyncService } from '../services/CloudSyncService';
 import { CloudSyncStatus } from '../services/ApiTypes';
 
@@ -16,7 +16,7 @@ struct CloudSyncSettings {
 
   private cloudSync: CloudSyncService = CloudSyncService.getInstance();
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

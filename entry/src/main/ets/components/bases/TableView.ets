@@ -1,7 +1,7 @@
 // components/bases/TableView.ets
 // 数据库表格视图 — 列头 + 数据行 + 排序交互
 
-import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../../utils/Theme';
 import { TableRowData, ColumnDef, SortRule } from '../../models/BasesTypes';
 import { BasesViewModel } from '../../viewmodels/BasesViewModel';
 
@@ -11,7 +11,7 @@ export struct TableView {
   @ObjectLink vm: BasesViewModel;
   onRowClick?: (noteId: string) => void;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

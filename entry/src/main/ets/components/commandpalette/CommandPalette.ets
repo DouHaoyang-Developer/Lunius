@@ -1,7 +1,7 @@
 // components/commandpalette/CommandPalette.ets
-// Obsidian 命令面板 - Ctrl+P 唤起，支持命令搜索与快捷操作
+// Lunius 命令面板 - Ctrl+P 唤起，支持命令搜索与快捷操作
 
-import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../../utils/Theme';
 
 export interface CommandItem {
   id: string;
@@ -21,7 +21,7 @@ export struct CommandPalette {
   onClose?: () => void;
   onCommand?: (commandId: string) => void;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

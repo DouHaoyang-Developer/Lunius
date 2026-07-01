@@ -1,7 +1,7 @@
 // components/properties/GlobalPropertyPanel.ets
 // 全局属性面板 — 列出 vault 中所有属性及使用频次
 
-import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../../utils/Theme';
 import { PropertyUsage, PropertyType, FrontmatterValue } from '../../services/ApiTypes';
 import { vaultIndex } from '../../services/VaultIndex';
 
@@ -13,7 +13,7 @@ export struct GlobalPropertyPanel {
   @State searchFilter: string = '';
   @State selectedProperty: PropertyUsage | null = null;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

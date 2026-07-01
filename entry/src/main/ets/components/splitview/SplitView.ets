@@ -1,7 +1,7 @@
 // components/splitview/SplitView.ets
-// Obsidian 分屏编辑 - 左右同时显示编辑器和预览
+// Lunius 分屏编辑 - 左右同时显示编辑器和预览
 
-import { ObsidianColors, ThemeMode, getColors } from '../../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../../utils/Theme';
 import { NoteViewModel } from '../../viewmodels/NoteViewModel';
 
 @Component
@@ -11,7 +11,7 @@ export struct SplitView {
   @State editorWidth: number = 50; // 百分比
   @State isDragging: boolean = false;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

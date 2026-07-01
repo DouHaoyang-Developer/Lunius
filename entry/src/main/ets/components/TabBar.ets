@@ -1,7 +1,7 @@
 // components/TabBar.ets
 // 顶部标签栏 - 从 WorkspaceViewModel 获取真实标签数据
 
-import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
 
 export interface TabItem {
   id: string;
@@ -20,7 +20,7 @@ export struct TabBar {
   onTabClose?: (tabId: string) => void;
   onTabPin?: (tabId: string) => void;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

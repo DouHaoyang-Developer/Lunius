@@ -1,7 +1,7 @@
 // components/VersionHistoryPanel.ets
 // 版本历史面板 — 查看、对比、恢复笔记的版本快照
 
-import { ObsidianColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
 import { VersionService } from '../services/VersionService';
 import { VersionEntry, VersionDetail, VersionCompareResult } from '../services/ApiTypes';
 
@@ -19,7 +19,7 @@ struct VersionHistoryPanel {
   private noteId: string = '';
   private versionService: VersionService = VersionService.getInstance();
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 

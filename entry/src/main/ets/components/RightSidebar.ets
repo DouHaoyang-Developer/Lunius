@@ -1,7 +1,7 @@
 // components/RightSidebar.ets
 // 右侧边栏容器（大纲 + 反向链接）
 
-import { ObsidianColors, ThemeMode, getColors, SidebarWidth } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors, SidebarWidth } from '../utils/Theme';
 import { ResponsiveState } from '../utils/ResponsiveLayout';
 import { OutlineView } from './OutlineView';
 import { BacklinksView } from './BacklinksView';
@@ -17,7 +17,7 @@ export struct RightSidebar {
   @Prop panelWidth: number = SidebarWidth.PC_RIGHT;
   onClose?: () => void;
 
-  private colors(): ObsidianColors {
+  private colors(): LuniusColors {
     return getColors(this.themeMode);
   }
 
