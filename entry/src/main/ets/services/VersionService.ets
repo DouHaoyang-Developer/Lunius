@@ -8,14 +8,16 @@ import {
   VersionEntry, VersionDetail, VersionCompareResult, VersionStats
 } from './ApiTypes';
 
-interface VersionIndexData {
-  [noteId: string]: VersionEntry[];
+interface DiffResult {
+  additions: number;
+  deletions: number;
+  text: string;
 }
 
 export class VersionService implements IVersionService {
   private static instance: VersionService;
   private fileService: FileService;
-  private versionIndex: VersionIndexData = {};
+  private versionIndex: Map<string, VersionEntry[]> = new Map();
 
   private static readonly VERSIONS_DIR = '.lunius/versions';
   private static readonly INDEX_FILE = '.lunius/version_index.json';
@@ -37,10 +39,17 @@ export class VersionService implements IVersionService {
     const content = await this.fileService.readFile(indexPath);
     if (content && content.length > 0) {
       try {
-        this.versionIndex = JSON.parse(content) as VersionIndexData;
+        const parsed = JSON.parse(content) as object;
+        const data = parsed as Record<string, Object>;
+        const keys = Object.keys(data);
+        for (let i = 0; i < keys.length; i++) {
+          const key = keys[i];
+          const val = data[key];
+          this.versionIndex.set(key, val as VersionEntry[]);
+        }
       } catch (e) {
         console.error('VersionService: failed to parse index, resetting');
-        this.versionIndex = {};
+        this.versionIndex = new Map();
       }
     }
     console.info(`VersionService initialized: ${this.getTotalTrackedNotes()} notes tracked`);
@@ -80,16 +89,17 @@ export class VersionService implements IVersionService {
     await this.fileService.writeFile(versionPath, content);
 
     // 更新索引
-    if (!this.versionIndex[noteId]) {
-      this.versionIndex[noteId] = [];
+    if (!this.versionIndex.has(noteId)) {
+      this.versionIndex.set(noteId, []);
     }
-    this.versionIndex[noteId].push(entry);
+    const noteVersions = this.versionIndex.get(noteId)!;
+    noteVersions.push(entry);
 
     // 保存索引
     await this.persistIndex();
 
     // 自动清理超出限制的旧版本
-    if (this.versionIndex[noteId].length > VersionService.MAX_VERSIONS_PER_NOTE) {
+    if (noteVersions.length > VersionService.MAX_VERSIONS_PER_NOTE) {
       await this.cleanupVersions(noteId, VersionService.MAX_VERSIONS_PER_NOTE);
     }
 
@@ -106,8 +116,18 @@ export class VersionService implements IVersionService {
     if (!entry) {
       throw new Error(`Version ${versionId} not found for note ${noteId}`);
     }
-    const content = await this.readVersionContent(noteId, versionId);
-    return { ...entry, content };
+    const contentResult = await this.readVersionContent(noteId, versionId);
+    const detail: VersionDetail = {
+      versionId: entry.versionId,
+      noteId: entry.noteId,
+      timestamp: entry.timestamp,
+      contentSize: entry.contentSize,
+      versionNumber: entry.versionNumber,
+      isCheckpoint: entry.isCheckpoint,
+      message: entry.message,
+      content: contentResult
+    };
+    return detail;
   }
 
   async restoreVersion(noteId: string, versionId: string): Promise<VersionEntry> {
@@ -156,9 +176,9 @@ export class VersionService implements IVersionService {
     const checkpointIds = new Set(
       entries.filter((e: VersionEntry) => e.isCheckpoint).map((e: VersionEntry) => e.versionId)
     );
-    this.versionIndex[noteId] = entries.filter(
+    this.versionIndex.set(noteId, entries.filter(
       (e: VersionEntry) => keepIds.has(e.versionId) || checkpointIds.has(e.versionId)
-    );
+    ));
 
     await this.persistIndex();
     return toDelete.length;
@@ -169,8 +189,10 @@ export class VersionService implements IVersionService {
     let totalSize = 0;
     let notesTracked = 0;
 
-    for (const noteId of Object.keys(this.versionIndex)) {
-      const entries = this.versionIndex[noteId];
+    const noteIds: string[] = [];
+    this.versionIndex.forEach((_entries: VersionEntry[], id: string) => { noteIds.push(id); });
+    for (const noteId of noteIds) {
+      const entries = this.versionIndex.get(noteId)!;
       if (entries.length > 0) {
         notesTracked++;
         totalVersions += entries.length;
@@ -212,7 +234,7 @@ export class VersionService implements IVersionService {
   }
 
   private getEntriesForNote(noteId: string): VersionEntry[] {
-    return this.versionIndex[noteId] ?? [];
+    return this.versionIndex.get(noteId) ?? [];
   }
 
   private findEntry(noteId: string, versionId: string): VersionEntry | undefined {
@@ -221,20 +243,29 @@ export class VersionService implements IVersionService {
   }
 
   private async persistIndex(): Promise<void> {
-    const json = JSON.stringify(this.versionIndex);
+    let json = '{';
+    const noteIds: string[] = [];
+    this.versionIndex.forEach((_entries: VersionEntry[], id: string) => { noteIds.push(id); });
+    for (let i = 0; i < noteIds.length; i++) {
+      const id = noteIds[i];
+      const entries = this.versionIndex.get(id)!;
+      json += '"' + id + '":' + JSON.stringify(entries);
+      if (i < noteIds.length - 1) {
+        json += ',';
+      }
+    }
+    json += '}';
     await this.fileService.writeFile(this.getIndexPath(), json);
   }
 
   private getTotalTrackedNotes(): number {
-    return Object.keys(this.versionIndex).length;
+    return this.versionIndex.size;
   }
 
   /**
    * 行级 Diff 算法（基于 LCS）
    */
-  private computeDiff(oldText: string, newText: string): {
-    additions: number; deletions: number; text: string
-  } {
+  private computeDiff(oldText: string, newText: string): DiffResult {
     const oldLines = oldText.split('\n');
     const newLines = newText.split('\n');
     const lcs = this.longestCommonSubsequence(oldLines, newLines);
@@ -271,13 +302,21 @@ export class VersionService implements IVersionService {
       }
     }
 
-    return { additions, deletions, text };
+    const result: DiffResult = { additions, deletions, text };
+    return result;
   }
 
   private longestCommonSubsequence(a: string[], b: string[]): string[] {
     const m = a.length;
     const n = b.length;
-    const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+    const dp: number[][] = [];
+    for (let x = 0; x <= m; x++) {
+      const row: number[] = [];
+      for (let y = 0; y <= n; y++) {
+        row.push(0);
+      }
+      dp.push(row);
+    }
 
     for (let i = 1; i <= m; i++) {
       for (let j = 1; j <= n; j++) {

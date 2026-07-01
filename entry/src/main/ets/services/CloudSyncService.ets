@@ -4,7 +4,7 @@
 
 import { http } from '@kit.NetworkKit';
 import { FileService } from '../utils/FileService';
-import { ICloudSyncService } from './ICloudSyncService';
+import { ICloudSyncService, QuotaInfo } from './ICloudSyncService';
 import {
   CloudNoteMapping, CloudSyncStatus, CloudSyncResult, CloudHistoryVersion
 } from './ApiTypes';
@@ -32,9 +32,20 @@ interface DriveAbout {
   needUpdate: boolean;
 }
 
+interface DriveMetadata {
+  name: string;
+  mimeType: string;
+  parents: string[];
+}
+
 interface DriveHistoryVersionList {
   items: CloudHistoryVersion[];
   nextCursor?: string;
+}
+
+interface TokenResponse {
+  access_token: string;
+  refresh_token?: string;
 }
 
 export class CloudSyncService implements ICloudSyncService {
@@ -109,12 +120,14 @@ export class CloudSyncService implements ICloudSyncService {
     await this.persistMappings();
   }
 
-  async getQuotaInfo(): Promise<{ used: number; total: number }> {
+  async getQuotaInfo(): Promise<QuotaInfo> {
     try {
       const about = await this.request('GET', '/about?fields=*') as DriveAbout;
-      return { used: about.quotaBytesUsed, total: about.quotaBytesTotal };
+      const result: QuotaInfo = { used: about.quotaBytesUsed, total: about.quotaBytesTotal };
+      return result;
     } catch {
-      return { used: 0, total: 0 };
+      const emptyResult: QuotaInfo = { used: 0, total: 0 };
+      return emptyResult;
     }
   }
 
@@ -140,7 +153,7 @@ export class CloudSyncService implements ICloudSyncService {
     noteId: string, content: string, hash: string
   ): Promise<CloudNoteMapping> {
     const fileName = `${noteId}.md`;
-    const metadata = {
+    const metadata: DriveMetadata = {
       name: fileName,
       mimeType: 'text/markdown',
       parents: ['appDataFolder']
@@ -251,7 +264,11 @@ export class CloudSyncService implements ICloudSyncService {
       const cloudFiles = await this.listCloudFiles();
 
       // 2. 上传本地变更
-      for (const [noteId, mapping] of this.mappingStore) {
+      const noteIds: string[] = [];
+    this.mappingStore.forEach((_mapping: CloudNoteMapping, id: string) => noteIds.push(id));
+    for (const noteId of noteIds) {
+      const mapping = this.mappingStore.get(noteId);
+      if (!mapping) continue;
         try {
           const localContent = await this.fileService.readFile(
             `${this.fileService.getBaseDirectory()}/${noteId}.md`
@@ -423,9 +440,7 @@ export class CloudSyncService implements ICloudSyncService {
     return null;
   }
 
-  private async exchangeToken(code: string): Promise<{
-    access_token: string; refresh_token?: string
-  } | null> {
+  private async exchangeToken(code: string): Promise<TokenResponse | null> {
     try {
       const resp = await http.createHttp().request(
         'https://oauth-login.cloud.huawei.com/oauth2/v3/token',
@@ -463,11 +478,14 @@ export class CloudSyncService implements ICloudSyncService {
       options.extraData = typeof body === 'string' ? body : JSON.stringify(body);
     }
 
-    const resp = await http.createHttp().request(`${DRIVE_API_BASE}${path}`, options);
-
-    if (acceptType === 'text/plain') {
-      return resp.result as string;
+    try {
+      const resp = await http.createHttp().request(`${DRIVE_API_BASE}${path}`, options);
+      if (acceptType === 'text/plain') {
+        return resp.result as string;
+      }
+      return JSON.parse(resp.result as string);
+    } catch (err) {
+      throw new Error(`CloudSync request failed: ${path}`);
     }
-    return JSON.parse(resp.result as string);
   }
 }

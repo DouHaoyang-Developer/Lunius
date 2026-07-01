@@ -3,6 +3,11 @@
 
 import { CloudNoteMapping, CloudSyncStatus, CloudSyncResult, CloudHistoryVersion } from './ApiTypes';
 
+export interface QuotaInfo {
+  used: number;
+  total: number;
+}
+
 export interface ICloudSyncService {
   /** 初始化云同步服务（加载本地映射） */
   init(): Promise<void>;
@@ -14,7 +19,7 @@ export interface ICloudSyncService {
   isAuthorized(): boolean;
 
   /** 获取用户配额信息 */
-  getQuotaInfo(): Promise<{ used: number; total: number }>;
+  getQuotaInfo(): Promise<QuotaInfo>;
 
   /** 上传单个笔记到云端 */
   uploadNote(noteId: string, content: string): Promise<CloudNoteMapping>;

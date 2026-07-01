@@ -235,17 +235,6 @@ export class FileService {
    * 获取所有 .md 文件列表
    * @returns 文件路径数组
    */
-  public async deleteFile(filePath: string): Promise<boolean> {
-    try {
-      await fs.unlink(filePath);
-      console.info(`File deleted: ${filePath}`);
-      return true;
-    } catch (err) {
-      console.error(`Failed to delete file: ${(err as BusinessError).message}`);
-      return false;
-    }
-  }
-
   public async getMarkdownFiles(): Promise<string[]> {
     try {
       const filesDir = this.getFilesDir();
