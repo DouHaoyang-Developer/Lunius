@@ -42,6 +42,12 @@ export class WorkspaceViewModel {
   rightSidebarWidth: number = 260;
   ribbonCollapsed: boolean = false;
 
+  leftSidebarActiveTab: string = 'fileExplorer';
+  rightSidebarActiveTab: string = 'outline';
+  isMobileMenuOpen: boolean = false;
+  isMobileTabSheetOpen: boolean = false;
+  isMobileToolbarVisible: boolean = false;
+
   isSearchOpen: boolean = false;
   searchQuery: string = '';
 
@@ -254,6 +260,26 @@ export class WorkspaceViewModel {
   closeCanvas(): void {
     this.isCanvasOpen = false;
     this.canvasViewModel = null;
+  }
+
+  setLeftSidebarTab(tabId: string): void {
+    this.leftSidebarActiveTab = tabId;
+  }
+
+  setRightSidebarTab(tabId: string): void {
+    this.rightSidebarActiveTab = tabId;
+  }
+
+  toggleMobileMenu(): void {
+    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+  }
+
+  toggleMobileTabSheet(): void {
+    this.isMobileTabSheetOpen = !this.isMobileTabSheetOpen;
+  }
+
+  toggleMobileToolbar(): void {
+    this.isMobileToolbarVisible = !this.isMobileToolbarVisible;
   }
 
   private deactivateOtherTabs(pane: SplitPane, activeTabId: string): void {

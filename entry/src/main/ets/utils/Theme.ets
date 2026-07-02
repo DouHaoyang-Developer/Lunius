@@ -41,6 +41,14 @@ export interface LuniusColors {
   successColor: string;
   warningColor: string;
   infoColor: string;
+  overlayBg: string;
+  frostedBg: string;
+  frostedBgLight: string;
+  frostedBgThick: string;
+  mobileNavBg: string;
+  mobileToolbarBg: string;
+  ambientGlowRate: number;
+  ambientGlowDegree: number;
 }
 
 export const LightColors: LuniusColors = {
@@ -75,7 +83,15 @@ export const LightColors: LuniusColors = {
   errorColor: '#E53935',
   successColor: '#4CAF50',
   warningColor: '#F5A623',
-  infoColor: '#2196F3'
+  infoColor: '#2196F3',
+  overlayBg: 'rgba(0,0,0,0.15)',
+  frostedBg: 'rgba(255,255,255,0.85)',
+  frostedBgLight: 'rgba(250,250,250,0.75)',
+  frostedBgThick: 'rgba(255,255,255,0.92)',
+  mobileNavBg: 'rgba(255,255,255,0.9)',
+  mobileToolbarBg: 'rgba(248,248,248,0.88)',
+  ambientGlowRate: 0.4,
+  ambientGlowDegree: 0.3
 };
 
 export const DarkColors: LuniusColors = {
@@ -110,7 +126,15 @@ export const DarkColors: LuniusColors = {
   errorColor: '#FF5252',
   successColor: '#69F0AE',
   warningColor: '#FFD740',
-  infoColor: '#40C4FF'
+  infoColor: '#40C4FF',
+  overlayBg: 'rgba(0,0,0,0.3)',
+  frostedBg: 'rgba(30,30,30,0.85)',
+  frostedBgLight: 'rgba(38,38,38,0.75)',
+  frostedBgThick: 'rgba(30,30,30,0.92)',
+  mobileNavBg: 'rgba(45,45,45,0.9)',
+  mobileToolbarBg: 'rgba(38,38,38,0.88)',
+  ambientGlowRate: 0.4,
+  ambientGlowDegree: 0.3
 };
 
 export function getColors(mode: ThemeMode): LuniusColors {
@@ -138,12 +162,14 @@ export function getDeviceType(width: number): DeviceType {
 
 // 侧边栏宽度配置
 export class SidebarWidth {
-  static readonly PHONE: number = 280;
+  static readonly PHONE: number = 300;
   static readonly TABLET_LEFT: number = 260;
   static readonly TABLET_RIGHT: number = 240;
   static readonly PC_LEFT: number = 280;
   static readonly PC_RIGHT: number = 260;
   static readonly RIBBON: number = 44;
+  static readonly RIBBON_PC: number = 48;
+  static readonly COLLAPSED: number = 0;
 }
 
 // 间距规范
@@ -154,6 +180,10 @@ export class Spacing {
   static readonly LG: number = 16;
   static readonly XL: number = 24;
   static readonly XXL: number = 32;
+  static readonly EDGE_GESTURE: number = 20;
+  static readonly MOBILE_NAV_HEIGHT: number = 56;
+  static readonly MOBILE_TOOLBAR_HEIGHT: number = 44;
+  static readonly SIDEBAR_TAB_HEIGHT: number = 36;
 }
 
 // 圆角规范
@@ -162,6 +192,8 @@ export class Radius {
   static readonly MD: number = 8;
   static readonly LG: number = 12;
   static readonly FULL: number = 999;
+  static readonly SHEET: number = 16;
+  static readonly CAPSULE: number = 28;
 }
 
 // 图标映射（Unicode, 无外部依赖）
@@ -193,6 +225,13 @@ export class Icons {
   static readonly REDO: string = '\u27F3';
   static readonly ZOOM_IN: string = '\u2295';
   static readonly ZOOM_OUT: string = '\u2296';
+  static readonly SIDEBAR_LEFT: string = '\u25C0';
+  static readonly SIDEBAR_RIGHT: string = '\u25B6';
+  static readonly TAB_COUNT: string = '\u229E';
+  static readonly QUICK_SWITCH: string = '\u25CB';
+  static readonly EXPAND_LEFT: string = '\u25C0';
+  static readonly EXPAND_RIGHT: string = '\u25B6';
+  static readonly NEW_TAB: string = '\u2295';
 }
 
 // 字体规范
@@ -226,3 +265,21 @@ export const Typography: TypographyConfig = {
   caption: captionStyle,
   mono: monoStyle
 };
+
+export interface SidebarTab {
+  id: string;
+  icon: string;
+  label: string;
+}
+
+export const LeftSidebarTabs: SidebarTab[] = [
+  { id: 'fileExplorer', icon: Icons.FILE_EXPLORER, label: '\u6587\u4EF6' },
+  { id: 'search', icon: Icons.SEARCH, label: '\u641C\u7D22' },
+  { id: 'bookmarks', icon: Icons.PIN, label: '\u4E66\u7B7E' }
+];
+
+export const RightSidebarTabs: SidebarTab[] = [
+  { id: 'outline', icon: Icons.PROPERTIES, label: '\u5927\u7EB2' },
+  { id: 'backlinks', icon: '\uD83D\uDD17', label: '\u53CD\u5411\u94FE\u63A5' },
+  { id: 'bookmarks', icon: Icons.PIN, label: '\u4E66\u7B7E' }
+];

@@ -1,5 +1,5 @@
 // components/ContextMenu.ets
-// Obsidian-style floating context menu at pointer position with backdrop dismiss
+// Lunius-style floating context menu at pointer position with backdrop dismiss
 
 import { LuniusColors, ThemeMode, getColors, Spacing, Radius } from '../../utils/Theme';
 

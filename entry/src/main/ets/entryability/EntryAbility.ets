@@ -151,6 +151,13 @@ export default class EntryAbility extends UIAbility {
       const windowInstance = windowStage.getMainWindowSync();
       windowInstance.setWindowBackgroundColor('#1E1E1E');
       windowInstance.setWindowLayoutFullScreen(true);
+      const sysBarProps: window.SystemBarProperties = {
+        statusBarColor: '#1E1E1E',
+        navigationBarColor: '#1E1E1E',
+        statusBarContentColor: '#D4D4D4',
+        navigationBarContentColor: '#D4D4D4'
+      };
+      windowInstance.setWindowSystemBarProperties(sysBarProps);
     } catch (e) {
       hilog.error(0x0000, TAG, 'Window setup error: %{public}s', JSON.stringify(e));
     }

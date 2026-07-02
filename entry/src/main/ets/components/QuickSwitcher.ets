@@ -1,5 +1,5 @@
 // components/QuickSwitcher.ets
-// Obsidian-style quick switcher — Ctrl+O overlay with fuzzy file search and keyboard nav
+// Lunius-style quick switcher — Ctrl+O overlay with fuzzy file search and keyboard nav
 
 import { LuniusColors, ThemeMode, getColors, Spacing, Radius } from '../utils/Theme';
 import { KeyCode } from '@kit.InputKit';

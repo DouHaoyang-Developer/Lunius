@@ -1,5 +1,5 @@
 // components/modal/Modal.ets
-// Generic Obsidian-style modal dialog — alert, confirm, and prompt types
+// Generic Lunius-style modal dialog — alert, confirm, and prompt types
 
 import { LuniusColors, ThemeMode, getColors, Spacing, Radius } from '../../utils/Theme';
 

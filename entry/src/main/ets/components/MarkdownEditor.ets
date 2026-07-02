@@ -30,6 +30,7 @@ export struct MarkdownEditor {
   @Prop isSplitView: boolean = false;
   @Prop canNavigateBack: boolean = false;
   @Prop canNavigateForward: boolean = false;
+  @Prop isMobileMode: boolean = false;
   @State viewMode: string = 'live';
   @State showProperties: boolean = false;
   @State showModal: boolean = false;
@@ -457,79 +458,83 @@ export struct MarkdownEditor {
   build() {
     Stack() {
       Column({ space: 0 }) {
-        Breadcrumb({
-          items: this.breadcrumbItems(),
-          hasModified: this.vm.hasUnsavedChanges
-        }).width('100%')
-
-        Row({ space: Spacing.SM }) {
-          Button({ type: ButtonType.Circle }) {
-            Text('\u2190').fontSize(14).fontColor(this.colors().iconSecondary)
-          }
-          .width(28).height(28).backgroundColor(this.colors().bgHover)
-          .onClick(() => { if (this.onNavigateBack) this.onNavigateBack(); })
-
-          Button({ type: ButtonType.Circle }) {
-            Text('\u2192').fontSize(14).fontColor(this.colors().iconSecondary)
-          }
-          .width(28).height(28).backgroundColor(this.colors().bgHover)
-          .onClick(() => { if (this.onNavigateForward) this.onNavigateForward(); })
-
-          Divider().vertical(true).height(20).color(this.colors().divider)
-
-          Button({ type: ButtonType.Normal }) {
-            Text(this.viewModeLabel())
-              .fontSize(12).fontColor(this.colors().accent).fontWeight(FontWeight.Medium)
-          }
-          .backgroundColor(this.colors().bgHover).borderRadius(4)
-          .height(28).padding({ left: Spacing.SM, right: Spacing.SM })
-          .onClick(() => this.cycleViewMode())
-
-          Divider().vertical(true).height(20).color(this.colors().divider)
-
-          Button({ type: ButtonType.Circle }) {
-            Text('B').fontSize(14).fontWeight(FontWeight.Bold)
-              .fontColor(this.colors().textSecondary)
-          }.width(28).height(28).backgroundColor(this.colors().bgHover)
-          Button({ type: ButtonType.Circle }) {
-            Text('I').fontSize(14).fontStyle(FontStyle.Italic)
-              .fontColor(this.colors().textSecondary)
-          }.width(28).height(28).backgroundColor(this.colors().bgHover)
-          Button({ type: ButtonType.Circle }) {
-            Text('H').fontSize(14).fontColor(this.colors().textSecondary)
-          }.width(28).height(28).backgroundColor(this.colors().bgHover)
-
-          Divider().vertical(true).height(20).color(this.colors().divider)
-
-          Button({ type: ButtonType.Circle }) {
-            Text('\uD83D\uDDBC').fontSize(14).fontColor(this.colors().textSecondary)
-          }.width(28).height(28).backgroundColor(this.colors().bgHover)
-            .onClick(() => this.handleInsertImage())
-          Button({ type: ButtonType.Circle }) {
-            Text('\uD83D\uDCCE').fontSize(14).fontColor(this.colors().textSecondary)
-          }.width(28).height(28).backgroundColor(this.colors().bgHover)
-            .onClick(() => this.handleInsertAttachment())
-
-          Blank()
-
-          Button({ type: ButtonType.Circle }) {
-            Text('\uD83D\uDCCB').fontSize(14)
-              .fontColor(this.showProperties
-                ? this.colors().accent : this.colors().textSecondary)
-          }.width(28).height(28).backgroundColor(this.colors().bgHover)
-            .onClick(() => { this.showProperties = !this.showProperties; })
-          Button({ type: ButtonType.Circle }) {
-            Text(this.vm.isSaving ? '\u27F3' : '\uD83D\uDCBE')
-              .fontSize(14)
-              .fontColor(this.vm.hasUnsavedChanges
-                ? this.colors().accent : this.colors().textSecondary)
-          }.width(28).height(28).backgroundColor(this.colors().bgHover)
-            .onClick(() => this.vm.saveNote())
+        if (!this.isMobileMode) {
+          Breadcrumb({
+            items: this.breadcrumbItems(),
+            hasModified: this.vm.hasUnsavedChanges
+          }).width('100%')
         }
-        .width('100%').height(40)
-        .padding({ left: Spacing.MD, right: Spacing.MD })
-        .backgroundColor(this.colors().editorBg)
-        .border({ width: { bottom: 1 }, color: this.colors().divider })
+
+        if (!this.isMobileMode) {
+          Row({ space: Spacing.SM }) {
+            Button({ type: ButtonType.Circle }) {
+              Text('\u2190').fontSize(14).fontColor(this.colors().iconSecondary)
+            }
+            .width(28).height(28).backgroundColor(this.colors().bgHover)
+            .onClick(() => { if (this.onNavigateBack) this.onNavigateBack(); })
+
+            Button({ type: ButtonType.Circle }) {
+              Text('\u2192').fontSize(14).fontColor(this.colors().iconSecondary)
+            }
+            .width(28).height(28).backgroundColor(this.colors().bgHover)
+            .onClick(() => { if (this.onNavigateForward) this.onNavigateForward(); })
+
+            Divider().vertical(true).height(20).color(this.colors().divider)
+
+            Button({ type: ButtonType.Normal }) {
+              Text(this.viewModeLabel())
+                .fontSize(12).fontColor(this.colors().accent).fontWeight(FontWeight.Medium)
+            }
+            .backgroundColor(this.colors().bgHover).borderRadius(4)
+            .height(28).padding({ left: Spacing.SM, right: Spacing.SM })
+            .onClick(() => this.cycleViewMode())
+
+            Divider().vertical(true).height(20).color(this.colors().divider)
+
+            Button({ type: ButtonType.Circle }) {
+              Text('B').fontSize(14).fontWeight(FontWeight.Bold)
+                .fontColor(this.colors().textSecondary)
+            }.width(28).height(28).backgroundColor(this.colors().bgHover)
+            Button({ type: ButtonType.Circle }) {
+              Text('I').fontSize(14).fontStyle(FontStyle.Italic)
+                .fontColor(this.colors().textSecondary)
+            }.width(28).height(28).backgroundColor(this.colors().bgHover)
+            Button({ type: ButtonType.Circle }) {
+              Text('H').fontSize(14).fontColor(this.colors().textSecondary)
+            }.width(28).height(28).backgroundColor(this.colors().bgHover)
+
+            Divider().vertical(true).height(20).color(this.colors().divider)
+
+            Button({ type: ButtonType.Circle }) {
+              Text('\uD83D\uDDBC').fontSize(14).fontColor(this.colors().textSecondary)
+            }.width(28).height(28).backgroundColor(this.colors().bgHover)
+              .onClick(() => this.handleInsertImage())
+            Button({ type: ButtonType.Circle }) {
+              Text('\uD83D\uDCCE').fontSize(14).fontColor(this.colors().textSecondary)
+            }.width(28).height(28).backgroundColor(this.colors().bgHover)
+              .onClick(() => this.handleInsertAttachment())
+
+            Blank()
+
+            Button({ type: ButtonType.Circle }) {
+              Text('\uD83D\uDCCB').fontSize(14)
+                .fontColor(this.showProperties
+                  ? this.colors().accent : this.colors().textSecondary)
+            }.width(28).height(28).backgroundColor(this.colors().bgHover)
+              .onClick(() => { this.showProperties = !this.showProperties; })
+            Button({ type: ButtonType.Circle }) {
+              Text(this.vm.isSaving ? '\u27F3' : '\uD83D\uDCBE')
+                .fontSize(14)
+                .fontColor(this.vm.hasUnsavedChanges
+                  ? this.colors().accent : this.colors().textSecondary)
+            }.width(28).height(28).backgroundColor(this.colors().bgHover)
+              .onClick(() => this.vm.saveNote())
+          }
+          .width('100%').height(40)
+          .padding({ left: Spacing.MD, right: Spacing.MD })
+          .backgroundColor(this.colors().editorBg)
+          .border({ width: { bottom: 1 }, color: this.colors().divider })
+        }
 
         if (this.showCompletions && this.completions.length > 0) {
           Scroll() {
@@ -689,16 +694,18 @@ export struct MarkdownEditor {
           }
         }.width('100%').layoutWeight(1)
 
-        StatusBar({
-          wordCount: this.vm.getWordCount(),
-          charCount: this.vm.getCharCount(),
-          readTime: this.vm.getReadingTime(),
-          cursorLine: this.cursorLineCol().line,
-          cursorCol: this.cursorLineCol().col,
-          syncStatus: this.syncStatus,
-          currentView: this.viewMode,
-          onViewChange: (view: string) => { this.viewMode = view; }
-        }).width('100%')
+        if (!this.isMobileMode) {
+          StatusBar({
+            wordCount: this.vm.getWordCount(),
+            charCount: this.vm.getCharCount(),
+            readTime: this.vm.getReadingTime(),
+            cursorLine: this.cursorLineCol().line,
+            cursorCol: this.cursorLineCol().col,
+            syncStatus: this.syncStatus,
+            currentView: this.viewMode,
+            onViewChange: (view: string) => { this.viewMode = view; }
+          }).width('100%')
+        }
       }
       .width('100%').height('100%')
       .backgroundColor(this.colors().editorBg)

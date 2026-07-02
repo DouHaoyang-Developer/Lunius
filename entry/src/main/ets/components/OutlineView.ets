@@ -1,5 +1,5 @@
 // components/OutlineView.ets
-// Document outline panel — Obsidian-style indented headings with level badges
+// Document outline panel — Lunius-style indented headings with level badges
 
 import { LuniusColors, ThemeMode, getColors, Spacing } from '../utils/Theme';
 import { OutlineNode } from '../models/FileNode';

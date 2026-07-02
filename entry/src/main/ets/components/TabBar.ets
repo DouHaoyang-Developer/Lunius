@@ -13,9 +13,11 @@ export struct TabBar {
   @StorageLink('themeMode') themeMode: ThemeMode = ThemeMode.DARK;
   @Prop tabs: TabItem[] = [];
   @Prop activeTabId: string = '';
+  @Prop compact: boolean = false;
   onTabChange?: (tabId: string) => void;
   onTabClose?: (tabId: string) => void;
   onTabPin?: (tabId: string) => void;
+  onNewTab?: () => void;
 
   private colors(): LuniusColors {
     return getColors(this.themeMode);
@@ -38,14 +40,14 @@ export struct TabBar {
                 .fontColor(tab.isActive ? this.colors().fileIcon : this.colors().iconSecondary)
 
               Text(tab.title + (tab.isModified ? ' \u25CF' : ''))
-                .fontSize(12)
+                .fontSize(this.compact ? 11 : 12)
                 .fontColor(tab.isActive ? this.colors().textPrimary : this.colors().textMuted)
                 .fontWeight(tab.isActive ? FontWeight.Medium : FontWeight.Regular)
                 .maxLines(1)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
 
               Button({ type: ButtonType.Circle }) {
-                Text('\uD83D\uDCCC')
+                Text(Icons.PIN)
                   .fontSize(8)
                   .fontColor(tab.isPinned ? this.colors().accent : this.colors().textMuted)
               }
@@ -53,9 +55,7 @@ export struct TabBar {
               .backgroundColor(Color.Transparent)
               .visibility(tab.isActive ? Visibility.Visible : Visibility.Hidden)
               .onClick(() => {
-                if (this.onTabPin) {
-                  this.onTabPin(tab.id);
-                }
+                if (this.onTabPin) this.onTabPin(tab.id);
               })
 
               Button({ type: ButtonType.Circle }) {
@@ -67,12 +67,10 @@ export struct TabBar {
               .backgroundColor(Color.Transparent)
               .visibility(tab.isActive ? Visibility.Visible : Visibility.Hidden)
               .onClick(() => {
-                if (this.onTabClose) {
-                  this.onTabClose(tab.id);
-                }
+                if (this.onTabClose) this.onTabClose(tab.id);
               })
             }
-            .height(36)
+            .height(this.compact ? 32 : 36)
             .padding({ left: Spacing.MD, right: Spacing.SM })
             .backgroundColor(tab.isActive ? this.colors().tabActiveBg : this.colors().tabBg)
             .border({
@@ -80,9 +78,7 @@ export struct TabBar {
               color: tab.isActive ? this.colors().accent : this.colors().divider
             })
             .onClick(() => {
-              if (this.onTabChange) {
-                this.onTabChange(tab.id);
-              }
+              if (this.onTabChange) this.onTabChange(tab.id);
             })
           }
         }, (tab: TabItem) => tab.id)
@@ -91,10 +87,23 @@ export struct TabBar {
       .layoutWeight(1)
       .listDirection(Axis.Horizontal)
       .scrollBar(BarState.Off)
+
+      Button({ type: ButtonType.Circle }) {
+        Text(Icons.NEW_TAB)
+          .fontSize(14)
+          .fontColor(this.colors().iconSecondary)
+      }
+      .width(28).height(28)
+      .backgroundColor(Color.Transparent)
+      .margin({ right: Spacing.SM })
+      .onClick(() => {
+        if (this.onNewTab) this.onNewTab();
+      })
     }
     .width('100%')
-    .height(40)
-    .backgroundColor(this.colors().tabBg)
+    .height(this.compact ? 36 : 40)
+    .backgroundColor(this.colors().frostedBg)
+    .backgroundBlurStyle(BlurStyle.BACKGROUND_THIN, { colorMode: ThemeColorMode.SYSTEM })
     .border({ width: { bottom: 1 }, color: this.colors().divider })
   }
 }

@@ -1,5 +1,4 @@
 // utils/ResponsiveLayout.ets
-// 响应式布局状态管理
 
 import { Breakpoints, DeviceType, getDeviceType } from './Theme';
 
@@ -9,6 +8,9 @@ export class ResponsiveState {
   screenHeight: number = 1280;
   deviceType: DeviceType = DeviceType.TABLET;
   isLandscape: boolean = false;
+  sidebarGestureWidth: number = 20;
+  safeAreaTop: number = 0;
+  safeAreaBottom: number = 0;
 
   updateSize(width: number, height: number): void {
     this.screenWidth = width;
@@ -38,12 +40,36 @@ export class ResponsiveState {
   }
 
   get showRibbon(): boolean {
-    return this.isPC || this.isTablet;
+    return this.isPC || (this.isTablet && this.isLandscape);
   }
 
   get editorMaxWidth(): number {
     if (this.isPC) return 900;
     if (this.isTablet) return 700;
     return this.screenWidth - 32;
+  }
+
+  get showMobileNavBar(): boolean {
+    return this.isPhone;
+  }
+
+  get showMobileToolbar(): boolean {
+    return this.isPhone;
+  }
+
+  get showStatusBar(): boolean {
+    return !this.isPhone;
+  }
+
+  get leftSidebarMode(): string {
+    if (this.isPhone) return 'overlay';
+    if (this.isTablet && !this.isLandscape) return 'overlay';
+    return 'persistent';
+  }
+
+  get rightSidebarMode(): string {
+    if (this.isPhone) return 'overlay';
+    if (this.isTablet && !this.isLandscape) return 'overlay';
+    return 'persistent';
   }
 }

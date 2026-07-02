@@ -1,4 +1,4 @@
-import { LuniusColors, ThemeMode, getColors, Icons, Spacing, Radius } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors, Icons, Spacing, Radius, SidebarWidth } from '../utils/Theme';
 
 interface RibbonItem {
   action: string;
@@ -10,6 +10,7 @@ export struct Ribbon {
   @StorageLink('themeMode') themeMode: ThemeMode = ThemeMode.DARK;
   @Prop isCollapsed: boolean = false;
   @Prop activeTool: string = 'file-explorer';
+  @Prop isTablet: boolean = false;
   onToolAction?: (action: string) => void;
 
   private colors(): LuniusColors {
@@ -48,7 +49,7 @@ export struct Ribbon {
             Column() {
               Text(item.icon)
                 .fontSize(20)
-                .fontColor(item.action === this.activeTool || item.action === this.activeTool
+                .fontColor(item.action === this.activeTool
                   ? this.colors().accent
                   : this.colors().iconSecondary)
             }
@@ -94,9 +95,10 @@ export struct Ribbon {
       .width('100%')
       .padding(Spacing.SM)
     }
-    .width(this.isCollapsed ? 44 : 56)
+    .width(this.isTablet ? SidebarWidth.RIBBON : SidebarWidth.RIBBON_PC)
     .height('100%')
-    .backgroundColor(this.colors().ribbonBg)
+    .backgroundColor(this.colors().frostedBg)
+    .backgroundBlurStyle(BlurStyle.BACKGROUND_THIN, { colorMode: ThemeColorMode.SYSTEM })
     .border({ width: { right: 1 }, color: this.colors().divider })
   }
 }

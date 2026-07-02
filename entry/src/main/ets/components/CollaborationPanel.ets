@@ -1,5 +1,5 @@
 // components/CollaborationPanel.ets
-// Obsidian-style distributed collaboration panel — session management and participant list
+// Lunius-style distributed collaboration panel — session management and participant list
 
 import { LuniusColors, ThemeMode, getColors, Spacing, Radius } from '../utils/Theme';
 import {

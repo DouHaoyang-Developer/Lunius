@@ -1,5 +1,5 @@
 // components/BacklinksView.ets
-// Backlinks panel — Obsidian-style linked mentions with context preview
+// Backlinks panel — Lunius-style linked mentions with context preview
 
 import { LuniusColors, ThemeMode, getColors, Spacing } from '../utils/Theme';
 import { Backlink } from '../models/FileNode';

@@ -1,5 +1,5 @@
 // components/commandpalette/CommandPalette.ets
-// Obsidian-style command palette — Ctrl+P overlay with search and keyboard nav
+// Lunius-style command palette — Ctrl+P overlay with search and keyboard nav
 
 import { LuniusColors, ThemeMode, getColors, Spacing, Radius } from '../../utils/Theme';
 import { KeyCode } from '@kit.InputKit';

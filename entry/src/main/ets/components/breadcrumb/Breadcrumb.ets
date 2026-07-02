@@ -51,7 +51,8 @@ export struct Breadcrumb {
     .width('100%')
     .height(32)
     .padding({ left: Spacing.LG, right: Spacing.LG })
-    .backgroundColor(this.colors().editorBg)
+    .backgroundColor(this.colors().frostedBg)
+    .backgroundBlurStyle(BlurStyle.BACKGROUND_THIN, { colorMode: ThemeColorMode.SYSTEM })
     .border({ width: { bottom: 1 }, color: this.colors().divider })
   }
 }
