@@ -56,18 +56,18 @@ export struct PenKitCard {
           //   }
           // })
           Text('✏️ 点击编写手写笔记')
-            .fontSize(11).fontColor(this.colors().textMuted)
+            .fontSize(11).fontColor(this.colors().textTertiary)
         }
       }
       .width('100%').height(60)
-      .backgroundColor(this.colors().bgTertiary)
+      .backgroundColor(this.colors().surface1)
       .borderRadius(4)
       .justifyContent(FlexAlign.Center)
 
       // 底部信息
       Row() {
         Text('.pen')
-          .fontSize(10).fontColor(this.colors().textMuted)
+          .fontSize(10).fontColor(this.colors().textTertiary)
         Text('Pen Kit')
           .fontSize(10).fontColor(this.colors().accent)
           .margin({ left: 4 })
@@ -77,10 +77,10 @@ export struct PenKitCard {
     }
     .width(this.node.width * this.zoomScale)
     .height(this.node.height * this.zoomScale)
-    .backgroundColor(this.colors().bgSecondary)
+    .backgroundColor(this.colors().surface2)
     .border({
       width: this.isSelected ? 2 : 1,
-      color: this.isSelected ? this.colors().accent : this.colors().divider
+      color: this.isSelected ? this.colors().accent : this.colors().border
     })
     .borderRadius(6)
     .shadow(this.isSelected ? { radius: 8, color: this.colors().accent + '40' } : {})

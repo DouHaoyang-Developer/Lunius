@@ -1,4 +1,8 @@
-import { LuniusColors, ThemeMode, getColors, Spacing } from '../../utils/Theme';
+// components/statusbar/StatusBar.ets
+// 底部状态栏 — 统计信息 + 视图模式切换
+// 设计：左侧统计、中间光标位置、右侧同步状态+视图切换
+
+import { LuniusColors, ThemeMode, getColors, Spacing, Radius, Icons, EditorViewMode } from '../../utils/Theme';
 import { SyncStatus } from '../../services/ApiTypes';
 
 @Component
@@ -17,118 +21,99 @@ export struct StatusBar {
     return getColors(this.themeMode);
   }
 
+  @Builder
+  ViewModeButton(mode: string, isFirst: boolean, isLast: boolean) {
+    Text(EditorViewMode.LABELS[mode] || mode)
+      .fontSize(11)
+      .fontColor(this.currentView === mode
+        ? this.colors().accent
+        : this.colors().textTertiary)
+      .fontWeight(this.currentView === mode ? FontWeight.Medium : FontWeight.Regular)
+      .height(22)
+      .padding({ left: Spacing.SM, right: Spacing.SM })
+      .backgroundColor(this.currentView === mode
+        ? this.colors().accentSubtle : Color.Transparent)
+      .borderRadius({
+        topLeft: isFirst ? Radius.XS : 0,
+        bottomLeft: isFirst ? Radius.XS : 0,
+        topRight: isLast ? Radius.XS : 0,
+        bottomRight: isLast ? Radius.XS : 0
+      })
+      .onClick(() => {
+        if (this.onViewChange) {
+          this.onViewChange(mode);
+        }
+      })
+  }
+
+  @Builder
+  ViewModeSwitcher() {
+    Row({ space: 0 }) {
+      this.ViewModeButton('source', true, false)
+      this.ViewModeButton('live', false, false)
+      this.ViewModeButton('preview', false, false)
+      this.ViewModeButton('split', false, true)
+    }
+    .height(22)
+    .border({ width: 1, color: this.colors().border })
+    .borderRadius(Radius.XS)
+    .backgroundColor(this.colors().surface2)
+  }
+
+  @Builder
+  SyncIndicator() {
+    if (this.syncStatus) {
+      Row({ space: 4 }) {
+        Text(this.syncStatus.isSyncing ? Icons.SYNC
+          : this.syncStatus.pendingChanges > 0 ? Icons.PENDING
+          : Icons.SYNC_DONE)
+          .fontSize(10)
+          .fontColor(this.syncStatus.isSyncing
+            ? this.colors().accent : this.colors().textTertiary)
+        Text(this.syncStatus.isSyncing
+          ? '\u540C\u6B65\u4E2D'
+          : String(this.syncStatus.pendingChanges) + ' \u5F85\u540C\u6B65')
+          .fontSize(11)
+          .fontColor(this.colors().textTertiary)
+      }
+      .margin({ right: Spacing.MD })
+    }
+  }
+
   build() {
     Row() {
+      // 左侧：统计信息
       Row({ space: Spacing.MD }) {
         Text(String(this.wordCount) + ' \u8BCD')
           .fontSize(11)
-          .fontColor(this.colors().textMuted)
+          .fontColor(this.colors().textTertiary)
         Text(String(this.charCount) + ' \u5B57\u7B26')
           .fontSize(11)
-          .fontColor(this.colors().textMuted)
+          .fontColor(this.colors().textTertiary)
         Text('\u7EA6 ' + String(this.readTime) + ' \u5206\u949F')
           .fontSize(11)
-          .fontColor(this.colors().textMuted)
+          .fontColor(this.colors().textTertiary)
       }
 
       Blank()
 
+      // 中间：光标位置
       Text('Ln ' + String(this.cursorLine) + ', Col ' + String(this.cursorCol))
         .fontSize(11)
-        .fontColor(this.colors().textMuted)
+        .fontColor(this.colors().textTertiary)
 
       Blank()
 
+      // 右侧：同步 + 视图切换
       Row({ space: Spacing.SM }) {
-        if (this.syncStatus) {
-          Row({ space: 4 }) {
-            Text(this.syncStatus.isSyncing ? '\u27F3'
-              : this.syncStatus.pendingChanges > 0 ? '\u2191'
-              : '\u2713')
-              .fontSize(11)
-              .fontColor(this.syncStatus.isSyncing
-                ? this.colors().accent : this.colors().textMuted)
-            Text(this.syncStatus.isSyncing
-              ? '\u540C\u6B65\u4E2D...'
-              : String(this.syncStatus.pendingChanges) + ' \u5F85\u540C\u6B65')
-              .fontSize(11)
-              .fontColor(this.colors().textMuted)
-          }
-          .margin({ right: Spacing.MD })
-        }
-
-        Row({ space: 0 }) {
-          Button({ type: ButtonType.Normal }) {
-            Text('\u6E90\u7801')
-              .fontSize(10)
-              .fontColor(this.currentView === 'source'
-                ? this.colors().accent : this.colors().textMuted)
-          }
-          .width(38).height(22)
-          .backgroundColor(this.currentView === 'source'
-            ? this.colors().bgActive : Color.Transparent)
-          .borderRadius({ topLeft: 3, bottomLeft: 3 })
-          .onClick(() => {
-            if (this.onViewChange) {
-              this.onViewChange('source');
-            }
-          })
-
-          Button({ type: ButtonType.Normal }) {
-            Text('\u5B9E\u65F6')
-              .fontSize(10)
-              .fontColor(this.currentView === 'live'
-                ? this.colors().accent : this.colors().textMuted)
-          }
-          .width(38).height(22)
-          .backgroundColor(this.currentView === 'live'
-            ? this.colors().bgActive : Color.Transparent)
-          .onClick(() => {
-            if (this.onViewChange) {
-              this.onViewChange('live');
-            }
-          })
-
-          Button({ type: ButtonType.Normal }) {
-            Text('\u9605\u8BFB')
-              .fontSize(10)
-              .fontColor(this.currentView === 'preview'
-                ? this.colors().accent : this.colors().textMuted)
-          }
-          .width(38).height(22)
-          .backgroundColor(this.currentView === 'preview'
-            ? this.colors().bgActive : Color.Transparent)
-          .onClick(() => {
-            if (this.onViewChange) {
-              this.onViewChange('preview');
-            }
-          })
-
-          Button({ type: ButtonType.Normal }) {
-            Text('\u5206\u5C4F')
-              .fontSize(10)
-              .fontColor(this.currentView === 'split'
-                ? this.colors().accent : this.colors().textMuted)
-          }
-          .width(38).height(22)
-          .backgroundColor(this.currentView === 'split'
-            ? this.colors().bgActive : Color.Transparent)
-          .borderRadius({ topRight: 3, bottomRight: 3 })
-          .onClick(() => {
-            if (this.onViewChange) {
-              this.onViewChange('split');
-            }
-          })
-        }
-        .border({ width: 1, color: this.colors().divider })
-        .borderRadius(3)
+        this.SyncIndicator()
+        this.ViewModeSwitcher()
       }
     }
     .width('100%')
-    .height(28)
+    .height(Spacing.STATUS_BAR_HEIGHT)
     .padding({ left: Spacing.LG, right: Spacing.LG })
-    .backgroundColor(this.colors().frostedBg)
-    .backgroundBlurStyle(BlurStyle.BACKGROUND_THIN, { colorMode: ThemeColorMode.SYSTEM })
-    .border({ width: { top: 1 }, color: this.colors().divider })
+    .backgroundColor(this.colors().surface1)
+    .border({ width: { top: 1 }, color: this.colors().border })
   }
 }

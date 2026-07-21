@@ -1,4 +1,8 @@
-import { LuniusColors, ThemeMode, getColors, Spacing } from '../../utils/Theme';
+// components/breadcrumb/Breadcrumb.ets
+// 面包屑导航 — Vault 图标 + 路径层级
+// 设计：紧凑、带分隔符、修改标记
+
+import { LuniusColors, ThemeMode, getColors, Spacing, Radius, Icons } from '../../utils/Theme';
 
 export interface BreadcrumbItem {
   name: string;
@@ -18,14 +22,16 @@ export struct Breadcrumb {
 
   build() {
     Row({ space: 2 }) {
-      Text('\uD83D\uDC8E')
-        .fontSize(14)
+      // Vault 图标
+      Text(Icons.VAULT)
+        .fontSize(13)
+        .fontColor(this.colors().accent)
 
       ForEach(this.items, (item: BreadcrumbItem, index: number) => {
-        Row({ space: 4 }) {
+        Row({ space: 2 }) {
           Text('\u203A')
-            .fontSize(13)
-            .fontColor(this.colors().textMuted)
+            .fontSize(11)
+            .fontColor(this.colors().textTertiary)
             .margin({ left: 2, right: 2 })
 
           Text(item.name)
@@ -42,17 +48,18 @@ export struct Breadcrumb {
       }, (item: BreadcrumbItem) => item.path)
 
       if (this.hasModified) {
-        Text('\u25CF')
-          .fontSize(8)
-          .fontColor(this.colors().accent)
+        Row()
+          .width(5)
+          .height(5)
+          .backgroundColor(this.colors().accent)
+          .borderRadius(Radius.FULL)
           .margin({ left: Spacing.XS })
       }
     }
     .width('100%')
     .height(32)
     .padding({ left: Spacing.LG, right: Spacing.LG })
-    .backgroundColor(this.colors().frostedBg)
-    .backgroundBlurStyle(BlurStyle.BACKGROUND_THIN, { colorMode: ThemeColorMode.SYSTEM })
-    .border({ width: { bottom: 1 }, color: this.colors().divider })
+    .backgroundColor(this.colors().surface1)
+    .border({ width: { bottom: 1 }, color: this.colors().border })
   }
 }

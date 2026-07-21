@@ -1,7 +1,7 @@
 // components/VersionHistoryPanel.ets
 // 版本历史面板 — 查看、对比、恢复笔记的版本快照
 
-import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors, Spacing, Radius, Icons } from '../utils/Theme';
 import { VersionService } from '../services/VersionService';
 import { VersionEntry, VersionDetail, VersionCompareResult } from '../services/ApiTypes';
 
@@ -130,28 +130,28 @@ struct VersionHistoryPanel {
 
         Button() {
           Text('清理')
-            .fontSize(12).fontColor(this.colors().textMuted)
+            .fontSize(12).fontColor(this.colors().textTertiary)
         }
         .height(28).backgroundColor(Color.Transparent)
         .onClick(() => this.cleanupVersions())
       }
       .width('100%').height(52).padding({ left: 12, right: 12 })
-      .backgroundColor(this.colors().bgSecondary)
-      .border({ width: { bottom: 1 }, color: this.colors().divider })
+      .backgroundColor(this.colors().surface2)
+      .border({ width: { bottom: 1 }, color: this.colors().border })
 
       if (this.message) {
         Row() {
           Text(this.message)
             .fontSize(12).fontColor(this.colors().accent)
         }
-        .width('100%').padding(8).backgroundColor(this.colors().bgSecondary)
+        .width('100%').padding(8).backgroundColor(this.colors().surface2)
         .onClick(() => this.message = '')
       }
 
       if (this.isLoading) {
         Column() {
           LoadingProgress().width(36).height(36).color(this.colors().accent)
-          Text('加载中...').fontSize(13).fontColor(this.colors().textMuted).margin({ top: 8 })
+          Text('加载中...').fontSize(13).fontColor(this.colors().textTertiary).margin({ top: 8 })
         }
         .width('100%').layoutWeight(1).justifyContent(FlexAlign.Center)
       } else if (this.showDiff && this.compareResult) {
@@ -162,7 +162,7 @@ struct VersionHistoryPanel {
         this.VersionListView()
       }
     }
-    .width('100%').height('100%').backgroundColor(this.colors().bgPrimary)
+    .width('100%').height('100%').backgroundColor(this.colors().surface0)
   }
 
   @Builder
@@ -171,7 +171,7 @@ struct VersionHistoryPanel {
       Column() {
         if (this.versions.length === 0) {
           Text('暂无版本历史')
-            .fontSize(14).fontColor(this.colors().textMuted)
+            .fontSize(14).fontColor(this.colors().textTertiary)
             .width('100%').textAlign(TextAlign.Center).margin({ top: 40 })
         } else {
           ForEach(this.versions, (version: VersionEntry) => {
@@ -186,16 +186,16 @@ struct VersionHistoryPanel {
                     .fontColor(this.colors().textPrimary)
                 }
                 Text(this.formatTime(version.timestamp))
-                  .fontSize(11).fontColor(this.colors().textMuted)
+                  .fontSize(11).fontColor(this.colors().textTertiary)
               }
               .alignItems(HorizontalAlign.Start).layoutWeight(1)
 
               Text(this.formatSize(version.contentSize))
-                .fontSize(12).fontColor(this.colors().textMuted)
+                .fontSize(12).fontColor(this.colors().textTertiary)
             }
             .width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 })
-            .backgroundColor(this.colors().bgPrimary)
-            .border({ width: { bottom: 1 }, color: this.colors().divider })
+            .backgroundColor(this.colors().surface0)
+            .border({ width: { bottom: 1 }, color: this.colors().border })
             .onClick(() => this.selectVersion(version.versionId))
           }, (version: VersionEntry) => version.versionId)
         }
@@ -224,9 +224,9 @@ struct VersionHistoryPanel {
         Text(`v${this.selectedVersion!.versionNumber}`)
           .fontSize(16).fontWeight(FontWeight.Medium).fontColor(this.colors().textPrimary)
         Text(this.formatTime(this.selectedVersion!.timestamp))
-          .fontSize(12).fontColor(this.colors().textMuted)
+          .fontSize(12).fontColor(this.colors().textTertiary)
         Text(this.formatSize(this.selectedVersion!.contentSize))
-          .fontSize(12).fontColor(this.colors().textMuted)
+          .fontSize(12).fontColor(this.colors().textTertiary)
       }
       .width('100%').padding({ left: 16, right: 16 })
 
@@ -244,15 +244,15 @@ struct VersionHistoryPanel {
           .onClick(() => this.compareWithCurrent(this.selectedVersion!.versionId))
 
         Button('标记检查点')
-          .fontSize(13).fontColor(this.colors().textMuted)
+          .fontSize(13).fontColor(this.colors().textTertiary)
           .backgroundColor(Color.Transparent)
-          .border({ width: 1, color: this.colors().divider, style: BorderStyle.Solid })
+          .border({ width: 1, color: this.colors().border, style: BorderStyle.Solid })
           .borderRadius(4).padding({ left: 12, right: 12 })
           .onClick(() => this.markCheckpoint(this.selectedVersion!.versionId))
       }
       .width('100%').padding(16)
 
-      Divider().color(this.colors().divider)
+      Divider().color(this.colors().border)
 
       // 版本内容预览
       Scroll() {
@@ -263,7 +263,7 @@ struct VersionHistoryPanel {
       }
       .width('100%').layoutWeight(1)
       .scrollBar(BarState.Auto)
-      .backgroundColor(this.colors().editorBg)
+      .backgroundColor(this.colors().surface0)
     }
     .width('100%').layoutWeight(1)
   }
@@ -283,9 +283,9 @@ struct VersionHistoryPanel {
 
       Row({ space: 8 }) {
         Text(`v${this.compareResult!.oldVersion.versionNumber}`)
-          .fontSize(14).fontColor(this.colors().textMuted)
+          .fontSize(14).fontColor(this.colors().textTertiary)
         Text('→')
-          .fontSize(14).fontColor(this.colors().textMuted)
+          .fontSize(14).fontColor(this.colors().textTertiary)
         Text(`v${this.compareResult!.newVersion.versionNumber}`)
           .fontSize(14).fontWeight(FontWeight.Medium).fontColor(this.colors().textPrimary)
       }
@@ -299,7 +299,7 @@ struct VersionHistoryPanel {
       }
       .width('100%').padding({ left: 16, right: 16, bottom: 8 })
 
-      Divider().color(this.colors().divider)
+      Divider().color(this.colors().border)
 
       // Diff 内容
       Scroll() {
@@ -310,7 +310,7 @@ struct VersionHistoryPanel {
       }
       .width('100%').layoutWeight(1)
       .scrollBar(BarState.Auto)
-      .backgroundColor(this.colors().editorBg)
+      .backgroundColor(this.colors().surface0)
     }
     .width('100%').layoutWeight(1)
   }

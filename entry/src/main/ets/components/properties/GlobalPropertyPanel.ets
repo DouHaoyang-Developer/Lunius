@@ -82,16 +82,16 @@ export struct GlobalPropertyPanel {
         .onClick(() => { this.loadProperties(); })
       }
       .width('100%').height(36).padding({ left: 12, right: 12 })
-      .backgroundColor(this.colors().sidebarBg)
+      .backgroundColor(this.colors().surface1)
 
       if (this.isLoading) {
         Text('加载中...')
-          .fontSize(12).fontColor(this.colors().textMuted).margin(20)
+          .fontSize(12).fontColor(this.colors().textTertiary).margin(20)
       } else {
         // 搜索过滤
         TextInput({ placeholder: '过滤属性名...', text: $$this.searchFilter })
           .fontSize(12).fontColor(this.colors().textPrimary)
-          .height(32).backgroundColor(this.colors().bgTertiary).borderRadius(6)
+          .height(32).backgroundColor(this.colors().surface1).borderRadius(6)
           .width('100%').margin({ left: 8, right: 8, top: 4, bottom: 4 })
 
         // 属性列表
@@ -108,7 +108,7 @@ export struct GlobalPropertyPanel {
                     .fontSize(13).fontColor(this.colors().textPrimary)
                     .textOverflow({ overflow: TextOverflow.Ellipsis }).maxLines(1)
                   Text(`${prop.count} 个笔记`)
-                    .fontSize(11).fontColor(this.colors().textMuted)
+                    .fontSize(11).fontColor(this.colors().textTertiary)
                 }
                 .layoutWeight(1).alignItems(HorizontalAlign.Start)
 
@@ -123,7 +123,7 @@ export struct GlobalPropertyPanel {
                 }
               }
               .width('100%').height(40).padding({ left: 12, right: 12 })
-              .backgroundColor(index % 2 === 0 ? this.colors().bgPrimary : this.colors().bgSecondary)
+              .backgroundColor(index % 2 === 0 ? this.colors().surface0 : this.colors().surface2)
             }
           }, (prop: PropertyUsage) => prop.key)
         }
@@ -131,6 +131,6 @@ export struct GlobalPropertyPanel {
       }
     }
     .width('100%').height('100%')
-    .backgroundColor(this.colors().sidebarBg)
+    .backgroundColor(this.colors().surface1)
   }
 }

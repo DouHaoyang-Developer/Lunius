@@ -1,3 +1,7 @@
+// components/MobileNavBar.ets
+// 移动端导航栏 — 悬浮胶囊式导航
+// 设计：5 按钮均匀分布，毛玻璃背景，圆角胶囊
+
 import { LuniusColors, ThemeMode, getColors, Spacing, Radius, Icons } from '../utils/Theme';
 
 @Component
@@ -17,78 +21,61 @@ export struct MobileNavBar {
     return getColors(this.themeMode);
   }
 
+  @Builder
+  NavButton(icon: string, enabled: boolean, action?: () => void) {
+    Column() {
+      Text(icon)
+        .fontSize(18)
+        .fontColor(enabled ? this.colors().textPrimary : this.colors().textDisabled)
+    }
+    .width(44)
+    .height(44)
+    .justifyContent(FlexAlign.Center)
+    .borderRadius(Radius.FULL)
+    .onClick(() => {
+      if (enabled && action) action();
+    })
+  }
+
+  @Builder
+  TabCountBadge() {
+    if (this.tabCount > 0) {
+      Column() {
+        Text(String(this.tabCount))
+          .fontSize(9)
+          .fontColor(this.colors().onAccent)
+          .fontWeight(FontWeight.Medium)
+      }
+      .width(16)
+      .height(16)
+      .backgroundColor(this.colors().accent)
+      .borderRadius(Radius.FULL)
+      .justifyContent(FlexAlign.Center)
+      .position({ x: 28, y: 6 })
+    }
+  }
+
   build() {
     Row() {
-      Button({ type: ButtonType.Circle }) {
-        Text(Icons.BACK)
-          .fontSize(18)
-          .fontColor(this.canGoBack ? this.colors().iconPrimary : this.colors().textMuted)
-      }
-      .width(40)
-      .height(40)
-      .backgroundColor(Color.Transparent)
-      .enabled(this.canGoBack)
-      .onClick(() => {
-        if (this.onBack) this.onBack();
-      })
+      this.NavButton(Icons.BACK, this.canGoBack, this.onBack)
+      this.NavButton(Icons.FORWARD, this.canGoForward, this.onForward)
+      this.NavButton(Icons.SEARCH, true, this.onQuickSwitch)
 
-      Button({ type: ButtonType.Circle }) {
-        Text(Icons.FORWARD)
-          .fontSize(18)
-          .fontColor(this.canGoForward ? this.colors().iconPrimary : this.colors().textMuted)
+      Stack() {
+        this.NavButton(Icons.TAB, true, this.onShowTabs)
+        this.TabCountBadge()
       }
-      .width(40)
-      .height(40)
-      .backgroundColor(Color.Transparent)
-      .enabled(this.canGoForward)
-      .onClick(() => {
-        if (this.onForward) this.onForward();
-      })
+      .width(44)
+      .height(44)
 
-      Button({ type: ButtonType.Circle }) {
-        Text(Icons.QUICK_SWITCH)
-          .fontSize(20)
-          .fontColor(this.colors().iconPrimary)
-      }
-      .width(40)
-      .height(40)
-      .backgroundColor(Color.Transparent)
-      .onClick(() => {
-        if (this.onQuickSwitch) this.onQuickSwitch();
-      })
-
-      Button({ type: ButtonType.Normal }) {
-        Text(String(this.tabCount))
-          .fontSize(14)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(this.colors().textPrimary)
-      }
-      .height(28)
-      .backgroundColor(this.colors().bgTertiary)
-      .borderRadius(14)
-      .padding({ left: 14, right: 14 })
-      .onClick(() => {
-        if (this.onShowTabs) this.onShowTabs();
-      })
-
-      Button({ type: ButtonType.Circle }) {
-        Text(Icons.MENU)
-          .fontSize(18)
-          .fontColor(this.colors().iconPrimary)
-      }
-      .width(40)
-      .height(40)
-      .backgroundColor(Color.Transparent)
-      .onClick(() => {
-        if (this.onOpenMenu) this.onOpenMenu();
-      })
+      this.NavButton(Icons.MENU, true, this.onOpenMenu)
     }
-    .width('90%')
+    .width('92%')
     .height(Spacing.MOBILE_NAV_HEIGHT)
     .justifyContent(FlexAlign.SpaceEvenly)
     .alignItems(VerticalAlign.Center)
     .backgroundColor(this.colors().mobileNavBg)
     .borderRadius(Radius.CAPSULE)
-    .shadow(ShadowStyle.OUTER_FLOATING_SM)
+    .shadow({ radius: 12, color: 'rgba(0,0,0,0.15)', offsetX: 0, offsetY: 4 })
   }
 }

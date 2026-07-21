@@ -1,4 +1,8 @@
-import { LuniusColors, ThemeMode, getColors, Spacing, Icons } from '../utils/Theme';
+// components/TabBar.ets
+// 标签页栏 — Obsidian 风格的紧凑标签
+// 设计：文件图标+标题+修改指示器，悬停显示关闭/固定按钮
+
+import { LuniusColors, ThemeMode, getColors, Spacing, Radius, Icons } from '../utils/Theme';
 
 export interface TabItem {
   id: string;
@@ -23,63 +27,107 @@ export struct TabBar {
     return getColors(this.themeMode);
   }
 
+  @Builder
+  TabContent(tab: TabItem) {
+    Row({ space: 6 }) {
+      // 固定指示器
+      if (tab.isPinned) {
+        Row()
+          .width(3)
+          .height(12)
+          .backgroundColor(this.colors().accent)
+          .borderRadius(Radius.FULL)
+      }
+
+      // 文件图标
+      Text(Icons.FILE)
+        .fontSize(11)
+        .fontColor(tab.isActive ? this.colors().fileIcon : this.colors().textTertiary)
+
+      // 标题
+      Text(tab.title)
+        .fontSize(this.compact ? 11 : 12)
+        .fontColor(tab.isActive ? this.colors().textPrimary : this.colors().textSecondary)
+        .fontWeight(tab.isActive ? FontWeight.Medium : FontWeight.Regular)
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .layoutWeight(1)
+
+      // 修改指示器（未保存）
+      if (tab.isModified && !tab.isActive) {
+        Row()
+          .width(6)
+          .height(6)
+          .backgroundColor(this.colors().textTertiary)
+          .borderRadius(Radius.FULL)
+      }
+
+      // 操作按钮（仅 active 显示）
+      if (tab.isActive) {
+        Row({ space: 2 }) {
+          // 固定按钮
+          Column() {
+            Text(Icons.PIN)
+              .fontSize(8)
+              .fontColor(tab.isPinned ? this.colors().accent : this.colors().textTertiary)
+          }
+          .width(18)
+          .height(18)
+          .justifyContent(FlexAlign.Center)
+          .borderRadius(Radius.XS)
+          .onClick(() => {
+            if (this.onTabPin) this.onTabPin(tab.id);
+          })
+
+          // 关闭按钮
+          Column() {
+            Text(Icons.CLOSE)
+              .fontSize(10)
+              .fontColor(this.colors().textTertiary)
+          }
+          .width(18)
+          .height(18)
+          .justifyContent(FlexAlign.Center)
+          .borderRadius(Radius.XS)
+          .onClick(() => {
+            if (this.onTabClose) this.onTabClose(tab.id);
+          })
+        }
+      }
+    }
+    .height(this.compact ? Spacing.TAB_HEIGHT_COMPACT : Spacing.TAB_HEIGHT)
+    .padding({ left: Spacing.MD, right: Spacing.SM })
+    .backgroundColor(tab.isActive ? this.colors().surface0 : Color.Transparent)
+    .border({
+      width: { top: tab.isActive ? 2 : 0, right: 0.5 },
+      color: tab.isActive ? this.colors().accent : this.colors().border
+    })
+    .onClick(() => {
+      if (this.onTabChange) this.onTabChange(tab.id);
+    })
+  }
+
+  @Builder
+  NewTabButton() {
+    Column() {
+      Text(Icons.PLUS)
+        .fontSize(16)
+        .fontColor(this.colors().textTertiary)
+    }
+    .width(32)
+    .height('100%')
+    .justifyContent(FlexAlign.Center)
+    .onClick(() => {
+      if (this.onNewTab) this.onNewTab();
+    })
+  }
+
   build() {
     Row() {
       List({ space: 0 }) {
         ForEach(this.tabs, (tab: TabItem, _index: number) => {
           ListItem() {
-            Row({ space: 6 }) {
-              if (tab.isPinned) {
-                Text(Icons.PIN)
-                  .fontSize(9)
-                  .fontColor(this.colors().accent)
-              }
-
-              Text('\uD83D\uDCC4')
-                .fontSize(12)
-                .fontColor(tab.isActive ? this.colors().fileIcon : this.colors().iconSecondary)
-
-              Text(tab.title + (tab.isModified ? ' \u25CF' : ''))
-                .fontSize(this.compact ? 11 : 12)
-                .fontColor(tab.isActive ? this.colors().textPrimary : this.colors().textMuted)
-                .fontWeight(tab.isActive ? FontWeight.Medium : FontWeight.Regular)
-                .maxLines(1)
-                .textOverflow({ overflow: TextOverflow.Ellipsis })
-
-              Button({ type: ButtonType.Circle }) {
-                Text(Icons.PIN)
-                  .fontSize(8)
-                  .fontColor(tab.isPinned ? this.colors().accent : this.colors().textMuted)
-              }
-              .width(14).height(14)
-              .backgroundColor(Color.Transparent)
-              .visibility(tab.isActive ? Visibility.Visible : Visibility.Hidden)
-              .onClick(() => {
-                if (this.onTabPin) this.onTabPin(tab.id);
-              })
-
-              Button({ type: ButtonType.Circle }) {
-                Text(Icons.CLOSE)
-                  .fontSize(10)
-                  .fontColor(this.colors().textMuted)
-              }
-              .width(16).height(16)
-              .backgroundColor(Color.Transparent)
-              .visibility(tab.isActive ? Visibility.Visible : Visibility.Hidden)
-              .onClick(() => {
-                if (this.onTabClose) this.onTabClose(tab.id);
-              })
-            }
-            .height(this.compact ? 32 : 36)
-            .padding({ left: Spacing.MD, right: Spacing.SM })
-            .backgroundColor(tab.isActive ? this.colors().tabActiveBg : this.colors().tabBg)
-            .border({
-              width: { top: tab.isActive ? 2 : 0, right: 1 },
-              color: tab.isActive ? this.colors().accent : this.colors().divider
-            })
-            .onClick(() => {
-              if (this.onTabChange) this.onTabChange(tab.id);
-            })
+            this.TabContent(tab)
           }
         }, (tab: TabItem) => tab.id)
       }
@@ -88,22 +136,11 @@ export struct TabBar {
       .listDirection(Axis.Horizontal)
       .scrollBar(BarState.Off)
 
-      Button({ type: ButtonType.Circle }) {
-        Text(Icons.NEW_TAB)
-          .fontSize(14)
-          .fontColor(this.colors().iconSecondary)
-      }
-      .width(28).height(28)
-      .backgroundColor(Color.Transparent)
-      .margin({ right: Spacing.SM })
-      .onClick(() => {
-        if (this.onNewTab) this.onNewTab();
-      })
+      this.NewTabButton()
     }
     .width('100%')
-    .height(this.compact ? 36 : 40)
-    .backgroundColor(this.colors().frostedBg)
-    .backgroundBlurStyle(BlurStyle.BACKGROUND_THIN, { colorMode: ThemeColorMode.SYSTEM })
-    .border({ width: { bottom: 1 }, color: this.colors().divider })
+    .height(this.compact ? Spacing.TAB_HEIGHT_COMPACT : Spacing.TAB_HEIGHT)
+    .backgroundColor(this.colors().surface1)
+    .border({ width: { bottom: 1 }, color: this.colors().border })
   }
 }

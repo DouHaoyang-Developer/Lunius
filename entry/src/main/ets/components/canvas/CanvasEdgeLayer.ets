@@ -29,7 +29,7 @@ export struct CanvasEdgeLayer {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, 9999, 9999);
 
-    const edgeColor = this.colors().textMuted;
+    const edgeColor = this.colors().textTertiary;
     for (const edge of this.vm.edges) {
       const fromNode = this.vm.nodes.find((n: CanvasNode) => n.id === edge.fromNode);
       const toNode = this.vm.nodes.find((n: CanvasNode) => n.id === edge.toNode);

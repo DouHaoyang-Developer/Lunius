@@ -419,7 +419,7 @@ struct LuniusApp {
           onNewTab: () => this.createNewNote()
         })
         this.EditorArea()
-      }.layoutWeight(1).height('100%').backgroundColor(this.colors().editorBg)
+      }.layoutWeight(1).height('100%').backgroundColor(this.colors().surface0)
 
       if (this.workspace.rightSidebarVisible && this.activeTab()) {
         RightSidebar({
@@ -434,7 +434,7 @@ struct LuniusApp {
           onClose: () => { this.workspace.rightSidebarVisible = false; }
         }).width(SidebarWidth.PC_RIGHT).height('100%')
       }
-    }.width('100%').height('100%').backgroundColor(this.colors().bgPrimary)
+    }.width('100%').height('100%').backgroundColor(this.colors().surface0)
   }
 
   @Builder
@@ -481,7 +481,7 @@ struct LuniusApp {
             })
           }
           this.EditorArea()
-        }.layoutWeight(1).height('100%').backgroundColor(this.colors().editorBg)
+        }.layoutWeight(1).height('100%').backgroundColor(this.colors().surface0)
 
         if (this.responsive.isLandscape && this.workspace.rightSidebarVisible
             && this.activeTab()) {
@@ -497,7 +497,7 @@ struct LuniusApp {
             onClose: () => { this.workspace.rightSidebarVisible = false; }
           }).width(SidebarWidth.TABLET_RIGHT).height('100%')
         }
-      }.width('100%').height('100%').backgroundColor(this.colors().bgPrimary)
+      }.width('100%').height('100%').backgroundColor(this.colors().surface0)
 
       if (this.showLeftOverlay) {
         this.LeftOverlayBuilder()
@@ -535,7 +535,7 @@ struct LuniusApp {
         .justifyContent(FlexAlign.Center)
         .padding({ bottom: this.responsive.safeAreaBottom > 0
           ? this.responsive.safeAreaBottom : Spacing.SM })
-      }.width('100%').height('100%').backgroundColor(this.colors().bgPrimary)
+      }.width('100%').height('100%').backgroundColor(this.colors().surface0)
 
       this.LeftEdgeGesture()
 
@@ -565,17 +565,19 @@ struct LuniusApp {
       GraphView().width('100%').layoutWeight(1)
     } else {
       Column({ space: Spacing.MD }) {
-        Text('\uD83D\uDCDD').fontSize(48)
+        Text(Icons.NEW_NOTE)
+          .fontSize(40)
+          .fontColor(this.colors().textTertiary)
         Text('\u6B22\u8FCE\u4F7F\u7528 Lunius')
           .fontSize(22).fontWeight(FontWeight.Bold).fontColor(this.colors().textPrimary)
-        Text('\u70B9\u51FB\u5DE6\u4FA7 "+" \u521B\u5EFA\u65B0\u7B14\u8BB0\uFF0C\u6216\u9009\u62E9\u6587\u4EF6\u5F00\u59CB\u7F16\u8F91')
+        Text('\u70B9\u51FB\u5DE6\u4FA7\u201C+\u201D\u521B\u5EFA\u65B0\u7B14\u8BB0\uFF0C\u6216\u9009\u62E9\u6587\u4EF6\u5F00\u59CB\u7F16\u8F91')
           .fontSize(14).fontColor(this.colors().textSecondary)
         Button('\u521B\u5EFA\u65B0\u7B14\u8BB0')
           .backgroundColor(this.colors().accent).borderRadius(8)
           .margin({ top: Spacing.SM })
           .onClick(() => this.createNewNote())
       }.width('100%').layoutWeight(1)
-      .justifyContent(FlexAlign.Center).backgroundColor(this.colors().editorBg)
+      .justifyContent(FlexAlign.Center).backgroundColor(this.colors().surface0)
     }
   }
 
@@ -698,11 +700,13 @@ struct LuniusApp {
 
       if (this.isLoading) {
         Column() {
-          Text('\u23F3').fontSize(32)
+          Text(Icons.LOADING)
+            .fontSize(28)
+            .fontColor(this.colors().textTertiary)
           Text('\u52A0\u8F7D\u4E2D...').fontSize(14)
             .fontColor(this.colors().textSecondary).margin({ top: Spacing.SM })
         }.width('100%').height('100%')
-        .backgroundColor(this.colors().bgPrimary).justifyContent(FlexAlign.Center).zIndex(90)
+        .backgroundColor(this.colors().surface0).justifyContent(FlexAlign.Center).zIndex(90)
       }
 
       if (this.showCollaborationPanel) {
@@ -746,7 +750,7 @@ struct LuniusApp {
       }
     }
     .width('100%').height('100%')
-    .backgroundColor(this.colors().bgPrimary)
+    .backgroundColor(this.colors().surface0)
     .onKeyEvent((event: KeyEvent): boolean => {
       const KEY_O = 2047;
       const KEY_P = 2056;

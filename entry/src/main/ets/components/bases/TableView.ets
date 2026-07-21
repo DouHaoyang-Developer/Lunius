@@ -30,7 +30,7 @@ export struct TableView {
       if (this.vm.isLoading) {
         Row() {
           LoadingProgress().width(24).height(24).color(this.colors().accent)
-          Text('加载中...').fontSize(14).fontColor(this.colors().textMuted).margin({ left: 8 })
+          Text('加载中...').fontSize(14).fontColor(this.colors().textTertiary).margin({ left: 8 })
         }
         .width('100%').height(60).justifyContent(FlexAlign.Center)
       } else {
@@ -53,13 +53,13 @@ export struct TableView {
           }, (col: ColumnDef) => col.key)
         }
         .width('100%').height(36)
-        .backgroundColor(this.colors().bgSecondary)
-        .border({ width: { bottom: 1 }, color: this.colors().divider })
+        .backgroundColor(this.colors().surface2)
+        .border({ width: { bottom: 1 }, color: this.colors().border })
 
         // 数据行
         if (this.vm.rows.length === 0) {
           Text('没有匹配的笔记')
-            .fontSize(14).fontColor(this.colors().textMuted).margin(40)
+            .fontSize(14).fontColor(this.colors().textTertiary).margin(40)
         } else {
           List({ space: 0 }) {
             ForEach(this.vm.rows, (row: TableRowData, index: number) => {
@@ -73,8 +73,8 @@ export struct TableView {
                   }, (col: ColumnDef) => col.key)
                 }
                 .width('100%').height(36)
-                .backgroundColor(index % 2 === 0 ? this.colors().bgPrimary : this.colors().bgSecondary)
-                .border({ width: { bottom: 0.5 }, color: this.colors().divider })
+                .backgroundColor(index % 2 === 0 ? this.colors().surface0 : this.colors().surface2)
+                .border({ width: { bottom: 0.5 }, color: this.colors().border })
                 .onClick(() => { if (this.onRowClick) this.onRowClick(row.noteId); })
               }
             }, (row: TableRowData) => row.noteId)
@@ -85,16 +85,16 @@ export struct TableView {
         // 底部状态栏
         Row() {
           Text(`${this.vm.filteredCount} / ${this.vm.totalCount} 条`)
-            .fontSize(11).fontColor(this.colors().textMuted).layoutWeight(1)
+            .fontSize(11).fontColor(this.colors().textTertiary).layoutWeight(1)
           Text(`${this.vm.config.columns.filter((c: ColumnDef) => c.visible).length} 列`)
-            .fontSize(11).fontColor(this.colors().textMuted)
+            .fontSize(11).fontColor(this.colors().textTertiary)
         }
         .width('100%').height(28).padding({ left: 12, right: 12 })
-        .backgroundColor(this.colors().bgSecondary)
-        .border({ width: { top: 1 }, color: this.colors().divider })
+        .backgroundColor(this.colors().surface2)
+        .border({ width: { top: 1 }, color: this.colors().border })
       }
     }
     .width('100%').height('100%')
-    .backgroundColor(this.colors().bgPrimary)
+    .backgroundColor(this.colors().surface0)
   }
 }

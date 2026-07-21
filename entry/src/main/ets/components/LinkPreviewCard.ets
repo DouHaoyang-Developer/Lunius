@@ -38,7 +38,7 @@ export struct LinkPreviewCard {
           Button({ type: ButtonType.Circle }) {
             Text('✕')
               .fontSize(10)
-              .fontColor(this.colors().textMuted)
+              .fontColor(this.colors().textTertiary)
           }
           .width(20)
           .height(20)
@@ -66,14 +66,14 @@ export struct LinkPreviewCard {
         Row({ space: 8 }) {
           Text(`${this.data.wordCount} 词`)
             .fontSize(11)
-            .fontColor(this.colors().textMuted)
+            .fontColor(this.colors().textTertiary)
 
           Blank()
 
           Button('打开')
             .fontSize(11)
             .fontColor(this.colors().accent)
-            .backgroundColor(this.colors().bgHover)
+            .backgroundColor(this.colors().surfaceHover)
             .height(28)
             .borderRadius(4)
             .padding({ left: 12, right: 12 })
@@ -85,12 +85,12 @@ export struct LinkPreviewCard {
         }
         .width('100%')
         .padding({ left: 12, right: 12, top: 4, bottom: 10 })
-        .border({ width: { top: 1 }, color: this.colors().divider })
+        .border({ width: { top: 1 }, color: this.colors().border })
       }
       .width(280)
-      .backgroundColor(this.colors().bgSecondary)
+      .backgroundColor(this.colors().surface2)
       .borderRadius(8)
-      .border({ width: 1, color: this.colors().divider })
+      .border({ width: 1, color: this.colors().border })
       .shadow({ radius: 12, color: 'rgba(0,0,0,0.25)', offsetX: 0, offsetY: 4 })
       .position({ x: 'auto', y: 0 })
       .zIndex(250)

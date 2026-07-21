@@ -56,7 +56,7 @@ export struct ColumnConfigBar {
                   .layoutWeight(1).textOverflow({ overflow: TextOverflow.Ellipsis }).maxLines(1)
 
                 Text(`${col.width}px`)
-                  .fontSize(10).fontColor(this.colors().textMuted)
+                  .fontSize(10).fontColor(this.colors().textTertiary)
               }
               .width('100%').height(32).padding({ left: 12, right: 12 })
             }
@@ -66,6 +66,6 @@ export struct ColumnConfigBar {
       }
     }
     .width('100%')
-    .backgroundColor(this.colors().bgSecondary)
+    .backgroundColor(this.colors().surface2)
   }
 }

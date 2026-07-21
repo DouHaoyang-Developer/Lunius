@@ -34,23 +34,23 @@ struct FilterConditionRow {
       // 属性选择
       TextInput({ text: $$this.condition.property, placeholder: '属性' })
         .fontSize(12).fontColor(this.colors().textPrimary)
-        .width(80).height(30).backgroundColor(this.colors().bgTertiary).borderRadius(4)
+        .width(80).height(30).backgroundColor(this.colors().surface1).borderRadius(4)
 
       // 运算符选择
       TextInput({ text: '=', placeholder: '=' })
         .fontSize(12).fontColor(this.colors().accent).width(30).height(30)
-        .backgroundColor(this.colors().bgTertiary).borderRadius(4)
+        .backgroundColor(this.colors().surface1).borderRadius(4)
 
       // 值输入（exists/not_exists 不需要）
       if (this.condition.operator !== 'exists' && this.condition.operator !== 'not_exists') {
         TextInput({ text: $$this.condition.value, placeholder: '值' })
           .fontSize(12).fontColor(this.colors().textPrimary)
           .layoutWeight(1).height(30)
-          .backgroundColor(this.colors().bgTertiary).borderRadius(4)
+          .backgroundColor(this.colors().surface1).borderRadius(4)
       }
 
       Button({ type: ButtonType.Circle }) {
-        Text('✕').fontSize(10).fontColor(this.colors().textMuted)
+        Text('✕').fontSize(10).fontColor(this.colors().textTertiary)
       }
       .width(20).height(20).backgroundColor(Color.Transparent)
       .onClick(() => { if (this.onRemove) this.onRemove(); })
@@ -106,7 +106,7 @@ export struct FilterEditor {
           Button('+ 条件')
             .fontSize(12).fontColor(this.colors().accent)
             .height(28).padding({ left: 8, right: 8 })
-            .backgroundColor(this.colors().bgTertiary).borderRadius(4)
+            .backgroundColor(this.colors().surface1).borderRadius(4)
             .onClick(() => {
               const newCond: FilterCondition = {
                 property: '', operator: 'contains', value: ''
@@ -115,9 +115,9 @@ export struct FilterEditor {
             })
 
           Button('清除')
-            .fontSize(12).fontColor(this.colors().textMuted)
+            .fontSize(12).fontColor(this.colors().textTertiary)
             .height(28).padding({ left: 8, right: 8 })
-            .backgroundColor(this.colors().bgTertiary).borderRadius(4)
+            .backgroundColor(this.colors().surface1).borderRadius(4)
             .onClick(() => {
               this.filter().conditions = [];
             })
@@ -126,7 +126,7 @@ export struct FilterEditor {
       }
     }
     .width('100%')
-    .backgroundColor(this.colors().bgSecondary)
-    .border({ width: { bottom: 1 }, color: this.colors().divider })
+    .backgroundColor(this.colors().surface2)
+    .border({ width: { bottom: 1 }, color: this.colors().border })
   }
 }

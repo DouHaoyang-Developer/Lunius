@@ -1,4 +1,8 @@
-import { LuniusColors, ThemeMode, getColors, Spacing, Radius } from '../utils/Theme';
+// components/FileTree.ets
+// 文件树 — Vault 导航树
+// 设计：几何图标、hover/active 态、搜索过滤、右键菜单
+
+import { LuniusColors, ThemeMode, getColors, Spacing, Radius, Icons } from '../utils/Theme';
 import { FileNode, NodeType } from '../models/FileNode';
 
 interface ContextMenuAction {
@@ -27,12 +31,12 @@ struct FileTreeNode {
 
   private nodeIcon(): string {
     if (this.node.type === NodeType.VAULT) {
-      return '\uD83D\uDC8E';
+      return Icons.VAULT;
     }
     if (this.node.type === NodeType.FOLDER) {
-      return this.node.isExpanded ? '\uD83D\uDCC2' : '\uD83D\uDCC1';
+      return this.node.isExpanded ? Icons.FOLDER_OPEN : Icons.FOLDER_CLOSED;
     }
-    return '\uD83D\uDCC4';
+    return Icons.FILE;
   }
 
   private nodeColor(): string {
@@ -42,18 +46,62 @@ struct FileTreeNode {
     return this.colors().fileIcon;
   }
 
+  @Builder
+  ContextMenu() {
+    if (this.showContextMenu && this.isPC) {
+      Column({ space: 0 }) {
+        ForEach(
+          [
+            { label: '\u5728\u65B0\u7A97\u53E3\u6253\u5F00', action: 'open' } as ContextMenuAction,
+            { label: '\u91CD\u547D\u540D', action: 'rename' } as ContextMenuAction,
+            { label: '\u5220\u9664', action: 'delete' } as ContextMenuAction
+          ] as ContextMenuAction[],
+          (item: ContextMenuAction, _idx: number) => {
+            Text(item.label)
+              .fontSize(12)
+              .fontColor(item.action === 'delete'
+                ? this.colors().error : this.colors().textPrimary)
+              .width('100%')
+              .height(32)
+              .padding({ left: Spacing.MD, right: Spacing.MD })
+              .backgroundColor(Color.Transparent)
+              .onClick(() => {
+                if (item.action === 'open' && this.onOpenInNewWindow) {
+                  this.onOpenInNewWindow(this.node);
+                } else if (item.action === 'rename' && this.onRename) {
+                  this.onRename(this.node);
+                } else if (item.action === 'delete' && this.onDelete) {
+                  this.onDelete(this.node);
+                }
+                this.showContextMenu = false;
+              })
+          }, (item: ContextMenuAction) => item.action
+        )
+      }
+      .width(150)
+      .backgroundColor(this.colors().surface2)
+      .borderRadius(Radius.MD)
+      .border({ width: 1, color: this.colors().border })
+      .shadow({ radius: 12, color: 'rgba(0,0,0,0.2)', offsetX: 2, offsetY: 4 })
+      .position({ x: 40, y: 30 })
+      .zIndex(10)
+    }
+  }
+
   build() {
     Column() {
       Row() {
+        // 缩进
         Row()
           .width(this.level * this.indentSize)
           .height('100%')
 
+        // 展开/折叠箭头
         if (this.node.type !== NodeType.FILE && this.node.children &&
             this.node.children.length > 0) {
-          Text(this.node.isExpanded ? '\u25BC' : '\u25B6')
-            .fontSize(10)
-            .fontColor(this.colors().textMuted)
+          Text(this.node.isExpanded ? Icons.CHEVRON_DOWN : Icons.CHEVRON_RIGHT)
+            .fontSize(9)
+            .fontColor(this.colors().textTertiary)
             .width(18)
             .textAlign(TextAlign.Center)
             .onClick(() => {
@@ -65,10 +113,13 @@ struct FileTreeNode {
           Row().width(18)
         }
 
+        // 图标
         Text(this.nodeIcon())
-          .fontSize(15)
+          .fontSize(13)
+          .fontColor(this.nodeColor())
           .margin({ right: Spacing.SM })
 
+        // 文件名
         Text(this.node.name)
           .fontSize(13)
           .fontColor(this.node.isActive ? this.colors().accent : this.colors().textPrimary)
@@ -77,19 +128,23 @@ struct FileTreeNode {
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .maxLines(1)
 
+        // 字数徽标
         if (this.node.type === NodeType.FILE && this.node.wordCount &&
             this.node.wordCount > 0) {
           Text(String(this.node.wordCount))
             .fontSize(10)
-            .fontColor(this.colors().textMuted)
+            .fontColor(this.colors().textTertiary)
+            .backgroundColor(this.colors().surface2)
+            .padding({ left: Spacing.XS, right: Spacing.XS, top: 1, bottom: 1 })
+            .borderRadius(Radius.XS)
             .margin({ left: Spacing.XS })
         }
       }
       .width('100%')
-      .height(36)
+      .height(Spacing.FILE_TREE_ITEM)
       .padding({ left: Spacing.SM, right: Spacing.MD })
-      .backgroundColor(this.isHovered ? this.colors().bgHover :
-        this.node.isActive ? this.colors().bgActive : Color.Transparent)
+      .backgroundColor(this.isHovered ? this.colors().surfaceHover :
+        this.node.isActive ? this.colors().surfaceActive : Color.Transparent)
       .borderRadius(Radius.SM)
       .onHover((isHover: boolean) => {
         this.isHovered = isHover;
@@ -109,44 +164,7 @@ struct FileTreeNode {
           })
       )
 
-      if (this.showContextMenu && this.isPC) {
-        Column({ space: 0 }) {
-          ForEach(
-            [
-              { label: '\u25A1 \u5728\u65B0\u7A97\u53E3\u6253\u5F00', action: 'open' } as ContextMenuAction,
-              { label: '\u270F \u91CD\u547D\u540D', action: 'rename' } as ContextMenuAction,
-              { label: '\uD83D\uDDD1 \u5220\u9664', action: 'delete' } as ContextMenuAction
-            ] as ContextMenuAction[],
-            (item: ContextMenuAction, _idx: number) => {
-              Text(item.label)
-                .fontSize(12)
-                .fontColor(item.action === 'delete'
-                  ? this.colors().errorColor : this.colors().textPrimary)
-                .width('100%')
-                .height(32)
-                .padding({ left: Spacing.MD, right: Spacing.MD })
-                .backgroundColor(this.colors().bgSecondary)
-                .onClick(() => {
-                  if (item.action === 'open' && this.onOpenInNewWindow) {
-                    this.onOpenInNewWindow(this.node);
-                  } else if (item.action === 'rename' && this.onRename) {
-                    this.onRename(this.node);
-                  } else if (item.action === 'delete' && this.onDelete) {
-                    this.onDelete(this.node);
-                  }
-                  this.showContextMenu = false;
-                })
-            }, (item: ContextMenuAction) => item.action
-          )
-        }
-        .width(150)
-        .backgroundColor(this.colors().bgSecondary)
-        .borderRadius(Radius.MD)
-        .border({ width: 1, color: this.colors().divider })
-        .shadow({ radius: 12, color: 'rgba(0,0,0,0.3)', offsetX: 2, offsetY: 4 })
-        .position({ x: 40, y: 30 })
-        .zIndex(10)
-      }
+      this.ContextMenu()
 
       if (this.node.isExpanded && this.node.children) {
         ForEach(this.node.children, (child: FileNode) => {
@@ -252,58 +270,73 @@ export struct FileTree {
     return count;
   }
 
+  @Builder
+  EmptyState() {
+    Column({ space: Spacing.SM }) {
+      Text(Icons.SEARCH)
+        .fontSize(28)
+        .fontColor(this.colors().textTertiary)
+      Text('\u672A\u627E\u5230\u5339\u914D\u6587\u4EF6')
+        .fontSize(13)
+        .fontColor(this.colors().textTertiary)
+    }
+    .width('100%')
+    .layoutWeight(1)
+    .justifyContent(FlexAlign.Center)
+  }
+
+  @Builder
+  NewFileButton() {
+    Column() {
+      Text(Icons.PLUS)
+        .fontSize(16)
+        .fontColor(this.colors().accent)
+    }
+    .width(28)
+    .height(28)
+    .justifyContent(FlexAlign.Center)
+    .borderRadius(Radius.SM)
+    .backgroundColor(this.colors().surface2)
+    .onClick(() => {
+      if (this.onCreateNew) {
+        this.onCreateNew();
+      }
+    })
+    .gesture(
+      LongPressGesture()
+        .onAction(() => {
+          if (this.onCreateFromTemplate) {
+            this.onCreateFromTemplate();
+          }
+        })
+    )
+  }
+
   build() {
     Column() {
+      // 搜索栏
       Row({ space: Spacing.SM }) {
         TextInput({ placeholder: '\u641C\u7D22\u6587\u4EF6...', text: $$this.searchQuery })
-          .placeholderColor(this.colors().textMuted)
+          .placeholderColor(this.colors().textTertiary)
           .fontColor(this.colors().textPrimary)
           .fontSize(13)
           .height(32)
-          .backgroundColor(this.colors().bgTertiary)
+          .backgroundColor(this.colors().surface2)
           .borderRadius(Radius.SM)
           .layoutWeight(1)
           .padding({ left: Spacing.SM, right: Spacing.SM })
 
-        Button({ type: ButtonType.Circle }) {
-          Text('+')
-            .fontSize(18)
-            .fontColor(this.colors().accent)
-        }
-        .width(28)
-        .height(28)
-        .backgroundColor(this.colors().bgHover)
-        .onClick(() => {
-          if (this.onCreateNew) {
-            this.onCreateNew();
-          }
-        })
-        .gesture(
-          LongPressGesture()
-            .onAction(() => {
-              if (this.onCreateFromTemplate) {
-                this.onCreateFromTemplate();
-              }
-            })
-        )
+        this.NewFileButton()
       }
       .width('100%')
       .height(44)
       .padding({ left: Spacing.MD, right: Spacing.MD })
-      .backgroundColor(this.colors().sidebarBg)
-      .border({ width: { bottom: 1 }, color: this.colors().divider })
+      .backgroundColor(this.colors().surface1)
+      .border({ width: { bottom: 1 }, color: this.colors().border })
 
+      // 文件列表
       if (this.filteredData().length === 0 && this.searchQuery !== '') {
-        Column({ space: Spacing.SM }) {
-          Text('\uD83D\uDD0D')
-            .fontSize(28)
-          Text('\u672A\u627E\u5230\u5339\u914D\u6587\u4EF6')
-            .fontSize(13)
-            .fontColor(this.colors().textMuted)
-        }
-        .width('100%')
-        .layoutWeight(1)
-        .justifyContent(FlexAlign.Center)
+        this.EmptyState()
       } else {
         List({ space: 2 }) {
           ForEach(this.filteredData(), (root: FileNode) => {
@@ -324,23 +357,24 @@ export struct FileTree {
         .width('100%')
         .layoutWeight(1)
         .padding({ top: Spacing.XS, bottom: Spacing.XS })
-        .backgroundColor(this.colors().sidebarBg)
+        .backgroundColor(this.colors().surface1)
         .scrollBar(BarState.Auto)
       }
 
+      // 底部统计
       Row() {
         Text(String(this.countFiles(this.data)) + ' \u4E2A\u6587\u4EF6')
           .fontSize(11)
-          .fontColor(this.colors().textMuted)
+          .fontColor(this.colors().textTertiary)
       }
       .width('100%')
       .height(28)
       .padding({ left: Spacing.MD, right: Spacing.MD })
-      .backgroundColor(this.colors().sidebarBg)
-      .border({ width: { top: 1 }, color: this.colors().divider })
+      .backgroundColor(this.colors().surface1)
+      .border({ width: { top: 1 }, color: this.colors().border })
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.colors().sidebarBg)
+    .backgroundColor(this.colors().surface1)
   }
 }

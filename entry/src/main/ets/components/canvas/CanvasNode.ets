@@ -92,10 +92,10 @@ export struct CanvasNodeComponent {
         }
         .width(this.node.width * this.zoomScale)
         .height(this.node.height * this.zoomScale)
-        .backgroundColor(this.colors().bgSecondary)
+        .backgroundColor(this.colors().surface2)
         .border({
           width: this.isSelected ? 2 : 1,
-          color: this.isSelected ? this.colors().accent : this.colors().divider
+          color: this.isSelected ? this.colors().accent : this.colors().border
         })
         .borderRadius(6)
         .shadow(this.isSelected ? { radius: 8, color: this.colors().accent + '40' } : {})

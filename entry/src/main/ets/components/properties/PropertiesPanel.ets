@@ -56,7 +56,7 @@ export struct PropertiesPanel {
 
         Text(this.isExpanded ? '▼' : '▶')
           .fontSize(10)
-          .fontColor(this.colors().textMuted)
+          .fontColor(this.colors().textTertiary)
           .onClick(() => {
             this.isExpanded = !this.isExpanded;
           })
@@ -77,7 +77,7 @@ export struct PropertiesPanel {
       .width('100%')
       .height(36)
       .padding({ left: 12, right: 12 })
-      .backgroundColor(this.colors().sidebarBg)
+      .backgroundColor(this.colors().surface1)
 
       if (this.isExpanded) {
         Column({ space: 0 }) {
@@ -89,7 +89,7 @@ export struct PropertiesPanel {
         }
         .width('100%')
         .padding({ top: 4, bottom: 4 })
-        .border({ width: { bottom: 1 }, color: this.colors().divider })
+        .border({ width: { bottom: 1 }, color: this.colors().border })
 
         List({ space: 0 }) {
           ForEach(this.properties(), (prop: PropertyItem, index: number) => {
@@ -109,7 +109,7 @@ export struct PropertiesPanel {
               .fontColor(this.colors().textPrimary)
               .width(80)
               .height(28)
-              .backgroundColor(this.colors().bgTertiary)
+              .backgroundColor(this.colors().surface1)
               .borderRadius(4)
 
             TextInput({ placeholder: '值', text: $$this.editingValue })
@@ -117,7 +117,7 @@ export struct PropertiesPanel {
               .fontColor(this.colors().textPrimary)
               .layoutWeight(1)
               .height(28)
-              .backgroundColor(this.colors().bgTertiary)
+              .backgroundColor(this.colors().surface1)
               .borderRadius(4)
 
             Button({ type: ButtonType.Circle }) {
@@ -143,7 +143,7 @@ export struct PropertiesPanel {
       }
     }
     .width('100%')
-    .backgroundColor(this.colors().sidebarBg)
+    .backgroundColor(this.colors().surface1)
     .borderRadius(4)
   }
 
@@ -152,7 +152,7 @@ export struct PropertiesPanel {
     Row() {
       Text(label)
         .fontSize(11)
-        .fontColor(this.colors().textMuted)
+        .fontColor(this.colors().textTertiary)
         .width(60)
       Text(value)
         .fontSize(11)
@@ -171,7 +171,7 @@ export struct PropertiesPanel {
     Row({ space: 8 }) {
       Text(prop.key)
         .fontSize(12)
-        .fontColor(this.colors().textMuted)
+        .fontColor(this.colors().textTertiary)
         .width(70)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .maxLines(1)

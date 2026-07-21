@@ -25,7 +25,7 @@ export struct SplitView {
           .fontSize(14)
           .fontColor(this.colors().textPrimary)
           .fontFamily('monospace')
-          .backgroundColor(this.colors().editorBg)
+          .backgroundColor(this.colors().surface0)
           .padding(16)
           .onChange((value: string) => {
             this.vm.updateContent(value);
@@ -33,14 +33,14 @@ export struct SplitView {
       }
       .width(`${this.editorWidth}%`)
       .height('100%')
-      .border({ width: { right: 1 }, color: this.colors().divider })
+      .border({ width: { right: 1 }, color: this.colors().border })
 
       // 拖拽条
       Column() {
         Row()
           .width(4)
           .height('100%')
-          .backgroundColor(this.isDragging ? this.colors().accent : this.colors().divider)
+          .backgroundColor(this.isDragging ? this.colors().accent : this.colors().border)
           .borderRadius(2)
       }
       .width(8)
@@ -90,6 +90,6 @@ export struct SplitView {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.colors().editorBg)
+    .backgroundColor(this.colors().surface0)
   }
 }

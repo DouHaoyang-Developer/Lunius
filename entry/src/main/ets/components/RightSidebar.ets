@@ -1,3 +1,7 @@
+// components/RightSidebar.ets
+// 右侧边栏 — 大纲/反向链接/书签
+// 设计：与左侧栏一致的标签条 + 内容区
+
 import { LuniusColors, ThemeMode, getColors, Spacing, Radius, Icons, SidebarTab, RightSidebarTabs } from '../utils/Theme';
 import { OutlineView } from './OutlineView';
 import { BacklinksView } from './BacklinksView';
@@ -48,70 +52,90 @@ export struct RightSidebar {
     return result;
   }
 
+  @Builder
+  TabItem(tab: SidebarTab) {
+    Column() {
+      Text(tab.icon)
+        .fontSize(16)
+        .fontColor(this.activeTab === tab.id
+          ? this.colors().accent
+          : this.colors().textTertiary)
+
+      Row()
+        .width(18)
+        .height(2)
+        .backgroundColor(this.activeTab === tab.id
+          ? this.colors().accent : Color.Transparent)
+        .borderRadius(Radius.FULL)
+        .margin({ top: 3 })
+    }
+    .width(44)
+    .height(Spacing.SIDEBAR_TAB_HEIGHT)
+    .justifyContent(FlexAlign.Center)
+    .borderRadius(Radius.SM)
+    .onClick(() => {
+      if (this.onTabChange) {
+        this.onTabChange(tab.id);
+      }
+    })
+  }
+
+  @Builder
+  CloseButton() {
+    Column() {
+      Text(Icons.CLOSE)
+        .fontSize(13)
+        .fontColor(this.colors().textTertiary)
+    }
+    .width(28)
+    .height(28)
+    .justifyContent(FlexAlign.Center)
+    .borderRadius(Radius.SM)
+    .onClick(() => {
+      if (this.onClose) this.onClose();
+    })
+  }
+
+  @Builder
+  CollapseButton() {
+    Column() {
+      Text(Icons.SIDEBAR_RIGHT)
+        .fontSize(13)
+        .fontColor(this.colors().textTertiary)
+    }
+    .width(28)
+    .height(28)
+    .justifyContent(FlexAlign.Center)
+    .borderRadius(Radius.SM)
+    .onClick(() => {
+      if (this.onClose) this.onClose();
+    })
+  }
+
   build() {
     Column() {
+      // 标签条
       Row() {
         ForEach(this.tabs, (tab: SidebarTab) => {
-          Column() {
-            Text(tab.icon)
-              .fontSize(16)
-              .fontColor(this.activeTab === tab.id
-                ? this.colors().accent
-                : this.colors().iconSecondary)
-
-            Row()
-              .width(16)
-              .height(2)
-              .backgroundColor(this.activeTab === tab.id
-                ? this.colors().accent : Color.Transparent)
-              .borderRadius(1)
-              .margin({ top: 2 })
-          }
-          .width(44)
-          .height(Spacing.SIDEBAR_TAB_HEIGHT)
-          .justifyContent(FlexAlign.Center)
-          .onClick(() => {
-            if (this.onTabChange) {
-              this.onTabChange(tab.id);
-            }
-          })
+          this.TabItem(tab)
         }, (tab: SidebarTab) => tab.id)
 
         Blank()
 
         if (this.isOverlay) {
-          Button({ type: ButtonType.Circle }) {
-            Text(Icons.CLOSE)
-              .fontSize(12)
-              .fontColor(this.colors().textMuted)
-          }
-          .width(28)
-          .height(28)
-          .backgroundColor(Color.Transparent)
-          .onClick(() => {
-            if (this.onClose) this.onClose();
-          })
+          this.CloseButton()
         } else {
-          Button({ type: ButtonType.Circle }) {
-            Text(Icons.SIDEBAR_RIGHT)
-              .fontSize(12)
-              .fontColor(this.colors().iconSecondary)
-          }
-          .width(28)
-          .height(28)
-          .backgroundColor(Color.Transparent)
-          .onClick(() => {
-            if (this.onClose) this.onClose();
-          })
+          this.CollapseButton()
         }
       }
       .width('100%')
       .height(Spacing.SIDEBAR_TAB_HEIGHT)
       .padding({ left: Spacing.SM, right: Spacing.SM })
       .justifyContent(FlexAlign.Start)
-      .backgroundColor(this.colors().sidebarBg)
-      .border({ width: { bottom: 1 }, color: this.colors().divider })
+      .backgroundColor(this.colors().surface1)
+      .border({ width: { bottom: 1 }, color: this.colors().border })
 
+      // 内容区
       if (this.activeTab === 'outline') {
         OutlineView({
           data: this.getOutline(),
@@ -136,11 +160,11 @@ export struct RightSidebar {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.isOverlay ? this.colors().frostedBgThick : this.colors().frostedBg)
+    .backgroundColor(this.isOverlay ? this.colors().frostedBgThick : this.colors().surface1)
     .backgroundBlurStyle(
       this.isOverlay ? BlurStyle.BACKGROUND_THICK : BlurStyle.BACKGROUND_REGULAR,
       { colorMode: ThemeColorMode.SYSTEM }
     )
-    .border({ width: { left: 1 }, color: this.colors().divider })
+    .border({ width: { left: 1 }, color: this.colors().border })
   }
 }

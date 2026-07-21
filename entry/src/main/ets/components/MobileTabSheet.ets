@@ -26,15 +26,15 @@ export struct MobileTabSheet {
 
         Text(String(this.tabs.length))
           .fontSize(12)
-          .fontColor(this.colors().textMuted)
-          .backgroundColor(this.colors().bgTertiary)
+          .fontColor(this.colors().textTertiary)
+          .backgroundColor(this.colors().surface1)
           .padding({ left: Spacing.SM, right: Spacing.SM, top: 2, bottom: 2 })
           .borderRadius(10)
 
         Button({ type: ButtonType.Circle }) {
           Text(Icons.CLOSE)
             .fontSize(14)
-            .fontColor(this.colors().textMuted)
+            .fontColor(this.colors().textTertiary)
         }
         .width(32)
         .height(32)
@@ -55,7 +55,7 @@ export struct MobileTabSheet {
             Row({ space: Spacing.SM }) {
               Text('\uD83D\uDCC4')
                 .fontSize(14)
-                .fontColor(tab.isActive ? this.colors().accent : this.colors().iconSecondary)
+                .fontColor(tab.isActive ? this.colors().accent : this.colors().textSecondary)
 
               Text(tab.title + (tab.isModified ? ' \u25CF' : ''))
                 .fontSize(14)
@@ -76,7 +76,7 @@ export struct MobileTabSheet {
               Button({ type: ButtonType.Circle }) {
                 Text(Icons.CLOSE)
                   .fontSize(12)
-                  .fontColor(this.colors().textMuted)
+                  .fontColor(this.colors().textTertiary)
               }
               .width(28)
               .height(28)
@@ -88,7 +88,7 @@ export struct MobileTabSheet {
             .width('100%')
             .height(48)
             .padding({ left: Spacing.LG, right: Spacing.SM })
-            .backgroundColor(tab.isActive ? this.colors().bgActive : Color.Transparent)
+            .backgroundColor(tab.isActive ? this.colors().surfaceActive : Color.Transparent)
             .borderRadius(Radius.SM)
             .onClick(() => {
               this.onSwitchTab(tab.id);
@@ -112,7 +112,7 @@ export struct MobileTabSheet {
               .fontColor(this.colors().accent)
           }
         }
-        .backgroundColor(this.colors().bgHover)
+        .backgroundColor(this.colors().surfaceHover)
         .borderRadius(Radius.MD)
         .height(40)
         .padding({ left: Spacing.XL, right: Spacing.XL })

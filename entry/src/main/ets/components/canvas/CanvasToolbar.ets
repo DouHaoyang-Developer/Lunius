@@ -19,42 +19,42 @@ export struct CanvasToolbar {
       Button({ type: ButtonType.Circle }) {
         Text('T').fontSize(14).fontWeight(FontWeight.Bold).fontColor(this.colors().textPrimary)
       }
-      .width(32).height(32).backgroundColor(this.colors().bgTertiary)
+      .width(32).height(32).backgroundColor(this.colors().surface1)
       .onClick(() => { this.vm.addNode('text', 100, 100); })
 
       // 添加文件节点
       Button({ type: ButtonType.Circle }) {
         Text('📄').fontSize(14)
       }
-      .width(32).height(32).backgroundColor(this.colors().bgTertiary)
+      .width(32).height(32).backgroundColor(this.colors().surface1)
       .onClick(() => { this.vm.addNode('file', 200, 100); })
 
       // 添加链接节点
       Button({ type: ButtonType.Circle }) {
         Text('🔗').fontSize(14)
       }
-      .width(32).height(32).backgroundColor(this.colors().bgTertiary)
+      .width(32).height(32).backgroundColor(this.colors().surface1)
       .onClick(() => { this.vm.addNode('link', 300, 100); })
 
       // 分隔
-      Divider().vertical(true).height(20).color(this.colors().divider)
+      Divider().vertical(true).height(20).color(this.colors().border)
 
       // 手写模式切换
       Button({ type: ButtonType.Circle }) {
         Text('✏️').fontSize(14)
       }
       .width(32).height(32)
-      .backgroundColor(this.vm.drawingMode !== 'none' ? this.colors().accent : this.colors().bgTertiary)
+      .backgroundColor(this.vm.drawingMode !== 'none' ? this.colors().accent : this.colors().surface1)
       .onClick(() => { this.vm.cycleDrawingMode(); })
 
       // 分隔
-      Divider().vertical(true).height(20).color(this.colors().divider)
+      Divider().vertical(true).height(20).color(this.colors().border)
 
       // 缩放控制
       Button({ type: ButtonType.Circle }) {
         Text('-').fontSize(16).fontColor(this.colors().textPrimary)
       }
-      .width(28).height(28).backgroundColor(this.colors().bgTertiary)
+      .width(28).height(28).backgroundColor(this.colors().surface1)
       .onClick(() => {
         this.vm.updateViewport(this.vm.zoomScale * 0.8, this.vm.offsetX, this.vm.offsetY);
       })
@@ -65,36 +65,36 @@ export struct CanvasToolbar {
       Button({ type: ButtonType.Circle }) {
         Text('+').fontSize(16).fontColor(this.colors().textPrimary)
       }
-      .width(28).height(28).backgroundColor(this.colors().bgTertiary)
+      .width(28).height(28).backgroundColor(this.colors().surface1)
       .onClick(() => {
         this.vm.updateViewport(this.vm.zoomScale * 1.25, this.vm.offsetX, this.vm.offsetY);
       })
 
       // 分隔
-      Divider().vertical(true).height(20).color(this.colors().divider)
+      Divider().vertical(true).height(20).color(this.colors().border)
 
       // 撤销/重做
       Button({ type: ButtonType.Circle }) {
         Text('↩').fontSize(14).fontColor(this.colors().textPrimary)
       }
-      .width(28).height(28).backgroundColor(this.colors().bgTertiary)
+      .width(28).height(28).backgroundColor(this.colors().surface1)
       .onClick(() => { this.vm.undo(); })
 
       Button({ type: ButtonType.Circle }) {
         Text('↪').fontSize(14).fontColor(this.colors().textPrimary)
       }
-      .width(28).height(28).backgroundColor(this.colors().bgTertiary)
+      .width(28).height(28).backgroundColor(this.colors().surface1)
       .onClick(() => { this.vm.redo(); })
 
       // 重置视图
       Button({ type: ButtonType.Circle }) {
         Text('⊡').fontSize(14).fontColor(this.colors().textPrimary)
       }
-      .width(28).height(28).backgroundColor(this.colors().bgTertiary)
+      .width(28).height(28).backgroundColor(this.colors().surface1)
       .onClick(() => { this.vm.resetView(); })
     }
     .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-    .backgroundColor(this.colors().bgSecondary + 'E6')
+    .backgroundColor(this.colors().surface2 + 'E6')
     .borderRadius(20)
     .shadow({ radius: 4, color: '#00000020' })
   }

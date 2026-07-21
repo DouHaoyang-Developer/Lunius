@@ -69,7 +69,7 @@ export struct ContextMenu {
       }
       .width(168)
       .padding({ top: Spacing.XS, bottom: Spacing.XS })
-      .backgroundColor(this.colors().bgSecondary)
+      .backgroundColor(this.colors().surface2)
       .borderRadius(Radius.SM)
       .border({ width: 1, color: this.colors().border })
       .shadow({ radius: 12, color: 'rgba(0,0,0,0.28)', offsetX: 2, offsetY: 4 })

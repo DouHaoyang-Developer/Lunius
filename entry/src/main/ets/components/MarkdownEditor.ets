@@ -1,6 +1,6 @@
 import { picker } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
-import { LuniusColors, ThemeMode, getColors, Spacing, Radius } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors, Spacing, Radius, Icons } from '../utils/Theme';
 import { NoteViewModel } from '../viewmodels/NoteViewModel';
 import { Breadcrumb, BreadcrumbItem } from './breadcrumb/Breadcrumb';
 import { StatusBar } from './statusbar/StatusBar';
@@ -467,73 +467,133 @@ export struct MarkdownEditor {
 
         if (!this.isMobileMode) {
           Row({ space: Spacing.SM }) {
-            Button({ type: ButtonType.Circle }) {
-              Text('\u2190').fontSize(14).fontColor(this.colors().iconSecondary)
+            // 导航组
+            Column() {
+              Text(Icons.BACK)
+                .fontSize(13)
+                .fontColor(this.canNavigateBack
+                  ? this.colors().textSecondary : this.colors().textDisabled)
             }
-            .width(28).height(28).backgroundColor(this.colors().bgHover)
+            .width(28).height(28)
+            .justifyContent(FlexAlign.Center)
+            .borderRadius(Radius.SM)
             .onClick(() => { if (this.onNavigateBack) this.onNavigateBack(); })
 
-            Button({ type: ButtonType.Circle }) {
-              Text('\u2192').fontSize(14).fontColor(this.colors().iconSecondary)
+            Column() {
+              Text(Icons.FORWARD)
+                .fontSize(13)
+                .fontColor(this.canNavigateForward
+                  ? this.colors().textSecondary : this.colors().textDisabled)
             }
-            .width(28).height(28).backgroundColor(this.colors().bgHover)
+            .width(28).height(28)
+            .justifyContent(FlexAlign.Center)
+            .borderRadius(Radius.SM)
             .onClick(() => { if (this.onNavigateForward) this.onNavigateForward(); })
 
-            Divider().vertical(true).height(20).color(this.colors().divider)
+            // 分隔线
+            Divider().vertical(true).height(16).color(this.colors().border)
 
-            Button({ type: ButtonType.Normal }) {
+            // 视图模式切换
+            Row({ space: 0 }) {
               Text(this.viewModeLabel())
-                .fontSize(12).fontColor(this.colors().accent).fontWeight(FontWeight.Medium)
+                .fontSize(12)
+                .fontColor(this.colors().accent)
+                .fontWeight(FontWeight.Medium)
             }
-            .backgroundColor(this.colors().bgHover).borderRadius(4)
-            .height(28).padding({ left: Spacing.SM, right: Spacing.SM })
+            .height(28)
+            .padding({ left: Spacing.SM, right: Spacing.SM })
+            .backgroundColor(this.colors().surface2)
+            .borderRadius(Radius.SM)
             .onClick(() => this.cycleViewMode())
 
-            Divider().vertical(true).height(20).color(this.colors().divider)
+            // 分隔线
+            Divider().vertical(true).height(16).color(this.colors().border)
 
-            Button({ type: ButtonType.Circle }) {
-              Text('B').fontSize(14).fontWeight(FontWeight.Bold)
+            // 格式化按钮组
+            Column() {
+              Text('B')
+                .fontSize(14)
+                .fontWeight(FontWeight.Bold)
                 .fontColor(this.colors().textSecondary)
-            }.width(28).height(28).backgroundColor(this.colors().bgHover)
-            Button({ type: ButtonType.Circle }) {
-              Text('I').fontSize(14).fontStyle(FontStyle.Italic)
+            }
+            .width(28).height(28)
+            .justifyContent(FlexAlign.Center)
+            .borderRadius(Radius.SM)
+
+            Column() {
+              Text('I')
+                .fontSize(14)
+                .fontStyle(FontStyle.Italic)
                 .fontColor(this.colors().textSecondary)
-            }.width(28).height(28).backgroundColor(this.colors().bgHover)
-            Button({ type: ButtonType.Circle }) {
-              Text('H').fontSize(14).fontColor(this.colors().textSecondary)
-            }.width(28).height(28).backgroundColor(this.colors().bgHover)
+            }
+            .width(28).height(28)
+            .justifyContent(FlexAlign.Center)
+            .borderRadius(Radius.SM)
 
-            Divider().vertical(true).height(20).color(this.colors().divider)
+            Column() {
+              Text('H')
+                .fontSize(14)
+                .fontColor(this.colors().textSecondary)
+            }
+            .width(28).height(28)
+            .justifyContent(FlexAlign.Center)
+            .borderRadius(Radius.SM)
 
-            Button({ type: ButtonType.Circle }) {
-              Text('\uD83D\uDDBC').fontSize(14).fontColor(this.colors().textSecondary)
-            }.width(28).height(28).backgroundColor(this.colors().bgHover)
-              .onClick(() => this.handleInsertImage())
-            Button({ type: ButtonType.Circle }) {
-              Text('\uD83D\uDCCE').fontSize(14).fontColor(this.colors().textSecondary)
-            }.width(28).height(28).backgroundColor(this.colors().bgHover)
-              .onClick(() => this.handleInsertAttachment())
+            // 分隔线
+            Divider().vertical(true).height(16).color(this.colors().border)
+
+            // 插入组
+            Column() {
+              Text(Icons.IMAGE)
+                .fontSize(13)
+                .fontColor(this.colors().textSecondary)
+            }
+            .width(28).height(28)
+            .justifyContent(FlexAlign.Center)
+            .borderRadius(Radius.SM)
+            .onClick(() => this.handleInsertImage())
+
+            Column() {
+              Text(Icons.ATTACHMENT)
+                .fontSize(13)
+                .fontColor(this.colors().textSecondary)
+            }
+            .width(28).height(28)
+            .justifyContent(FlexAlign.Center)
+            .borderRadius(Radius.SM)
+            .onClick(() => this.handleInsertAttachment())
 
             Blank()
 
-            Button({ type: ButtonType.Circle }) {
-              Text('\uD83D\uDCCB').fontSize(14)
+            // 属性面板 + 保存
+            Column() {
+              Text(Icons.PROPERTIES)
+                .fontSize(13)
                 .fontColor(this.showProperties
                   ? this.colors().accent : this.colors().textSecondary)
-            }.width(28).height(28).backgroundColor(this.colors().bgHover)
-              .onClick(() => { this.showProperties = !this.showProperties; })
-            Button({ type: ButtonType.Circle }) {
-              Text(this.vm.isSaving ? '\u27F3' : '\uD83D\uDCBE')
-                .fontSize(14)
+            }
+            .width(28).height(28)
+            .justifyContent(FlexAlign.Center)
+            .borderRadius(Radius.SM)
+            .backgroundColor(this.showProperties
+              ? this.colors().accentSubtle : Color.Transparent)
+            .onClick(() => { this.showProperties = !this.showProperties; })
+
+            Column() {
+              Text(this.vm.isSaving ? Icons.LOADING : Icons.SAVE)
+                .fontSize(13)
                 .fontColor(this.vm.hasUnsavedChanges
                   ? this.colors().accent : this.colors().textSecondary)
-            }.width(28).height(28).backgroundColor(this.colors().bgHover)
-              .onClick(() => this.vm.saveNote())
+            }
+            .width(28).height(28)
+            .justifyContent(FlexAlign.Center)
+            .borderRadius(Radius.SM)
+            .onClick(() => this.vm.saveNote())
           }
           .width('100%').height(40)
           .padding({ left: Spacing.MD, right: Spacing.MD })
-          .backgroundColor(this.colors().editorBg)
-          .border({ width: { bottom: 1 }, color: this.colors().divider })
+          .backgroundColor(this.colors().surface0)
+          .border({ width: { bottom: 1 }, color: this.colors().border })
         }
 
         if (this.showCompletions && this.completions.length > 0) {
@@ -547,13 +607,13 @@ export struct MarkdownEditor {
                       .fontWeight(FontWeight.Medium)
                       .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
                     Text(item.description)
-                      .fontSize(11).fontColor(this.colors().textMuted).maxLines(1)
+                      .fontSize(11).fontColor(this.colors().textTertiary).maxLines(1)
                   }.alignItems(HorizontalAlign.Start)
                     .padding({ left: 10, right: 10 })
                 }
-                .height(44).backgroundColor(this.colors().bgSecondary)
-                .borderRadius(10)
-                .border({ width: 1, color: this.colors().divider })
+                .height(44).backgroundColor(this.colors().surface2)
+                .borderRadius(Radius.MD)
+                .border({ width: 1, color: this.colors().border })
                 .margin({ right: Spacing.SM })
                 .onClick(() => this.applyCompletion(item))
               }, (item: CompletionItem) => item.label)
@@ -561,7 +621,7 @@ export struct MarkdownEditor {
           }
           .scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off)
           .width('100%').height(52)
-          .backgroundColor(this.colors().editorBg)
+          .backgroundColor(this.colors().surface0)
           .padding({ left: Spacing.MD, right: Spacing.MD })
         }
 
@@ -625,8 +685,8 @@ export struct MarkdownEditor {
                   }
                   return false;
                 })
-                .caretColor('#8B5CF6')
-                .borderRadius(12)
+                .caretColor(this.colors().accent)
+                .borderRadius(Radius.LG)
                 .padding(Spacing.LG)
                 .width('100%').layoutWeight(1)
                 .margin({ left: 20, right: 20 })
@@ -668,15 +728,15 @@ export struct MarkdownEditor {
                     .fontSize(10).fontColor(cursor.color).maxLines(1)
                 }
                 .padding({ left: Spacing.SM, right: Spacing.SM, top: 3, bottom: 3 })
-                .backgroundColor(this.colors().bgTertiary)
+                .backgroundColor(this.colors().surface1)
                 .borderRadius(Radius.SM)
                 .margin({ left: Spacing.XS })
               }, (cursor: RemoteCursorState) => cursor.deviceId)
             }
             .width('100%').height(24)
             .padding({ left: Spacing.SM, right: Spacing.SM })
-            .backgroundColor(this.colors().bgSecondary)
-            .border({ width: { top: 1 }, color: this.colors().divider })
+            .backgroundColor(this.colors().surface2)
+            .border({ width: { top: 1 }, color: this.colors().border })
           }
 
           if (this.showProperties && this.vm.metadata) {
@@ -690,7 +750,7 @@ export struct MarkdownEditor {
               }
             })
             .width(240).height('100%')
-            .border({ width: { left: 1 }, color: this.colors().divider })
+            .border({ width: { left: 1 }, color: this.colors().border })
           }
         }.width('100%').layoutWeight(1)
 
@@ -708,7 +768,7 @@ export struct MarkdownEditor {
         }
       }
       .width('100%').height('100%')
-      .backgroundColor(this.colors().editorBg)
+      .backgroundColor(this.colors().surface0)
 
       Modal({
         config: this.modalConfig,

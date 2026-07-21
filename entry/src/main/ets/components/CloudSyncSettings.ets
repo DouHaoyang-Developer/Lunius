@@ -107,15 +107,15 @@ struct CloudSyncSettings {
         Row().width(36)
       }
       .width('100%').height(52).padding({ left: 12, right: 12 })
-      .backgroundColor(this.colors().bgSecondary)
-      .border({ width: { bottom: 1 }, color: this.colors().divider })
+      .backgroundColor(this.colors().surface2)
+      .border({ width: { bottom: 1 }, color: this.colors().border })
 
       if (this.message) {
         Row() {
           Text(this.message)
             .fontSize(12).fontColor(this.colors().accent)
         }
-        .width('100%').padding(8).backgroundColor(this.colors().bgSecondary)
+        .width('100%').padding(8).backgroundColor(this.colors().surface2)
         .onClick(() => this.message = '')
       }
 
@@ -133,7 +133,7 @@ struct CloudSyncSettings {
             if (!this.isAuthorized) {
               Column({ space: 12 }) {
                 Text('登录华为帐号，将笔记同步到云空间')
-                  .fontSize(13).fontColor(this.colors().textMuted)
+                  .fontSize(13).fontColor(this.colors().textTertiary)
                   .width('100%').padding({ left: 16, right: 16 }).margin({ top: 12 })
 
                 Button('授权登录')
@@ -150,7 +150,7 @@ struct CloudSyncSettings {
                   Text('已授权')
                     .fontSize(14).fontColor('#50C878')
                   Text(`最后同步: ${this.formatTime(this.syncStatus?.lastSyncTime ?? 0)}`)
-                    .fontSize(11).fontColor(this.colors().textMuted)
+                    .fontSize(11).fontColor(this.colors().textTertiary)
                 }
                 .alignItems(HorizontalAlign.Start).layoutWeight(1)
 
@@ -161,8 +161,8 @@ struct CloudSyncSettings {
                   .borderRadius(4).padding({ left: 10, right: 10 }).height(28)
                   .onClick(() => this.logout())
               }
-              .width('100%').padding(16).backgroundColor(this.colors().bgPrimary)
-              .border({ width: { bottom: 1 }, color: this.colors().divider })
+              .width('100%').padding(16).backgroundColor(this.colors().surface0)
+              .border({ width: { bottom: 1 }, color: this.colors().border })
 
               // 同步状态
               this.SectionTitle('同步状态');
@@ -197,7 +197,7 @@ struct CloudSyncSettings {
             this.SectionTitle('说明');
 
             Text('笔记将同步到华为云空间的应用私有文件夹，不会占用您的个人云盘空间。同步每 5 分钟自动执行一次，也可手动触发。')
-              .fontSize(12).fontColor(this.colors().textMuted).lineHeight(18)
+              .fontSize(12).fontColor(this.colors().textTertiary).lineHeight(18)
               .width('100%').padding({ left: 16, right: 16, top: 8, bottom: 16 })
 
             Row().height(40)
@@ -206,17 +206,17 @@ struct CloudSyncSettings {
         }
         .width('100%').layoutWeight(1)
         .scrollBar(BarState.Auto)
-        .backgroundColor(this.colors().bgPrimary)
+        .backgroundColor(this.colors().surface0)
       }
     }
-    .width('100%').height('100%').backgroundColor(this.colors().bgPrimary)
+    .width('100%').height('100%').backgroundColor(this.colors().surface0)
   }
 
   @Builder
   SectionTitle(title: string) {
     Text(title)
       .fontSize(12).fontWeight(FontWeight.Medium)
-      .fontColor(this.colors().textMuted)
+      .fontColor(this.colors().textTertiary)
       .margin({ top: 20, bottom: 8, left: 16, right: 16 })
       .letterSpacing(1)
   }
@@ -227,10 +227,10 @@ struct CloudSyncSettings {
       Text(label)
         .fontSize(14).fontColor(this.colors().textPrimary).layoutWeight(1)
       Text(value)
-        .fontSize(14).fontColor(this.colors().textMuted)
+        .fontSize(14).fontColor(this.colors().textTertiary)
     }
     .width('100%').height(44).padding({ left: 16, right: 16 })
-    .backgroundColor(this.colors().bgPrimary)
-    .border({ width: { bottom: 1 }, color: this.colors().divider })
+    .backgroundColor(this.colors().surface0)
+    .border({ width: { bottom: 1 }, color: this.colors().border })
   }
 }

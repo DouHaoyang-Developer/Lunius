@@ -1,4 +1,8 @@
-import { LuniusColors, ThemeMode, getColors, Spacing } from '../utils/Theme';
+// pages/SearchPage.ets
+// 全局搜索页 — 搜索栏 + 选项 + 历史/结果列表
+// 设计：统一搜索栏样式、标签式选项开关、卡片式结果项
+
+import { LuniusColors, ThemeMode, getColors, Spacing, Radius, Icons } from '../utils/Theme';
 import { fileService, SearchOptions } from '../services/IFileService';
 import { FileNode, NodeType } from '../models/FileNode';
 
@@ -17,6 +21,7 @@ struct SearchContent {
   @State searchHistory: string[] = ['ArkTS', 'HarmonyOS', '性能优化', '响应式设计'];
   @State caseSensitive: boolean = false;
   @State useRegex: boolean = false;
+  @State hoverIndex: number = -1;
 
   private getColors(): LuniusColors {
     return getColors(this.themeMode);
@@ -131,168 +136,142 @@ struct SearchContent {
   }
 
   @Builder
-  buildSearchBar() {
-    Row() {
-      Row({ space: 8 }) {
-        TextInput({ placeholder: '搜索笔记名称、别名、内容...', text: $$this.query })
-          .placeholderColor(this.getColors().textMuted)
-          .fontColor(this.getColors().textPrimary)
-          .fontSize(14)
-          .height(40)
-          .backgroundColor(Color.Transparent)
-          .layoutWeight(1)
-          .onChange((value: string) => {
-            this.query = value;
-            this.doSearch(value);
-          })
-          .onSubmit((_enterKey: EnterKeyType) => {
-            this.addToHistory(this.query);
-          })
-      }
-      .layoutWeight(1)
+  SearchBar() {
+    Row({ space: Spacing.SM }) {
+      Text(Icons.SEARCH)
+        .fontSize(14)
+        .fontColor(this.getColors().textTertiary)
 
-      Button({ type: ButtonType.Circle }) {
-        Text('\u2715')
-          .fontSize(14)
-          .fontColor(this.getColors().textMuted)
+      TextInput({ placeholder: '\u641C\u7D22\u7B14\u8BB0\u540D\u79F0\u3001\u522B\u540D\u3001\u5185\u5BB9...', text: $$this.query })
+        .placeholderColor(this.getColors().textTertiary)
+        .fontColor(this.getColors().textPrimary)
+        .fontSize(14)
+        .height(40)
+        .backgroundColor(Color.Transparent)
+        .layoutWeight(1)
+        .onChange((value: string) => {
+          this.query = value;
+          this.doSearch(value);
+        })
+        .onSubmit((_enterKey: EnterKeyType) => {
+          this.addToHistory(this.query);
+        })
+
+      if (this.query.length > 0) {
+        Column() {
+          Text(Icons.CLOSE)
+            .fontSize(12)
+            .fontColor(this.getColors().textTertiary)
+        }
+        .width(24)
+        .height(24)
+        .justifyContent(FlexAlign.Center)
+        .borderRadius(Radius.FULL)
+        .onClick(() => {
+          this.query = '';
+          this.results = [];
+        })
       }
-      .width(32)
-      .height(32)
-      .backgroundColor(Color.Transparent)
-      .visibility(this.query.length > 0 ? Visibility.Visible : Visibility.Hidden)
-      .onClick(() => {
-        this.query = '';
-        this.results = [];
-      })
     }
     .width('100%')
     .height(44)
-    .padding({ left: 12, right: 8 })
-    .backgroundColor(this.getColors().bgTertiary)
-    .borderRadius(10)
+    .padding({ left: Spacing.MD, right: Spacing.SM })
+    .backgroundColor(this.getColors().surface2)
+    .borderRadius(Radius.MD)
   }
 
   @Builder
-  buildSearchOptions() {
-    Row({ space: 8 }) {
-      Row() {
-        Toggle({ type: ToggleType.Checkbox, isOn: this.caseSensitive })
-          .selectedColor(this.getColors().accent)
-          .width(18)
-          .height(18)
-          .onChange((val: boolean) => {
-            this.caseSensitive = val;
-            if (this.query.length > 0) {
-              this.doSearch(this.query);
-            }
-          })
-        Text('Aa')
-          .fontSize(12)
-          .fontColor(this.caseSensitive ? this.getColors().accent : this.getColors().textMuted)
-          .margin({ left: 4 })
-      }
-      .padding({ left: 8, right: 12, top: 4, bottom: 4 })
-      .backgroundColor(this.caseSensitive ? this.getColors().tagBg : Color.Transparent)
-      .borderRadius(12)
-      .onClick(() => {
-        this.caseSensitive = !this.caseSensitive;
-        if (this.query.length > 0) {
-          this.doSearch(this.query);
-        }
-      })
+  OptionToggle(label: string, active: boolean, onToggle: () => void) {
+    Row({ space: 4 }) {
+      Text(label)
+        .fontSize(12)
+        .fontColor(active ? this.getColors().accent : this.getColors().textTertiary)
+        .fontWeight(active ? FontWeight.Medium : FontWeight.Regular)
+    }
+    .height(28)
+    .padding({ left: Spacing.SM, right: Spacing.MD })
+    .backgroundColor(active ? this.getColors().accentSubtle : this.getColors().surface2)
+    .borderRadius(Radius.FULL)
+    .onClick(() => onToggle())
+  }
 
-      Row() {
-        Toggle({ type: ToggleType.Checkbox, isOn: this.useRegex })
-          .selectedColor(this.getColors().accent)
-          .width(18)
-          .height(18)
-          .onChange((val: boolean) => {
-            this.useRegex = val;
-            if (this.query.length > 0) {
-              this.doSearch(this.query);
-            }
-          })
-        Text('.*')
-          .fontSize(12)
-          .fontColor(this.useRegex ? this.getColors().accent : this.getColors().textMuted)
-          .margin({ left: 4 })
-      }
-      .padding({ left: 8, right: 12, top: 4, bottom: 4 })
-      .backgroundColor(this.useRegex ? this.getColors().tagBg : Color.Transparent)
-      .borderRadius(12)
-      .onClick(() => {
+  @Builder
+  SearchOptions() {
+    Row({ space: Spacing.SM }) {
+      this.OptionToggle('Aa', this.caseSensitive, () => {
+        this.caseSensitive = !this.caseSensitive;
+        if (this.query.length > 0) this.doSearch(this.query);
+      })
+      this.OptionToggle('.*', this.useRegex, () => {
         this.useRegex = !this.useRegex;
-        if (this.query.length > 0) {
-          this.doSearch(this.query);
-        }
+        if (this.query.length > 0) this.doSearch(this.query);
       })
     }
     .width('100%')
   }
 
   @Builder
-  buildHistorySection() {
-    Column({ space: Spacing.MD }) {
-      if (this.searchHistory.length > 0) {
-        Column({ space: 0 }) {
+  HistorySection() {
+    Scroll() {
+      Column({ space: Spacing.MD }) {
+        if (this.searchHistory.length > 0) {
           Text('\u6700\u8FD1\u641C\u7D22')
             .fontSize(11)
-            .fontColor(this.getColors().textMuted)
-            .width('100%')
-            .padding({ left: 16, top: 20, bottom: 8 })
+            .fontColor(this.getColors().textTertiary)
             .fontWeight(FontWeight.Medium)
+            .width('100%')
+            .padding({ left: Spacing.LG, top: Spacing.XL, bottom: Spacing.SM })
 
           Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
-            ForEach(this.searchHistory, (item: string, idx: number) => {
+            ForEach(this.searchHistory, (item: string, _idx: number) => {
               Text(item)
                 .fontSize(13)
                 .fontColor(this.getColors().textSecondary)
-                .backgroundColor(this.getColors().bgTertiary)
-                .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-                .borderRadius(16)
+                .backgroundColor(this.getColors().surface2)
+                .padding({ left: Spacing.MD, right: Spacing.MD, top: 6, bottom: 6 })
+                .borderRadius(Radius.FULL)
                 .margin(4)
-                .onClick(() => {
-                  this.onHistoryTap(item);
-                })
+                .onClick(() => this.onHistoryTap(item))
             }, (item: string, _idx: number): string => item)
           }
           .width('100%')
-          .padding({ left: 12, right: 12 })
+          .padding({ left: Spacing.MD, right: Spacing.MD })
         }
-      }
 
-      Column({ space: 8 }) {
         Text('\u641C\u7D22\u63D0\u793A')
           .fontSize(11)
-          .fontColor(this.getColors().textMuted)
-          .width('100%')
-          .padding({ left: 16, top: 20, bottom: 4 })
+          .fontColor(this.getColors().textTertiary)
           .fontWeight(FontWeight.Medium)
+          .width('100%')
+          .padding({ left: Spacing.LG, top: Spacing.XL, bottom: Spacing.XS })
 
         Text('\u2022 \u8F93\u5165\u5173\u952E\u8BCD\u641C\u7D22\u7B14\u8BB0\u540D\u79F0\u3001\u522B\u540D\u6216\u5185\u5BB9')
           .fontSize(12)
-          .fontColor(this.getColors().textMuted)
+          .fontColor(this.getColors().textTertiary)
           .width('100%')
-          .padding({ left: 16, right: 16 })
+          .padding({ left: Spacing.LG, right: Spacing.LG })
         Text('\u2022 \u5F00\u542F\u6B63\u5219\u8868\u8FBE\u5F0F\u8FDB\u884C\u9AD8\u7EA7\u5339\u914D')
           .fontSize(12)
-          .fontColor(this.getColors().textMuted)
+          .fontColor(this.getColors().textTertiary)
           .width('100%')
-          .padding({ left: 16, right: 16 })
+          .padding({ left: Spacing.LG, right: Spacing.LG })
         Text('\u2022 \u533A\u5206\u5927\u5C0F\u5199\u7CBE\u786E\u5B9A\u4F4D')
           .fontSize(12)
-          .fontColor(this.getColors().textMuted)
+          .fontColor(this.getColors().textTertiary)
           .width('100%')
-          .padding({ left: 16, right: 16 })
+          .padding({ left: Spacing.LG, right: Spacing.LG })
       }
+      .width('100%')
     }
     .width('100%')
+    .layoutWeight(1)
+    .scrollBar(BarState.Off)
   }
 
   @Builder
-  buildResultItem(item: SearchResultItem) {
+  ResultItem(item: SearchResultItem, index: number) {
     Column({ space: 4 }) {
-      Row({ space: 8 }) {
+      Row({ space: Spacing.SM }) {
         Text(item.file.name)
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
@@ -301,9 +280,11 @@ struct SearchContent {
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
 
-        Text(item.file.wordCount ? String(item.file.wordCount) + ' \u5B57' : '')
-          .fontSize(11)
-          .fontColor(this.getColors().textMuted)
+        if (item.file.wordCount) {
+          Text(String(item.file.wordCount) + ' \u5B57')
+            .fontSize(11)
+            .fontColor(this.getColors().textTertiary)
+        }
       }
       .width('100%')
 
@@ -313,7 +294,6 @@ struct SearchContent {
           .fontColor(this.getColors().textSecondary)
           .maxLines(2)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .margin({ left: 0 })
       }
 
       if (item.file.tags && item.file.tags.length > 0) {
@@ -321,10 +301,10 @@ struct SearchContent {
           ForEach(item.file.tags, (tag: string) => {
             Text('#' + tag)
               .fontSize(10)
-              .fontColor(this.getColors().tagText)
-              .backgroundColor(this.getColors().tagBg)
+              .fontColor(this.getColors().accent)
+              .backgroundColor(this.getColors().accentSubtle)
               .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-              .borderRadius(10)
+              .borderRadius(Radius.FULL)
           }, (tag: string): string => tag)
         }
         .width('100%')
@@ -332,74 +312,77 @@ struct SearchContent {
       }
     }
     .width('100%')
-    .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-    .backgroundColor(this.getColors().bgPrimary)
-    .border({ width: { bottom: 1 }, color: this.getColors().divider })
+    .padding({ left: Spacing.LG, right: Spacing.LG, top: Spacing.MD, bottom: Spacing.MD })
+    .backgroundColor(index === this.hoverIndex ? this.getColors().surfaceHover : this.getColors().surface0)
+    .border({ width: { bottom: 1 }, color: this.getColors().border })
     .onClick(() => {
       this.searchNavStack.pushPathByName('searchDetail',
         new Object({ fileId: item.file.id, fileName: item.file.name }));
     })
   }
 
+  @Builder
+  EmptyResults() {
+    Column({ space: Spacing.SM }) {
+      Text(Icons.SEARCH)
+        .fontSize(32)
+        .fontColor(this.getColors().textTertiary)
+        .margin({ top: 48 })
+      Text('\u672A\u627E\u5230\u5339\u914D\u7ED3\u679C')
+        .fontSize(14)
+        .fontColor(this.getColors().textSecondary)
+      Text('\u8BF7\u5C1D\u8BD5\u5176\u4ED6\u5173\u952E\u8BCD\u6216\u9009\u9879')
+        .fontSize(12)
+        .fontColor(this.getColors().textTertiary)
+    }
+    .width('100%')
+    .layoutWeight(1)
+    .justifyContent(FlexAlign.Start)
+  }
+
   build() {
     Column() {
+      // 搜索栏
       Row() {
-        this.buildSearchBar()
+        this.SearchBar()
       }
       .width('100%')
-      .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-      .backgroundColor(this.getColors().bgSecondary)
+      .padding({ left: Spacing.MD, right: Spacing.MD, top: Spacing.SM, bottom: Spacing.SM })
+      .backgroundColor(this.getColors().surface1)
 
+      // 选项
       Row() {
-        this.buildSearchOptions()
+        this.SearchOptions()
       }
       .width('100%')
-      .padding({ left: 12, right: 12, bottom: 8 })
-      .backgroundColor(this.getColors().bgSecondary)
-      .border({ width: { bottom: 1 }, color: this.getColors().divider })
+      .padding({ left: Spacing.MD, right: Spacing.MD, bottom: Spacing.SM })
+      .backgroundColor(this.getColors().surface1)
+      .border({ width: { bottom: 1 }, color: this.getColors().border })
 
+      // 内容区
       if (this.query.length === 0) {
-        Scroll() {
-          this.buildHistorySection()
-        }
-        .width('100%')
-        .layoutWeight(1)
-        .scrollBar(BarState.Off)
+        this.HistorySection()
       } else {
         if (this.results.length === 0) {
-          Column({ space: 8 }) {
-            Text('\uD83D\uDD0D')
-              .fontSize(32)
-              .margin({ top: 48 })
-            Text('\u672A\u627E\u5230\u5339\u914D\u7ED3\u679C')
-              .fontSize(14)
-              .fontColor(this.getColors().textSecondary)
-            Text('\u8BF7\u5C1D\u8BD5\u5176\u4ED6\u5173\u952E\u8BCD\u6216\u9009\u9879')
-              .fontSize(12)
-              .fontColor(this.getColors().textMuted)
-              .margin({ top: 4 })
-          }
-          .width('100%')
-          .layoutWeight(1)
-          .justifyContent(FlexAlign.Start)
+          this.EmptyResults()
         } else {
           List({ space: 0 }) {
-            ForEach(this.results, (item: SearchResultItem, idx: number) => {
+            ForEach(this.results, (item: SearchResultItem, index: number) => {
               ListItem() {
-                this.buildResultItem(item)
+                this.ResultItem(item, index)
               }
             }, (item: SearchResultItem): string => item.file.id)
           }
           .width('100%')
           .layoutWeight(1)
           .scrollBar(BarState.Auto)
-          .padding({ top: 4 })
+          .padding({ top: Spacing.XS })
         }
       }
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.getColors().bgPrimary)
+    .backgroundColor(this.getColors().surface0)
   }
 }
 
@@ -432,14 +415,15 @@ struct SearchDetailPage {
   build() {
     Column() {
       Row() {
-        Button({ type: ButtonType.Circle }) {
-          Text('\u2190')
+        Column() {
+          Text(Icons.BACK)
             .fontSize(18)
             .fontColor(this.getColors().textPrimary)
         }
         .width(36)
         .height(36)
-        .backgroundColor(Color.Transparent)
+        .justifyContent(FlexAlign.Center)
+        .borderRadius(Radius.SM)
         .onClick(() => {
           this.searchNavStack.pop();
         })
@@ -457,29 +441,29 @@ struct SearchDetailPage {
       }
       .width('100%')
       .height(52)
-      .padding({ left: 12, right: 12 })
-      .backgroundColor(this.getColors().bgSecondary)
-      .border({ width: { bottom: 1 }, color: this.getColors().divider })
+      .padding({ left: Spacing.SM, right: Spacing.SM })
+      .backgroundColor(this.getColors().surface1)
+      .border({ width: { bottom: 1 }, color: this.getColors().border })
 
-      Column({ space: 12 }) {
+      Column({ space: Spacing.MD }) {
         Text('\u6587\u4EF6 ID: ' + this.fileId)
           .fontSize(13)
           .fontColor(this.getColors().textSecondary)
           .width('100%')
-          .padding({ left: 24, right: 24, top: 24 })
+          .padding({ left: Spacing.XL, right: Spacing.XL, top: Spacing.XL })
 
         Text('\u6B64\u5904\u53EF\u6E32\u67D3\u8BE5\u6587\u4EF6\u7684 Markdown \u9884\u89C8\u6216\u9AD8\u4EAE\u5339\u914D\u6587\u672C')
           .fontSize(12)
-          .fontColor(this.getColors().textMuted)
+          .fontColor(this.getColors().textTertiary)
           .width('100%')
-          .padding({ left: 24, right: 24 })
+          .padding({ left: Spacing.XL, right: Spacing.XL })
       }
       .width('100%')
       .layoutWeight(1)
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.getColors().bgPrimary)
+    .backgroundColor(this.getColors().surface0)
   }
 }
 

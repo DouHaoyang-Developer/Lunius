@@ -1,7 +1,8 @@
 // components/GraphView.ets
 // 知识图谱视图 — 从 RealGraphService 加载真实数据
+// 设计：Canvas 绘制网格背景（不用 Row hack）、精炼工具栏、信息栏
 
-import { LuniusColors, ThemeMode, getColors } from '../utils/Theme';
+import { LuniusColors, ThemeMode, getColors, Spacing, Radius, Icons } from '../utils/Theme';
 import { graphService } from '../services/IGraphService';
 import { GraphData, GraphNodeData, GraphEdgeData } from '../services/ApiTypes';
 
@@ -18,9 +19,12 @@ export struct GraphView {
   @State showLocalGraph: boolean = false;
   @State localGraphData: GraphData | null = null;
   private canvasCtx: CanvasRenderingContext2D | null = null;
+  private gridCtx: CanvasRenderingContext2D | null = null;
 
   private settings: RenderingContextSettings = new RenderingContextSettings(true);
   private context: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.settings);
+  private gridSettings: RenderingContextSettings = new RenderingContextSettings(true);
+  private gridContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.gridSettings);
   private lastX: number = 0;
   private lastY: number = 0;
 
@@ -72,11 +76,35 @@ export struct GraphView {
     this.redrawEdges();
   }
 
+  private drawGrid(): void {
+    const ctx = this.gridCtx;
+    if (!ctx) return;
+    const w = 2000;
+    const h = 2000;
+    ctx.clearRect(0, 0, w, h);
+    const gridColor = this.colors().border;
+    ctx.strokeStyle = gridColor;
+    ctx.lineWidth = 0.5;
+    const gridSize = 40;
+    for (let x = 0; x <= w; x += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+    for (let y = 0; y <= h; y += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+  }
+
   private redrawEdges(): void {
     const ctx = this.canvasCtx;
     if (!ctx) return;
     ctx.clearRect(-500, -500, 2000, 2000);
-    ctx.strokeStyle = this.colors().divider;
+    ctx.strokeStyle = this.colors().border;
     ctx.lineWidth = 1;
     const data = this.displayData();
     const nodes = data.nodes;
@@ -103,94 +131,117 @@ export struct GraphView {
     }
   }
 
+  @Builder
+  ToolButton(icon: string, action: () => void) {
+    Column() {
+      Text(icon)
+        .fontSize(14)
+        .fontColor(this.colors().textSecondary)
+    }
+    .width(30).height(30)
+    .justifyContent(FlexAlign.Center)
+    .borderRadius(Radius.SM)
+    .backgroundColor(this.colors().surface2)
+    .onClick(action)
+  }
+
+  @Builder
+  LoadingState() {
+    Column({ space: Spacing.SM }) {
+      Text(Icons.LOADING)
+        .fontSize(28)
+        .fontColor(this.colors().textTertiary)
+      Text('\u52A0\u8F7D\u56FE\u8C31...')
+        .fontSize(13)
+        .fontColor(this.colors().textTertiary)
+    }
+    .width('100%').layoutWeight(1)
+    .justifyContent(FlexAlign.Center)
+    .backgroundColor(this.colors().surface0)
+  }
+
+  @Builder
+  EmptyState() {
+    Column({ space: Spacing.SM }) {
+      Text(Icons.GRAPH)
+        .fontSize(40)
+        .fontColor(this.colors().textTertiary)
+      Text('\u6682\u65E0\u56FE\u8C31\u6570\u636E')
+        .fontSize(14)
+        .fontColor(this.colors().textSecondary)
+      Text('\u5728\u7B14\u8BB0\u4E2D\u4F7F\u7528 [[wikilink]] \u521B\u5EFA\u94FE\u63A5')
+        .fontSize(11)
+        .fontColor(this.colors().textTertiary)
+    }
+    .width('100%').layoutWeight(1)
+    .justifyContent(FlexAlign.Center)
+    .backgroundColor(this.colors().surface0)
+  }
+
   build() {
     Column() {
       // 顶部工具栏
       Row() {
-        Row({ space: 8 }) {
-          Text(this.showLocalGraph ? '局部图谱' : '关系图谱')
-            .fontSize(14).fontWeight(FontWeight.Medium)
-            .fontColor(this.colors().textSecondary)
+        Row({ space: Spacing.SM }) {
+          Text(this.showLocalGraph ? '\u5C40\u90E8\u56FE\u8C31' : '\u5173\u7CFB\u56FE\u8C31')
+            .fontSize(13)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(this.colors().textPrimary)
 
           if (this.showLocalGraph) {
-            Button('← 返回全局')
-              .fontSize(11).fontColor(this.colors().accent)
-              .backgroundColor(this.colors().bgHover)
-              .height(24).borderRadius(4)
-              .onClick(() => this.resetToGlobal())
+            Row({ space: 4 }) {
+              Text(Icons.BACK)
+                .fontSize(10)
+                .fontColor(this.colors().accent)
+              Text('\u8FD4\u56DE\u5168\u5C40')
+                .fontSize(11)
+                .fontColor(this.colors().accent)
+            }
+            .height(24)
+            .padding({ left: Spacing.SM, right: Spacing.SM })
+            .backgroundColor(this.colors().accentSubtle)
+            .borderRadius(Radius.SM)
+            .onClick(() => this.resetToGlobal())
           }
         }
 
-        Row({ space: 8 }) {
-          Button({ type: ButtonType.Circle }) {
-            Text('⊕').fontSize(16).fontColor(this.colors().iconSecondary)
-          }
-          .width(28).height(28).backgroundColor(this.colors().bgHover)
-          .onClick(() => { this.zoomScale = Math.min(this.zoomScale + 0.2, 3.0); this.redrawEdges(); })
-
-          Button({ type: ButtonType.Circle }) {
-            Text('⊖').fontSize(16).fontColor(this.colors().iconSecondary)
-          }
-          .width(28).height(28).backgroundColor(this.colors().bgHover)
-          .onClick(() => { this.zoomScale = Math.max(this.zoomScale - 0.2, 0.3); this.redrawEdges(); })
-
-          Button({ type: ButtonType.Circle }) {
-            Text('⟲').fontSize(14).fontColor(this.colors().iconSecondary)
-          }
-          .width(28).height(28).backgroundColor(this.colors().bgHover)
-          .onClick(() => {
+        Row({ space: Spacing.XS }) {
+          this.ToolButton(Icons.ZOOM_IN, () => {
+            this.zoomScale = Math.min(this.zoomScale + 0.2, 3.0);
+            this.redrawEdges();
+          })
+          this.ToolButton(Icons.ZOOM_OUT, () => {
+            this.zoomScale = Math.max(this.zoomScale - 0.2, 0.3);
+            this.redrawEdges();
+          })
+          this.ToolButton(Icons.RESET, () => {
             this.zoomScale = 1.0;
             this.offsetX = 0;
             this.offsetY = 0;
             this.redrawEdges();
           })
-
-          Button({ type: ButtonType.Circle }) {
-            Text('🔄').fontSize(12).fontColor(this.colors().iconSecondary)
-          }
-          .width(28).height(28).backgroundColor(this.colors().bgHover)
-          .onClick(() => this.loadGraph())
+          this.ToolButton(Icons.SYNC, () => this.loadGraph())
         }
       }
-      .width('100%').height(40).padding({ left: 16, right: 16 })
+      .width('100%').height(44)
+      .padding({ left: Spacing.MD, right: Spacing.MD })
       .justifyContent(FlexAlign.SpaceBetween)
-      .backgroundColor(this.colors().sidebarBg)
-      .border({ width: { bottom: 1 }, color: this.colors().divider })
+      .backgroundColor(this.colors().surface1)
+      .border({ width: { bottom: 1 }, color: this.colors().border })
 
       if (this.isLoading) {
-        Column() {
-          Text('⏳').fontSize(32)
-          Text('加载图谱...').fontSize(14).fontColor(this.colors().textSecondary).margin({ top: 8 })
-        }
-        .width('100%').layoutWeight(1)
-        .justifyContent(FlexAlign.Center)
-        .backgroundColor(this.colors().bgPrimary)
+        this.LoadingState()
       } else if (this.displayData().nodes.length === 0) {
-        Column() {
-          Text('🕸️').fontSize(48)
-          Text('暂无图谱数据').fontSize(16).fontColor(this.colors().textSecondary)
-          Text('在笔记中使用 [[wikilink]] 创建链接').fontSize(12).fontColor(this.colors().textMuted).margin({ top: 4 })
-        }
-        .width('100%').layoutWeight(1)
-        .justifyContent(FlexAlign.Center)
-        .backgroundColor(this.colors().bgPrimary)
+        this.EmptyState()
       } else {
         Stack() {
-          // 背景网格
-          Column() {
-            ForEach([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], (row: number) => {
-              Row() {
-                ForEach([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], (col: number) => {
-                  Row()
-                    .width(60).height(60)
-                    .border({ width: 0.5, color: this.colors().divider })
-                    .opacity(0.3)
-                }, (col: number) => col.toString())
-              }
-            }, (row: number) => row.toString())
-          }
-          .width('100%').height('100%')
-          .position({ x: 0, y: 0 })
+          // 背景网格 — Canvas 绘制
+          Canvas(this.gridContext)
+            .width('100%').height('100%')
+            .onReady(() => {
+              this.gridCtx = this.gridContext;
+              this.drawGrid();
+            })
 
           // 连线层
           Canvas(this.context)
@@ -208,13 +259,14 @@ export struct GraphView {
                   Circle()
                     .width(node.radius * 2 * this.zoomScale)
                     .height(node.radius * 2 * this.zoomScale)
-                    .fill(node.id === this.selectedNodeId ? '#FF4D4F' : node.color)
+                    .fill(node.id === this.selectedNodeId
+                      ? this.colors().accent : node.color)
                     .opacity(0.85)
-                    .shadow({ radius: 8, color: node.color, offsetX: 0, offsetY: 4 })
+                    .shadow({ radius: 6, color: node.color, offsetX: 0, offsetY: 2 })
 
                   Text(node.label.substring(0, 1))
                     .fontSize(Math.max(10, 16 * this.zoomScale))
-                    .fontColor('#FFFFFF')
+                    .fontColor(this.colors().onAccent)
                     .fontWeight(FontWeight.Bold)
                 }
 
@@ -239,7 +291,7 @@ export struct GraphView {
           .width('100%').height('100%')
         }
         .width('100%').layoutWeight(1)
-        .backgroundColor(this.colors().bgPrimary)
+        .backgroundColor(this.colors().surface0)
         .gesture(
           PanGesture()
             .onActionStart((event: GestureEvent) => {
@@ -264,24 +316,25 @@ export struct GraphView {
 
       // 底部信息栏
       Row() {
-        Text(`缩放: ${(this.zoomScale * 100).toFixed(0)}%`)
-          .fontSize(11).fontColor(this.colors().textMuted)
+        Text('\u7F29\u653E: ' + (this.zoomScale * 100).toFixed(0) + '%')
+          .fontSize(11).fontColor(this.colors().textTertiary)
 
-        Text(`节点: ${this.displayData().nodes.length} | 连线: ${this.displayData().edges.length}`)
-          .fontSize(11).fontColor(this.colors().textMuted)
+        Text('\u8282\u70B9: ' + String(this.displayData().nodes.length)
+          + ' | \u8FDE\u7EBF: ' + String(this.displayData().edges.length))
+          .fontSize(11).fontColor(this.colors().textTertiary)
 
         if (this.selectedNodeId) {
-          Text(`选中: ${this.selectedNodeId}`)
+          Text('\u9009\u4E2D: ' + this.selectedNodeId)
             .fontSize(11).fontColor(this.colors().accent)
         }
       }
       .width('100%').height(28)
-      .padding({ left: 16, right: 16 })
+      .padding({ left: Spacing.MD, right: Spacing.MD })
       .justifyContent(FlexAlign.SpaceBetween)
-      .backgroundColor(this.colors().sidebarBg)
-      .border({ width: { top: 1 }, color: this.colors().divider })
+      .backgroundColor(this.colors().surface1)
+      .border({ width: { top: 1 }, color: this.colors().border })
     }
     .width('100%').height('100%')
-    .backgroundColor(this.colors().bgPrimary)
+    .backgroundColor(this.colors().surface0)
   }
 }

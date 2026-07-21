@@ -94,7 +94,7 @@ export struct CollaborationPanel {
         state === CollaborationSessionState.JOINING) {
       return '#FF9800';
     }
-    return this.colors().textMuted;
+    return this.colors().textTertiary;
   }
 
   private getNoteTitle(): string {
@@ -145,7 +145,7 @@ export struct CollaborationPanel {
             Button({ type: ButtonType.Circle }) {
               Text('\u2715')
                 .fontSize(10)
-                .fontColor(this.colors().textMuted)
+                .fontColor(this.colors().textTertiary)
             }
             .width(22)
             .height(22)
@@ -155,8 +155,8 @@ export struct CollaborationPanel {
           .width('100%')
           .height(40)
           .padding({ left: Spacing.LG, right: Spacing.SM })
-          .backgroundColor(this.colors().bgSecondary)
-          .border({ width: { bottom: 1 }, color: this.colors().divider })
+          .backgroundColor(this.colors().surface2)
+          .border({ width: { bottom: 1 }, color: this.colors().border })
           .borderRadius({ topLeft: Radius.MD, topRight: Radius.MD })
 
           if (this.getHasActiveSession()) {
@@ -192,12 +192,12 @@ export struct CollaborationPanel {
           }
           .width('100%')
           .padding({ left: Spacing.LG, right: Spacing.LG, top: Spacing.MD, bottom: Spacing.LG })
-          .backgroundColor(this.colors().bgSecondary)
-          .border({ width: { top: 1 }, color: this.colors().divider })
+          .backgroundColor(this.colors().surface2)
+          .border({ width: { top: 1 }, color: this.colors().border })
           .borderRadius({ bottomLeft: Radius.MD, bottomRight: Radius.MD })
         }
         .width(300)
-        .backgroundColor(this.colors().bgPrimary)
+        .backgroundColor(this.colors().frostedBg)
         .borderRadius(Radius.MD)
         .border({ width: 1, color: this.colors().border })
         .shadow({ radius: 20, color: 'rgba(0,0,0,0.35)', offsetX: 0, offsetY: 8 })
@@ -224,7 +224,7 @@ export struct CollaborationPanel {
 
         Text('  |  ' + this.getNoteTitle())
           .fontSize(11)
-          .fontColor(this.colors().textMuted)
+          .fontColor(this.colors().textTertiary)
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .flexShrink(1)
@@ -234,13 +234,13 @@ export struct CollaborationPanel {
 
       Text(this.getParticipantCount().toString() + ' device' + (this.getParticipantCount() !== 1 ? 's' : '') + ' online')
         .fontSize(11)
-        .fontColor(this.colors().textMuted)
+        .fontColor(this.colors().textTertiary)
         .width('100%')
         .padding({ left: Spacing.LG, right: Spacing.LG, bottom: Spacing.SM })
     }
     .width('100%')
-    .backgroundColor(this.colors().bgTertiary)
-    .border({ width: { bottom: 1 }, color: this.colors().divider })
+    .backgroundColor(this.colors().surface1)
+    .border({ width: { bottom: 1 }, color: this.colors().border })
   }
 
   @Builder
@@ -248,7 +248,7 @@ export struct CollaborationPanel {
     Column() {
       Text('Participants')
         .fontSize(11)
-        .fontColor(this.colors().textMuted)
+        .fontColor(this.colors().textTertiary)
         .fontWeight(FontWeight.Medium)
         .width('100%')
         .padding({ left: Spacing.LG, top: Spacing.MD, bottom: Spacing.SM })
@@ -266,7 +266,7 @@ export struct CollaborationPanel {
 
             Text(this.getDeviceTypeLabel(device.deviceType))
               .fontSize(10)
-              .fontColor(this.colors().textMuted)
+              .fontColor(this.colors().textTertiary)
           }
           .alignItems(HorizontalAlign.Start)
           .layoutWeight(1)
@@ -289,11 +289,11 @@ export struct CollaborationPanel {
         .width('100%')
         .height(40)
         .padding({ left: Spacing.LG, right: Spacing.LG })
-        .backgroundColor(this.colors().bgPrimary)
+        .backgroundColor(this.colors().frostedBg)
       }, (device: CollaboratorDevice) => device.deviceId)
     }
     .width('100%')
-    .border({ width: { bottom: 1 }, color: this.colors().divider })
+    .border({ width: { bottom: 1 }, color: this.colors().border })
   }
 
   @Builder
@@ -311,7 +311,7 @@ export struct CollaborationPanel {
 
         Text('Start a session to collaborate in real-time with nearby devices')
           .fontSize(11)
-          .fontColor(this.colors().textMuted)
+          .fontColor(this.colors().textTertiary)
           .textAlign(TextAlign.Center)
           .width('90%')
           .lineHeight(16)
@@ -324,10 +324,10 @@ export struct CollaborationPanel {
         TextInput({ placeholder: 'Session ID...' })
           .fontSize(12)
           .fontColor(this.colors().textPrimary)
-          .placeholderColor(this.colors().textMuted)
+          .placeholderColor(this.colors().textTertiary)
           .height(34)
           .layoutWeight(1)
-          .backgroundColor(this.colors().bgTertiary)
+          .backgroundColor(this.colors().surface1)
           .borderRadius(Radius.SM)
           .padding({ left: Spacing.MD, right: Spacing.MD })
           .onChange((value: string) => {

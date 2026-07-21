@@ -178,7 +178,7 @@ export struct CanvasView {
       // 背景网格
       Column()
         .width('100%').height('100%')
-        .backgroundColor(this.colors().bgPrimary)
+        .backgroundColor(this.colors().surface0)
 
       // 连线层
       CanvasEdgeLayer({ vm: this.vm })
